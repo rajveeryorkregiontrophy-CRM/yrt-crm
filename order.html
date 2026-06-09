@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Detail — YRT CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14171c;--slate-900:#1b1f27;--slate-800:#232834;--slate-700:#2e3543;--slate-600:#3c4456;
+    --line:#e7e3da;--line-strong:#d6d0c4;--paper:#f7f5f0;--paper-2:#fff;
+    --brass:#9a7b3f;--brass-light:#c2a463;--brass-bg:#f3ecdc;--muted:#7b7768;--muted-2:#9b978a;
+    --st-art:#b4541f;--st-art-bg:#fbeadf;--st-due:#9a7b3f;--st-due-bg:#f3ecdc;
+    --st-approved:#3f7d52;--st-approved-bg:#e6f0e8;--st-process:#2f5e8a;--st-process-bg:#e4edf5;
+    --st-invoice:#6b4a8a;--st-invoice-bg:#efe8f5;--danger:#b4351f;
+    --radius:10px;--radius-sm:7px;--shadow-sm:0 1px 2px rgba(20,23,28,.04),0 1px 3px rgba(20,23,28,.06);
+    --font-display:'Archivo',system-ui,sans-serif;--font-body:'Inter',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font-body);background:var(--paper);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+
+  .topbar{height:58px;background:var(--paper-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 24px;position:sticky;top:0;z-index:30;}
+  .back{display:inline-flex;align-items:center;gap:7px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;padding:7px 11px;border-radius:var(--radius-sm);border:1px solid var(--line-strong);background:var(--paper-2);}
+  .back:hover{border-color:var(--brass);color:var(--brass);}
+  .topbar .title{font-family:var(--font-display);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:16px;}
+  .topbar .title .id{color:var(--brass);}
+  .topbar .actions{margin-left:auto;display:flex;gap:8px;}
+  .btn{padding:8px 14px;border-radius:var(--radius-sm);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--line-strong);background:var(--paper-2);color:var(--ink);display:inline-flex;align-items:center;gap:7px;}
+  .btn:hover{border-color:var(--brass);}
+  .btn-dark{background:var(--slate-900);color:#fff;border-color:var(--slate-900);}
+  .btn-dark:hover{background:var(--slate-700);}
+  .btn-brass{background:var(--brass);color:#fff;border-color:var(--brass);}
+  .btn-brass:hover{background:#876a35;}
+
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 24px 80px;}
+  .grid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start;}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr;}}
+
+  .card{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:18px;overflow:hidden;}
+  .card-h{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .card-h h3{font-family:var(--font-display);font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--slate-700);}
+  .card-b{padding:18px;}
+
+  /* client header block */
+  .client-block{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:4px;}
+  .field .val{font-size:14px;font-weight:500;}
+  .field .val.big{font-size:17px;font-weight:700;font-family:var(--font-display);}
+  .field .val.mono{font-family:var(--font-mono);}
+  .field-row{display:flex;gap:20px;}
+  .field-row .field{flex:1;}
+
+  /* line items */
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);background:var(--paper);}
+  thead th.num{text-align:right;}
+  tbody td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .li-input{width:100%;border:1px solid transparent;background:transparent;padding:6px 7px;border-radius:5px;font-size:13px;font-family:inherit;color:var(--ink);}
+  .li-input:hover{border-color:var(--line-strong);}
+  .li-input:focus{outline:none;border-color:var(--brass);background:#fff;}
+  .li-input.num{text-align:right;font-family:var(--font-mono);}
+  .li-input.cat{font-family:var(--font-mono);font-size:12px;color:var(--brass);font-weight:600;}
+  .li-amt{text-align:right;font-family:var(--font-mono);font-weight:600;font-size:13px;padding-right:10px;white-space:nowrap;}
+  .li-del{border:none;background:transparent;color:var(--muted-2);cursor:pointer;padding:5px;border-radius:5px;font-size:15px;line-height:1;}
+  .li-del:hover{background:var(--st-art-bg);color:var(--danger);}
+  .add-line{margin:12px 18px 4px;padding:9px;width:calc(100% - 36px);border:1px dashed var(--line-strong);background:transparent;border-radius:var(--radius-sm);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
+  .add-line:hover{border-color:var(--brass);color:var(--brass);}
+
+  /* totals sidebar */
+  .status-pick{display:flex;flex-direction:column;gap:13px;}
+  .seg{display:flex;flex-direction:column;gap:7px;}
+  .seg label{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;}
+  select.input,input.input{width:100%;border:1px solid var(--line-strong);background:var(--paper-2);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--ink);}
+  select.input:focus,input.input:focus{outline:none;border-color:var(--brass);}
+
+  .badge-st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:6px;}
+  .badge-st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .st-send_art{color:var(--st-art);background:var(--st-art-bg);}
+  .st-approval_due{color:var(--st-due);background:var(--st-due-bg);}
+  .st-approved{color:var(--st-approved);background:var(--st-approved-bg);}
+  .st-in_process{color:var(--st-process);background:var(--st-process-bg);}
+  .st-invoice{color:var(--st-invoice);background:var(--st-invoice-bg);}
+
+  .totals{padding:4px 0;}
+  .totals .t-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13.5px;}
+  .totals .t-row .lbl{color:var(--muted);}
+  .totals .t-row .amt{font-family:var(--font-mono);font-weight:600;}
+  .totals .t-grand{border-top:2px solid var(--ink);margin-top:6px;padding-top:12px;}
+  .totals .t-grand .lbl{font-family:var(--font-display);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:13px;}
+  .totals .t-grand .amt{font-family:var(--font-display);font-weight:800;font-size:21px;color:var(--brass);}
+
+  .state{padding:60px;text-align:center;color:var(--muted);}
+  .pipeline{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+  .pip{flex:1;min-width:60px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:7px 4px;border-radius:5px;background:var(--paper);color:var(--muted-2);border:1px solid var(--line);cursor:pointer;}
+  .pip.on{background:var(--slate-900);color:#fff;border-color:var(--slate-900);}
+  .meta-foot{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted-2);padding:12px 18px;border-top:1px solid var(--line);background:var(--paper);}
+  .meta-foot b{color:var(--muted);font-weight:600;}
+  .save-bar{position:fixed;bottom:0;left:0;right:0;background:var(--paper-2);border-top:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:12px;justify-content:flex-end;z-index:40;box-shadow:0 -2px 10px rgba(20,23,28,.05);}
+  .save-bar .status-msg{margin-right:auto;font-size:13px;color:var(--muted);}
+  .save-bar .status-msg.saved{color:var(--st-approved);}
+  .save-bar .status-msg.err{color:var(--danger);}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back" href="index.html">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Inbox
+  </a>
+  <div class="title">Sales Order <span class="id" id="t-id">#----</span></div>
+  <div id="t-badge"></div>
+  <div class="actions">
+    <button class="btn" id="btn-quote">Print Quotation</button>
+    <button class="btn-brass btn" id="btn-invoice">Convert to Invoice</button>
+  </div>
+</header>
+
+<div class="wrap" id="wrap">
+  <div class="state">Loading order…</div>
+</div>
+
+<template id="tpl">
+<div class="grid">
+  <div>
+    <!-- Client / order header -->
+    <div class="card">
+      <div class="card-h"><h3>Client &amp; Order</h3></div>
+      <div class="card-b">
+        <div class="client-block">
+          <div>
+            <div class="field"><label>Client</label><div class="val big" id="f-client">—</div></div>
+            <div class="field"><label>Location</label><div class="val" id="f-loc">—</div></div>
+            <div class="field-row">
+              <div class="field"><label>Contact</label><div class="val" id="f-contact">—</div></div>
+              <div class="field"><label>Telephone</label><div class="val mono" id="f-tel">—</div></div>
+            </div>
+            <div class="field"><label>Email</label><div class="val" id="f-email">—</div></div>
+          </div>
+          <div>
+            <div class="field-row">
+              <div class="field"><label>Quote Date</label><div class="val mono" id="f-qdate">—</div></div>
+              <div class="field"><label>Serviced By</label><div class="val" id="f-staff">—</div></div>
+            </div>
+            <div class="field"><label>Subject</label><div class="val" id="f-subject">—</div></div>
+            <div class="field"><label>Client P.O. #</label><div class="val mono" id="f-po">—</div></div>
+            <div class="field"><label>Ship Mode</label><div class="val" id="f-ship">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line items -->
+    <div class="card">
+      <div class="card-h"><h3>Product Listing</h3></div>
+      <table>
+        <thead><tr>
+          <th style="width:62px;">Cat</th><th>Description</th>
+          <th class="num" style="width:60px;">Qty</th>
+          <th style="width:54px;">Unit</th>
+          <th class="num" style="width:88px;">Unit Price</th>
+          <th class="num" style="width:96px;">Amount</th>
+          <th style="width:34px;"></th>
+        </tr></thead>
+        <tbody id="lines"></tbody>
+      </table>
+      <button class="add-line" id="add-line">+ Add line item</button>
+      <div class="meta-foot" id="meta"></div>
+    </div>
+  </div>
+
+  <!-- Sidebar: status + totals -->
+  <div>
+    <div class="card">
+      <div class="card-h"><h3>Status</h3></div>
+      <div class="card-b">
+        <div class="status-pick">
+          <div class="seg">
+            <label>Production Stage</label>
+            <div class="pipeline" id="pipeline">
+              <div class="pip" data-s="send_art">Send Art</div>
+              <div class="pip" data-s="approval_due">Approval</div>
+              <div class="pip" data-s="approved">Approved</div>
+              <div class="pip" data-s="in_process">Process</div>
+              <div class="pip" data-s="invoice">Invoice</div>
+            </div>
+          </div>
+          <div class="seg">
+            <label>Pick-up Date</label>
+            <input type="date" class="input" id="i-pickup">
+          </div>
+          <div class="seg">
+            <label>Sent to Client</label>
+            <select class="input" id="i-sent">
+              <option value="not_sent">Not Sent</option>
+              <option value="sent">Sent</option>
+            </select>
+          </div>
+          <div class="seg">
+            <label>Order State</label>
+            <select class="input" id="i-active">
+              <option value="active">Active</option>
+              <option value="on_hold">On Hold</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>Totals</h3></div>
+      <div class="card-b">
+        <div class="totals">
+          <div class="t-row"><span class="lbl">Subtotal</span><span class="amt" id="t-sub">$0.00</span></div>
+          <div class="t-row"><span class="lbl">Discount</span><span class="amt" id="t-disc">$0.00</span></div>
+          <div class="t-row"><span class="lbl">HST (13%)</span><span class="amt" id="t-hst">$0.00</span></div>
+          <div class="t-row t-grand"><span class="lbl">Grand Total</span><span class="amt" id="t-grand">$0.00</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</template>
+
+<div class="save-bar">
+  <span class="status-msg" id="save-msg">No changes</span>
+  <button class="btn" onclick="location.href='index.html'">Cancel</button>
+  <button class="btn-dark btn" id="btn-save">Save Order</button>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const db = createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
+
+const HST_RATE = 0.13;
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return DOW[x.getDay()]+', '+x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const params=new URLSearchParams(location.search);
+const ORDER_ID=params.get('id');
+
+let ORDER=null, LINES=[], DIRTY=false;
+
+function markDirty(){DIRTY=true;const m=document.getElementById('save-msg');m.textContent='Unsaved changes';m.className='status-msg';}
+
+async function load(){
+  if(!ORDER_ID){document.getElementById('wrap').innerHTML='<div class="state">No order specified. <a href="index.html">Back to inbox</a></div>';return;}
+  const {data,error}=await db.from('quotes')
+    .select('*, clients(*), contacts(*)')
+    .eq('id',ORDER_ID).single();
+  if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load this order.<br>${error?.message||''}</div>`;return;}
+  ORDER=data;
+  const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
+  LINES=items||[];
+  render();
+}
+
+function render(){
+  const wrap=document.getElementById('wrap');
+  wrap.innerHTML='';
+  wrap.appendChild(document.getElementById('tpl').content.cloneNode(true));
+
+  document.getElementById('t-id').textContent='#'+ORDER.stage_id;
+  document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;
+
+  const c=ORDER.clients||{}, ct=ORDER.contacts||{};
+  document.getElementById('f-client').textContent=c.company_name||'—';
+  const loc=[c.bill_address,c.bill_city,c.bill_province,c.bill_postal].filter(Boolean).join(', ');
+  document.getElementById('f-loc').textContent=loc||'—';
+  document.getElementById('f-contact').textContent=((ct.first_name||'')+' '+(ct.last_name||'')).trim()||'—';
+  document.getElementById('f-tel').textContent=ct.tel1||'—';
+  document.getElementById('f-email').textContent=ct.email1||'—';
+  document.getElementById('f-qdate').textContent=fmtD(ORDER.quote_date);
+  document.getElementById('f-staff').textContent=ORDER.serviced_by||'—';
+  document.getElementById('f-subject').textContent=ORDER.subject||'—';
+  document.getElementById('f-po').textContent=ORDER.po_number||'—';
+  document.getElementById('f-ship').textContent={pickup:'Pick-up',courier:'Courier',deliver:'Deliver'}[ORDER.ship_mode]||'—';
+
+  // status controls
+  document.querySelectorAll('.pip').forEach(p=>{
+    if(p.dataset.s===ORDER.art_status)p.classList.add('on');
+    p.addEventListener('click',()=>{ORDER.art_status=p.dataset.s;document.querySelectorAll('.pip').forEach(x=>x.classList.toggle('on',x.dataset.s===ORDER.art_status));document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;markDirty();});
+  });
+  const ip=document.getElementById('i-pickup');ip.value=ORDER.pickup_date||'';ip.addEventListener('change',()=>{ORDER.pickup_date=ip.value||null;markDirty();});
+  const is=document.getElementById('i-sent');is.value=ORDER.sent_status||'not_sent';is.addEventListener('change',()=>{ORDER.sent_status=is.value;markDirty();});
+  const ia=document.getElementById('i-active');ia.value=ORDER.active_status||'active';ia.addEventListener('change',()=>{ORDER.active_status=ia.value;markDirty();});
+
+  document.getElementById('add-line').addEventListener('click',addLine);
+  document.getElementById('btn-save').addEventListener('click',save);
+  document.getElementById('btn-quote').addEventListener('click',()=>alert('Quotation PDF generation is the next build — it will reproduce your YRT letterhead exactly.'));
+  document.getElementById('btn-invoice').addEventListener('click',()=>alert('Convert to Invoice will be wired in Phase C alongside the Invoices screen.'));
+
+  // meta footer
+  document.getElementById('meta').innerHTML=
+    `<span><b>Created</b> ${fmtD(ORDER.created_at?.slice(0,10))} ${ORDER.created_by?'· '+esc(ORDER.created_by):''}</span>
+     <span><b>Modified</b> ${fmtD(ORDER.modified_at?.slice(0,10))}</span>
+     <span><b>Record</b> ${esc(ORDER.record_type)}</span>`;
+
+  renderLines();
+}
+
+function renderLines(){
+  const tb=document.getElementById('lines');
+  tb.innerHTML='';
+  LINES.forEach((ln,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input class="li-input cat" value="${esc(ln.category_code||'')}" data-i="${i}" data-k="category_code" placeholder="0000"></td>
+      <td><input class="li-input" value="${esc(ln.description||'')}" data-i="${i}" data-k="description" placeholder="Description"></td>
+      <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
+      <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:46px;"></td>
+      <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
+      <td class="li-amt">${money(ln.net_amount)}</td>
+      <td><button class="li-del" data-del="${i}">×</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('.li-input').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const i=+inp.dataset.i,k=inp.dataset.k;let v=inp.value;
+      if(k==='quantity'||k==='unit_price')v=parseFloat(v)||0;
+      LINES[i][k]=v;
+      LINES[i].amount=(parseFloat(LINES[i].quantity)||0)*(parseFloat(LINES[i].unit_price)||0);
+      LINES[i].net_amount=LINES[i].amount-(LINES[i].amount*((parseFloat(LINES[i].discount_pct)||0)/100));
+      // update just the amount cell + totals
+      inp.closest('tr').querySelector('.li-amt').textContent=money(LINES[i].net_amount);
+      recalc();markDirty();
+    });
+  });
+  tb.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>{LINES.splice(+b.dataset.del,1);renderLines();recalc();markDirty();}));
+  recalc();
+}
+
+function addLine(){LINES.push({category_code:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
+
+function recalc(){
+  const sub=LINES.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
+  const disc=LINES.reduce((s,l)=>s+((parseFloat(l.amount)||0)*((parseFloat(l.discount_pct)||0)/100)),0);
+  const net=sub-disc;const hst=net*HST_RATE;const grand=net+hst;
+  document.getElementById('t-sub').textContent=money(sub);
+  document.getElementById('t-disc').textContent=money(disc);
+  document.getElementById('t-hst').textContent=money(hst);
+  document.getElementById('t-grand').textContent=money(grand);
+  ORDER._calc={subtotal:sub,discount_total:disc,hst,grand_total:grand};
+}
+
+async function save(){
+  const msg=document.getElementById('save-msg');
+  msg.textContent='Saving…';msg.className='status-msg';
+  const c=ORDER._calc||{};
+  // 1. update the quote
+  const {error:e1}=await db.from('quotes').update({
+    art_status:ORDER.art_status,pickup_date:ORDER.pickup_date,sent_status:ORDER.sent_status,
+    active_status:ORDER.active_status,subtotal:c.subtotal||0,discount_total:c.discount_total||0,
+    hst:c.hst||0,grand_total:c.grand_total||0
+  }).eq('id',ORDER_ID);
+  if(e1){msg.textContent='Error: '+e1.message;msg.className='status-msg err';return;}
+  // 2. replace line items (simple + reliable)
+  await db.from('quote_items').delete().eq('quote_id',ORDER_ID);
+  if(LINES.length){
+    const rows=LINES.map((l,idx)=>({quote_id:ORDER_ID,line_order:idx+1,category_code:l.category_code||null,
+      category_name:l.category_name||null,style_number:l.style_number||null,description:l.description||null,
+      quantity:parseFloat(l.quantity)||0,unit:l.unit||'Pc',unit_price:parseFloat(l.unit_price)||0,
+      amount:parseFloat(l.amount)||0,discount_pct:parseFloat(l.discount_pct)||0,net_amount:parseFloat(l.net_amount)||0}));
+    const {error:e2}=await db.from('quote_items').insert(rows);
+    if(e2){msg.textContent='Lines error: '+e2.message;msg.className='status-msg err';return;}
+  }
+  DIRTY=false;msg.textContent='Saved ✓';msg.className='status-msg saved';
+}
+
+function label(s){return {send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice',no_data:'No Data'}[s]||s;}
+
+window.addEventListener('beforeunload',e=>{if(DIRTY){e.preventDefault();e.returnValue='';}});
+load();
+</script>
+</body>
+</html>
