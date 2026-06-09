@@ -6,378 +6,161 @@
 <title>York Region Trophy — Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Narrow:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    /* Palette — "engraved brass on slate". Deep slate, warm brass, paper. */
-    --ink: #14171c;
-    --slate-900: #1b1f27;
-    --slate-800: #232834;
-    --slate-700: #2e3543;
-    --slate-600: #3c4456;
-    --line: #e7e3da;
-    --line-strong: #d6d0c4;
-    --paper: #f7f5f0;
-    --paper-2: #ffffff;
-    --brass: #9a7b3f;
-    --brass-light: #c2a463;
-    --brass-bg: #f3ecdc;
-    --muted: #7b7768;
-    --muted-2: #9b978a;
+  :root{
+    /* ---- DARK corporate base: deep charcoal-slate ---- */
+    --bg:#101319;          /* app background */
+    --bg-2:#15181e;        /* panels */
+    --bg-3:#1c2028;        /* raised / hover */
+    --bg-4:#242a34;        /* inputs, chips */
+    --sidebar:#0c0e13;
+    --line:#262c36;
+    --line-2:#323948;
+    --text:#e9ebef;
+    --text-2:#aeb4c0;
+    --text-3:#767d8c;
+    --brass:#caa75d;
+    --brass-2:#e0c483;
+    --brass-bg:rgba(202,167,93,.14);
 
-    /* Status hues */
-    --st-art: #b4541f;       /* send art — burnt orange, urgent craft */
-    --st-art-bg: #fbeadf;
-    --st-due: #9a7b3f;       /* approval due — brass */
-    --st-due-bg: #f3ecdc;
-    --st-approved: #3f7d52;  /* approved — green */
-    --st-approved-bg: #e6f0e8;
-    --st-process: #2f5e8a;   /* in process — blue */
-    --st-process-bg: #e4edf5;
-    --st-invoice: #6b4a8a;   /* invoice — violet */
-    --st-invoice-bg: #efe8f5;
+    /* ---- BRIGHT solid status colors (pop on dark) ---- */
+    --art:#ff6b35;         --art-ink:#1a0f08;     /* send art — bright orange */
+    --due:#ffb627;         --due-ink:#231803;     /* approval due — amber/gold */
+    --approved:#3ddc84;    --approved-ink:#04130a;/* approved — bright green */
+    --process:#3da5ff;     --process-ink:#03101f; /* in process — bright blue */
+    --invoice:#b06bff;     --invoice-ink:#15071f; /* invoice — bright violet */
+    --nodata:#5a6273;      --nodata-ink:#fff;
+    --danger:#ff4d4d;
 
-    --danger: #b4351f;
-    --radius: 10px;
-    --radius-sm: 7px;
-    --shadow-sm: 0 1px 2px rgba(20,23,28,0.04), 0 1px 3px rgba(20,23,28,0.06);
-    --shadow-md: 0 4px 16px rgba(20,23,28,0.08);
-    --font-display: 'Archivo', -apple-system, system-ui, sans-serif;
-    --font-body: 'Inter', -apple-system, system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --radius:11px;--radius-sm:8px;
+    --shadow:0 2px 8px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.25);
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
   }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
+  ::-webkit-scrollbar-track{background:transparent;}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
-  body {
-    font-family: var(--font-body);
-    background: var(--paper);
-    color: var(--ink);
-    font-size: 14px;
-    line-height: 1.45;
-    -webkit-font-smoothing: antialiased;
-  }
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
 
-  /* ---------------- Shell ---------------- */
-  .app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+  /* Sidebar */
+  .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
+  .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;letter-spacing:.01em;color:#fff;line-height:1.12;text-transform:uppercase;}
+  .brand .mark .amp{color:var(--brass-2);}
+  .brand .sub{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);margin-top:6px;}
+  .nav{padding:14px 12px;flex:1;overflow-y:auto;}
+  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--text-3);padding:14px 10px 6px;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
+  .nav a:hover{background:var(--bg-3);color:#fff;}
+  .nav a.active{background:linear-gradient(90deg,var(--brass),#b6914a);color:#15110a;font-weight:700;}
+  .nav a .ico{width:17px;height:17px;flex-shrink:0;}
+  .nav a .badge{margin-left:auto;background:var(--bg-4);color:var(--text);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;font-family:var(--fm);}
+  .nav a.active .badge{background:rgba(0,0,0,.25);color:#15110a;}
+  .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--brass-2),var(--brass));color:#15110a;display:grid;place-items:center;font-weight:900;font-size:10px;letter-spacing:.03em;}
 
-  .sidebar {
-    background: var(--slate-900);
-    color: #c9cdd6;
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    border-right: 1px solid #000;
-  }
-  .brand {
-    padding: 22px 20px 18px;
-    border-bottom: 1px solid var(--slate-700);
-  }
-  .brand .mark {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 17px;
-    letter-spacing: 0.01em;
-    color: #fff;
-    line-height: 1.12;
-    text-transform: uppercase;
-  }
-  .brand .mark .amp { color: var(--brass-light); }
-  .brand .sub {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.13em;
-    color: var(--muted-2);
-    margin-top: 6px;
-  }
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;position:sticky;top:0;z-index:20;}
+  .topbar h1{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
+  .topbar .date{font-size:12.5px;color:var(--text-3);font-family:var(--fm);}
+  .search{margin-left:auto;position:relative;width:280px;}
+  .search input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 12px 9px 34px;font-size:13px;font-family:inherit;color:var(--text);}
+  .search input:focus{outline:none;border-color:var(--brass);}
+  .search input::placeholder{color:var(--text-3);}
+  .search svg{position:absolute;left:11px;top:10px;width:15px;height:15px;color:var(--text-3);}
+  .btn-primary{background:linear-gradient(135deg,var(--brass-2),var(--brass));color:#15110a;border:none;padding:10px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .btn-primary:hover{filter:brightness(1.08);}
 
-  .nav { padding: 14px 12px; flex: 1; overflow-y: auto; }
-  .nav-label {
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #6b7180;
-    padding: 14px 10px 6px;
-  }
-  .nav a {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 9px 11px;
-    border-radius: var(--radius-sm);
-    color: #c9cdd6;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 13.5px;
-    margin-bottom: 1px;
-    transition: background 0.12s, color 0.12s;
-  }
-  .nav a:hover { background: var(--slate-700); color: #fff; }
-  .nav a.active { background: var(--brass); color: #fff; }
-  .nav a.active .ico { opacity: 1; }
-  .nav a .ico { width: 17px; height: 17px; opacity: 0.7; flex-shrink: 0; }
-  .nav a .badge {
-    margin-left: auto;
-    background: var(--slate-700);
-    color: #d7dae1;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 1px 7px;
-    border-radius: 20px;
-    font-family: var(--font-mono);
-  }
-  .nav a.active .badge { background: rgba(255,255,255,0.22); color:#fff; }
+  .content{padding:24px 26px 70px;max-width:1560px;width:100%;}
 
-  .sidebar-foot {
-    padding: 13px 16px;
-    border-top: 1px solid var(--slate-700);
-    font-size: 12px;
-    color: var(--muted-2);
-    display: flex; align-items: center; gap: 9px;
-  }
-  .avatar {
-    width: 30px; height: 30px; border-radius: 7px;
-    background: var(--brass); color: #fff;
-    display: grid; place-items: center;
-    font-weight: 800; font-size: 10px; letter-spacing: 0.03em;
-  }
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+  .kpi{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px 15px;position:relative;overflow:hidden;}
+  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+  .kpi.urgent::before{background:var(--art);box-shadow:0 0 16px var(--art);}
+  .kpi.due::before{background:var(--due);box-shadow:0 0 16px var(--due);}
+  .kpi.process::before{background:var(--process);box-shadow:0 0 16px var(--process);}
+  .kpi.soon::before{background:var(--danger);box-shadow:0 0 16px var(--danger);}
+  .kpi.money::before{background:var(--approved);box-shadow:0 0 16px var(--approved);}
+  .kpi .k-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:700;}
+  .kpi .k-value{font-family:var(--fd);font-size:32px;font-weight:900;line-height:1.05;margin-top:8px;letter-spacing:-.01em;color:#fff;}
+  .kpi .k-value small{font-size:17px;color:var(--text-2);font-weight:600;}
+  .kpi .k-foot{font-size:11.5px;color:var(--text-3);margin-top:3px;}
 
-  /* ---------------- Main ---------------- */
-  .main { display: flex; flex-direction: column; min-width: 0; }
+  .row{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;}
+  @media(max-width:1180px){.row{grid-template-columns:1fr;}}
+  .panel{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+  .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line);}
+  .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
+  .panel-head .count{font-family:var(--fm);font-size:12px;color:var(--text-2);background:var(--bg-4);padding:2px 9px;border-radius:20px;}
+  .panel-head .head-actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;transition:.12s;}
+  .chip:hover{border-color:var(--brass);color:var(--brass-2);}
+  .chip.active{background:var(--brass);color:#15110a;border-color:var(--brass);}
 
-  .topbar {
-    height: 60px;
-    background: var(--paper-2);
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 0 26px;
-    position: sticky; top: 0; z-index: 20;
-  }
-  .topbar h1 {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: 0.005em;
-    text-transform: uppercase;
-  }
-  .topbar .date {
-    font-size: 12.5px;
-    color: var(--muted);
-    font-family: var(--font-mono);
-  }
-  .search {
-    margin-left: auto;
-    position: relative;
-    width: 260px;
-  }
-  .search input {
-    width: 100%;
-    border: 1px solid var(--line-strong);
-    background: var(--paper);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px 8px 32px;
-    font-size: 13px;
-    font-family: inherit;
-    color: var(--ink);
-  }
-  .search input:focus { outline: none; border-color: var(--brass); background:#fff; }
-  .search svg { position: absolute; left: 10px; top: 9px; width: 15px; height: 15px; color: var(--muted-2); }
-  .btn-primary {
-    background: var(--slate-900);
-    color: #fff;
-    border: none;
-    padding: 9px 15px;
-    border-radius: var(--radius-sm);
-    font-weight: 600;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    display: inline-flex; align-items: center; gap: 7px;
-    transition: background 0.12s;
-  }
-  .btn-primary:hover { background: var(--slate-700); }
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);font-weight:700;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--bg-3);}
+  thead th.num{text-align:right;}
+  tbody td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr{cursor:pointer;transition:background .1s;}
+  tbody tr:hover{background:var(--bg-3);}
+  tbody tr:last-child td{border-bottom:none;}
+  .stage-id{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--brass-2);}
+  .client-cell .name{font-weight:700;color:#fff;}
+  .client-cell .sub{font-size:12px;color:var(--text-3);margin-top:1px;}
+  .subject-tag{font-size:12.5px;color:var(--text-2);}
+  .money-cell{font-family:var(--fm);font-weight:700;font-size:13.5px;color:#fff;}
 
-  .content { padding: 24px 26px 60px; max-width: 1500px; width: 100%; }
+  /* ---- BIG bright solid status badges ---- */
+  .badge-st{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);}
+  .badge-st::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 7px currentColor;}
+  .st-send_art{background:var(--art);color:var(--art-ink);}
+  .st-approval_due{background:var(--due);color:var(--due-ink);}
+  .st-approved{background:var(--approved);color:var(--approved-ink);}
+  .st-in_process{background:var(--process);color:var(--process-ink);}
+  .st-invoice{background:var(--invoice);color:var(--invoice-ink);}
+  .st-no_data{background:var(--nodata);color:var(--nodata-ink);}
+  .badge-st::before{background:rgba(0,0,0,.45);box-shadow:none;}
 
-  /* ---------------- KPI strip ---------------- */
-  .kpis {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-    margin-bottom: 24px;
-  }
-  .kpi {
-    background: var(--paper-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 15px 16px 14px;
-    box-shadow: var(--shadow-sm);
-    position: relative;
-    overflow: hidden;
-  }
-  .kpi::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    background: var(--brass);
-  }
-  .kpi.urgent::before { background: var(--st-art); }
-  .kpi.due::before { background: var(--st-due); }
-  .kpi.process::before { background: var(--st-process); }
-  .kpi.money::before { background: var(--st-approved); }
-  .kpi .k-label {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--muted); font-weight: 600;
-  }
-  .kpi .k-value {
-    font-family: var(--font-display);
-    font-size: 30px; font-weight: 800; line-height: 1.1;
-    margin-top: 7px; letter-spacing: -0.01em;
-  }
-  .kpi .k-value small { font-size: 16px; color: var(--muted); font-weight: 500; }
-  .kpi .k-foot { font-size: 11.5px; color: var(--muted-2); margin-top: 3px; }
+  /* dual date cell */
+  .dates{display:flex;flex-direction:column;gap:5px;}
+  .date-line{display:flex;align-items:center;gap:8px;font-size:12.5px;}
+  .date-line .tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;width:38px;color:var(--text-3);font-family:var(--fd);}
+  .date-line .d{font-family:var(--fm);font-weight:600;color:var(--text);}
+  .date-line.event .d{color:var(--brass-2);}
+  .dot-days{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:800;font-family:var(--fm);}
+  .dot-days.d0{background:var(--danger);color:#fff;box-shadow:0 0 10px rgba(255,77,77,.5);}
+  .dot-days.d1{background:var(--art);color:#1a0f08;}
+  .dot-days.d2{background:var(--due);color:#231803;}
+  .dot-days.d3{background:#4a5160;color:#fff;}
+  .dot-days.d4{background:var(--bg-4);color:var(--text-3);}
 
-  /* ---------------- Section ---------------- */
-  .row { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
-  @media (max-width: 1180px) { .row { grid-template-columns: 1fr; } }
+  .inq-item{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s;}
+  .inq-item:hover{background:var(--bg-3);}
+  .inq-item:last-child{border-bottom:none;}
+  .inq-date{font-family:var(--fm);font-size:11px;color:var(--text-3);width:44px;flex-shrink:0;padding-top:2px;}
+  .inq-body{flex:1;min-width:0;}
+  .inq-body .c{font-weight:700;font-size:13px;color:#fff;}
+  .inq-body .s{font-size:12px;color:var(--text-2);margin-top:1px;}
+  .inq-id{font-family:var(--fm);font-size:11px;color:var(--brass-2);font-weight:700;}
 
-  .panel {
-    background: var(--paper-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-  }
-  .panel-head {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--line);
-  }
-  .panel-head h2 {
-    font-family: var(--font-display);
-    font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
-  }
-  .panel-head .count {
-    font-family: var(--font-mono); font-size: 12px;
-    color: var(--muted); background: var(--paper);
-    padding: 2px 8px; border-radius: 20px; border: 1px solid var(--line);
-  }
-  .panel-head .head-actions { margin-left: auto; display: flex; gap: 6px; }
-  .chip {
-    font-size: 12px; padding: 5px 11px; border-radius: 20px;
-    border: 1px solid var(--line-strong); background: var(--paper-2);
-    color: var(--muted); cursor: pointer; font-weight: 500; font-family: inherit;
-    transition: all 0.12s;
-  }
-  .chip:hover { border-color: var(--brass); color: var(--brass); }
-  .chip.active { background: var(--slate-900); color: #fff; border-color: var(--slate-900); }
+  .state{padding:44px;text-align:center;color:var(--text-3);font-size:13.5px;}
+  .skeleton{padding:14px;}
+  .sk-row{height:46px;background:linear-gradient(90deg,var(--bg-2) 25%,var(--bg-3) 50%,var(--bg-2) 75%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:7px;margin-bottom:8px;}
+  @keyframes sh{to{background-position:-200% 0;}}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--bg-3);}
+  .legend span{font-size:11.5px;color:var(--text-3);display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block;}
 
-  /* ---------------- Order table ---------------- */
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    text-align: left;
-    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em;
-    color: var(--muted); font-weight: 600;
-    padding: 9px 14px; border-bottom: 1px solid var(--line);
-    background: var(--paper);
-    position: sticky; top: 0;
-  }
-  thead th.num, tbody td.num { text-align: right; }
-  tbody td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-  tbody tr { cursor: pointer; transition: background 0.1s; }
-  tbody tr:hover { background: var(--paper); }
-  tbody tr:last-child td { border-bottom: none; }
-
-  .stage-id {
-    font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-    color: var(--brass);
-  }
-  .client-cell .name { font-weight: 600; color: var(--ink); }
-  .client-cell .sub { font-size: 12px; color: var(--muted-2); margin-top: 1px; }
-  .subject-tag {
-    font-size: 12.5px; color: var(--slate-700);
-  }
-  .money-cell { font-family: var(--font-mono); font-weight: 600; font-size: 13px; }
-
-  /* status badge */
-  .badge-st {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 11.5px; font-weight: 600;
-    padding: 4px 9px; border-radius: 6px;
-    white-space: nowrap;
-  }
-  .badge-st::before { content:''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .st-send_art   { color: var(--st-art); background: var(--st-art-bg); }
-  .st-approval_due { color: var(--st-due); background: var(--st-due-bg); }
-  .st-approved   { color: var(--st-approved); background: var(--st-approved-bg); }
-  .st-in_process { color: var(--st-process); background: var(--st-process-bg); }
-  .st-invoice    { color: var(--st-invoice); background: var(--st-invoice-bg); }
-  .st-no_data    { color: var(--muted); background: var(--paper); }
-
-  /* pickup urgency pill */
-  .pickup {
-    display: inline-flex; flex-direction: column; align-items: flex-start;
-    font-size: 12.5px;
-  }
-  .pickup .d { font-weight: 600; font-family: var(--font-mono); }
-  .pickup .days { font-size: 11px; color: var(--muted-2); }
-  .pickup.overdue .d { color: var(--danger); }
-  .pickup.today .d { color: var(--st-art); }
-  .pickup.soon .d { color: var(--st-due); }
-
-  .dot-days {
-    display: inline-grid; place-items: center;
-    min-width: 22px; height: 22px; padding: 0 6px;
-    border-radius: 6px; font-size: 11px; font-weight: 700;
-    font-family: var(--font-mono);
-  }
-  .dot-days.d0 { background: var(--danger); color:#fff; }
-  .dot-days.d1 { background: var(--st-art); color:#fff; }
-  .dot-days.d2 { background: var(--st-due); color:#fff; }
-  .dot-days.d3 { background: #d8cfae; color: var(--slate-800); }
-  .dot-days.d4 { background: var(--paper); color: var(--muted); border:1px solid var(--line); }
-
-  /* ---------------- Inquiries side panel ---------------- */
-  .inq-item {
-    display: flex; gap: 12px; align-items: flex-start;
-    padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: pointer;
-    transition: background 0.1s;
-  }
-  .inq-item:hover { background: var(--paper); }
-  .inq-item:last-child { border-bottom: none; }
-  .inq-date {
-    font-family: var(--font-mono); font-size: 11px; color: var(--muted-2);
-    width: 42px; flex-shrink: 0; padding-top: 2px;
-  }
-  .inq-body { flex: 1; min-width: 0; }
-  .inq-body .c { font-weight: 600; font-size: 13px; }
-  .inq-body .s { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .inq-id { font-family: var(--font-mono); font-size: 11px; color: var(--brass); font-weight:600; }
-
-  /* loading / empty */
-  .state { padding: 40px; text-align: center; color: var(--muted); font-size: 13.5px; }
-  .skeleton { padding: 14px; }
-  .sk-row { height: 44px; background: linear-gradient(90deg,var(--paper) 25%,#efece5 50%,var(--paper) 75%);
-    background-size: 200% 100%; animation: sh 1.2s infinite; border-radius: 6px; margin-bottom: 8px; }
-  @keyframes sh { to { background-position: -200% 0; } }
-
-  .legend { display:flex; gap:14px; flex-wrap:wrap; padding: 11px 18px; border-top:1px solid var(--line); background:var(--paper); }
-  .legend span { font-size: 11.5px; color: var(--muted); display:inline-flex; align-items:center; gap:6px; }
-  .legend i { width:9px; height:9px; border-radius:50%; display:inline-block; }
-
-  @media (max-width: 880px) {
-    .app { grid-template-columns: 1fr; }
-    .sidebar { display:none; }
-    .kpis { grid-template-columns: repeat(2,1fr); }
-  }
+  @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}.kpis{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
 <body>
 <div class="app">
-
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="brand">
       <div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div>
@@ -385,77 +168,42 @@
     </div>
     <nav class="nav">
       <div class="nav-label">Workspace</div>
-      <a href="#" class="active">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-        Sales Inbox <span class="badge" id="nav-orders">0</span>
-      </a>
-      <a href="#">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        Quotes &amp; Inquiries <span class="badge" id="nav-quotes">0</span>
-      </a>
-      <a href="#">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Clients <span class="badge" id="nav-clients">0</span>
-      </a>
-      <a href="#">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        Products
-      </a>
-      <a href="#">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
-        Invoices
-      </a>
+      <a href="index.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Sales Inbox <span class="badge" id="nav-orders">0</span></a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Quotes &amp; Inquiries <span class="badge" id="nav-quotes">0</span></a>
+      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients <span class="badge" id="nav-clients">0</span></a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Products</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>Invoices</a>
       <div class="nav-label">Production</div>
-      <a href="#">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        Production Lineup
-      </a>
-      <a href="#">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-        Reports
-      </a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Production Lineup</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Reports</a>
     </nav>
     <div class="sidebar-foot">
-      <div class="avatar" id="user-initial">YRT</div>
-      <div>
-        <div style="color:#d7dae1;font-weight:700;letter-spacing:0.02em;">YRT CRM</div>
-        <div style="font-size:11px;">Operations Suite</div>
-      </div>
+      <div class="avatar">YRT</div>
+      <div><div style="color:var(--text);font-weight:700;letter-spacing:.02em;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div>
     </div>
   </aside>
 
-  <!-- Main -->
   <div class="main">
     <header class="topbar">
       <h1>Sales Inbox</h1>
       <span class="date" id="today"></span>
-      <div class="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="search" placeholder="Search orders, clients, ID…">
-      </div>
-      <button class="btn-primary">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
-        New Order
-      </button>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="search" placeholder="Search orders, clients, ID…"></div>
+      <button class="btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>New Order</button>
     </header>
 
     <div class="content">
-
-      <!-- KPI strip -->
-      <div class="kpis" id="kpis">
+      <div class="kpis">
         <div class="kpi urgent"><div class="k-label">Art to Send</div><div class="k-value" id="kpi-art">–</div><div class="k-foot">need artwork started</div></div>
         <div class="kpi due"><div class="k-label">Approval Due</div><div class="k-value" id="kpi-due">–</div><div class="k-foot">awaiting client sign-off</div></div>
         <div class="kpi process"><div class="k-label">In Production</div><div class="k-value" id="kpi-process">–</div><div class="k-foot">on the bench now</div></div>
-        <div class="kpi"><div class="k-label">Picks Up ≤ 3 Days</div><div class="k-value" id="kpi-soon">–</div><div class="k-foot">deadline pressure</div></div>
+        <div class="kpi soon"><div class="k-label">Picks Up ≤ 3 Days</div><div class="k-value" id="kpi-soon">–</div><div class="k-foot">deadline pressure</div></div>
         <div class="kpi money"><div class="k-label">Open Order Value</div><div class="k-value" id="kpi-value">–</div><div class="k-foot">active, incl. HST</div></div>
       </div>
 
       <div class="row">
-        <!-- Orders table -->
         <section class="panel">
           <div class="panel-head">
-            <h2>Active Orders</h2>
-            <span class="count" id="orders-count">—</span>
+            <h2>Active Orders</h2><span class="count" id="orders-count">—</span>
             <div class="head-actions" id="filters">
               <button class="chip active" data-f="all">All</button>
               <button class="chip" data-f="send_art">Art</button>
@@ -465,191 +213,104 @@
               <button class="chip" data-f="invoice">Invoice</button>
             </div>
           </div>
-          <div id="orders-wrap">
-            <div class="skeleton"><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div></div>
-          </div>
+          <div id="orders-wrap"><div class="skeleton"><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div></div></div>
           <div class="legend">
             <span><i style="background:var(--danger)"></i>Overdue</span>
-            <span><i style="background:var(--st-art)"></i>Due today / 1 day</span>
-            <span><i style="background:var(--st-due)"></i>2 days</span>
-            <span><i style="background:#d8cfae"></i>3 days</span>
-            <span><i style="background:var(--line-strong)"></i>4+ days</span>
+            <span><i style="background:var(--art)"></i>1 day</span>
+            <span><i style="background:var(--due)"></i>2 days</span>
+            <span><i style="background:#4a5160"></i>3 days</span>
+            <span><i style="background:var(--bg-4)"></i>4+ days</span>
+            <span style="margin-left:auto;color:var(--brass-2)"><i style="background:var(--brass-2)"></i>Event date</span>
           </div>
         </section>
 
-        <!-- Inquiries -->
         <section class="panel">
-          <div class="panel-head">
-            <h2>Inquiries &amp; Quotes</h2>
-            <span class="count" id="inq-count">—</span>
-          </div>
-          <div id="inq-wrap">
-            <div class="skeleton"><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div></div>
-          </div>
+          <div class="panel-head"><h2>Inquiries &amp; Quotes</h2><span class="count" id="inq-count">—</span></div>
+          <div id="inq-wrap"><div class="skeleton"><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div></div></div>
         </section>
       </div>
-
     </div>
   </div>
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const db = createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
 
-const SUPABASE_URL = 'https://hhnoldgvtjsmjxlowgaq.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f';
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const today=new Date();today.setHours(0,0,0,0);
+document.getElementById('today').textContent=DOW[today.getDay()]+', '+today.getDate()+' '+MON[today.getMonth()]+' '+today.getFullYear();
+const fmtDate=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return DOW[x.getDay()]+', '+x.getDate()+' '+MON[x.getMonth()];};
+const daysUntil=d=>{if(!d)return null;const x=new Date(d+'T00:00:00');return Math.round((x-today)/86400000);};
+const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const ST_LABEL={send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice',no_data:'No Data'};
 
-// ---- date helpers ----
-const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const today = new Date(); today.setHours(0,0,0,0);
-
-document.getElementById('today').textContent =
-  DOW[today.getDay()] + ', ' + today.getDate() + ' ' + MON[today.getMonth()] + ' ' + today.getFullYear();
-
-function fmtDate(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); return DOW[x.getDay()]+', '+x.getDate()+' '+MON[x.getMonth()]; }
-function daysUntil(d){ if(!d) return null; const x=new Date(d+'T00:00:00'); return Math.round((x-today)/86400000); }
-function money(n){ return '$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-
-const ST_LABEL = { send_art:'Send Art', approval_due:'Approval Due', approved:'Approved', in_process:'In Process', invoice:'Invoice', no_data:'No Data' };
-
-function pickupCell(d){
-  const n = daysUntil(d);
-  if(n===null) return '<span class="pickup"><span class="d">—</span></span>';
-  let cls = n<0?'overdue':n===0?'today':n<=2?'soon':'';
-  let dd = n<0?'d0':n===0?'d0':n===1?'d1':n===2?'d2':n===3?'d3':'d4';
-  let label = n<0?Math.abs(n)+'d late':n===0?'today':n+'d';
-  return `<div style="display:flex;align-items:center;gap:9px;">
-    <span class="pickup ${cls}"><span class="d">${fmtDate(d)}</span></span>
-    <span class="dot-days ${dd}">${n<0?'!':n}</span></div>`;
+function datesCell(pickup,event){
+  const n=daysUntil(pickup);
+  let dd=n===null?'d4':n<0?'d0':n<=1?'d1':n===2?'d2':n===3?'d3':'d4';
+  const chip=n===null?'':`<span class="dot-days ${dd}">${n<0?'!':n}</span>`;
+  return `<div class="dates">
+    <div class="date-line"><span class="tag">Pick</span><span class="d">${fmtDate(pickup)}</span>${chip}</div>
+    ${event?`<div class="date-line event"><span class="tag">Event</span><span class="d">${fmtDate(event)}</span></div>`:''}
+  </div>`;
 }
 
-let ALL_ORDERS = [], CURRENT_FILTER='all';
+let ALL=[],FILTER='all';
 
 async function load(){
-  // Orders = record_type 'order'
-  const { data: orders, error } = await db.from('quotes')
+  const {data:orders,error}=await db.from('quotes')
     .select('*, clients(company_name), contacts(first_name,last_name)')
-    .eq('record_type','order')
-    .order('pickup_date',{ascending:true});
-
-  if(error){ document.getElementById('orders-wrap').innerHTML =
-    `<div class="state">Couldn't load orders — ${error.message}</div>`; return; }
-
-  ALL_ORDERS = orders||[];
-
-  // Inquiries/quotes
-  const { data: inq } = await db.from('quotes')
-    .select('*, clients(company_name)')
-    .in('record_type',['quote','inquiry'])
-    .order('quote_date',{ascending:false});
-
-  renderKPIs(ALL_ORDERS);
-  renderOrders();
-  renderInquiries(inq||[]);
-
-  // nav counts
-  document.getElementById('nav-orders').textContent = ALL_ORDERS.length;
-  document.getElementById('nav-quotes').textContent = (inq||[]).length;
-  const { count } = await db.from('clients').select('*',{count:'exact',head:true});
-  document.getElementById('nav-clients').textContent = count ?? 0;
+    .eq('record_type','order').order('pickup_date',{ascending:true});
+  if(error){document.getElementById('orders-wrap').innerHTML=`<div class="state">Couldn't load orders — ${error.message}</div>`;return;}
+  ALL=orders||[];
+  const {data:inq}=await db.from('quotes').select('*, clients(company_name)').in('record_type',['quote','inquiry']).order('quote_date',{ascending:false});
+  renderKPIs(ALL);renderOrders();renderInq(inq||[]);
+  document.getElementById('nav-orders').textContent=ALL.length;
+  document.getElementById('nav-quotes').textContent=(inq||[]).length;
+  const {count}=await db.from('clients').select('*',{count:'exact',head:true});
+  document.getElementById('nav-clients').textContent=count??0;
 }
-
 function renderKPIs(o){
-  const art = o.filter(x=>x.art_status==='send_art').length;
-  const due = o.filter(x=>x.art_status==='approval_due').length;
-  const proc = o.filter(x=>x.art_status==='in_process').length;
-  const soon = o.filter(x=>{ const n=daysUntil(x.pickup_date); return n!==null && n<=3; }).length;
-  const val = o.reduce((s,x)=>s+Number(x.grand_total||0),0);
-  document.getElementById('kpi-art').textContent = art;
-  document.getElementById('kpi-due').textContent = due;
-  document.getElementById('kpi-process').textContent = proc;
-  document.getElementById('kpi-soon').textContent = soon;
-  document.getElementById('kpi-value').innerHTML = '<small>$</small>'+Math.round(val).toLocaleString('en-CA');
+  document.getElementById('kpi-art').textContent=o.filter(x=>x.art_status==='send_art').length;
+  document.getElementById('kpi-due').textContent=o.filter(x=>x.art_status==='approval_due').length;
+  document.getElementById('kpi-process').textContent=o.filter(x=>x.art_status==='in_process').length;
+  document.getElementById('kpi-soon').textContent=o.filter(x=>{const n=daysUntil(x.pickup_date);return n!==null&&n<=3;}).length;
+  document.getElementById('kpi-value').innerHTML='<small>$</small>'+Math.round(o.reduce((s,x)=>s+Number(x.grand_total||0),0)).toLocaleString('en-CA');
 }
-
 function renderOrders(){
-  const q = (document.getElementById('search').value||'').toLowerCase();
-  let rows = ALL_ORDERS.filter(o=>{
-    if(CURRENT_FILTER!=='all' && o.art_status!==CURRENT_FILTER) return false;
-    if(q){
-      const hay = ((o.clients?.company_name||'')+' '+(o.subject||'')+' '+o.stage_id+' '+(o.serviced_by||'')).toLowerCase();
-      if(!hay.includes(q)) return false;
-    }
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  let rows=ALL.filter(o=>{
+    if(FILTER!=='all'&&o.art_status!==FILTER)return false;
+    if(q){const hay=((o.clients?.company_name||'')+' '+(o.subject||'')+' '+o.stage_id+' '+(o.serviced_by||'')).toLowerCase();if(!hay.includes(q))return false;}
     return true;
   });
-
-  document.getElementById('orders-count').textContent = rows.length + (rows.length===1?' order':' orders');
-
-  if(!rows.length){ document.getElementById('orders-wrap').innerHTML =
-    `<div class="state">No orders match this view.</div>`; return; }
-
-  const body = rows.map(o=>{
-    const contact = o.contacts ? (o.contacts.first_name||'')+' '+(o.contacts.last_name||'') : '';
+  document.getElementById('orders-count').textContent=rows.length+(rows.length===1?' order':' orders');
+  if(!rows.length){document.getElementById('orders-wrap').innerHTML=`<div class="state">No orders match this view.</div>`;return;}
+  const body=rows.map(o=>{
+    const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
     return `<tr data-id="${o.id}">
       <td><span class="stage-id">#${o.stage_id}</span></td>
-      <td class="client-cell">
-        <div class="name">${esc(o.clients?.company_name||'—')}</div>
-        <div class="sub">${esc(contact.trim()||o.serviced_by||'')}</div>
-      </td>
+      <td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td>
       <td><span class="subject-tag">${esc(o.subject||'—')}</span></td>
       <td><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td>
-      <td>${pickupCell(o.pickup_date)}</td>
+      <td>${datesCell(o.pickup_date,o.event_date)}</td>
       <td class="num money-cell">${money(o.grand_total)}</td>
-    </tr>`;
+    </tr>`;}).join('');
+  document.getElementById('orders-wrap').innerHTML=`<table><thead><tr><th>ID</th><th>Client</th><th>Subject</th><th>Stage</th><th>Dates</th><th class="num">Total</th></tr></thead><tbody>${body}</tbody></table>`;
+  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.id)));
+}
+function renderInq(list){
+  document.getElementById('inq-count').textContent=list.length;
+  if(!list.length){document.getElementById('inq-wrap').innerHTML=`<div class="state">No open inquiries.</div>`;return;}
+  document.getElementById('inq-wrap').innerHTML=list.map(i=>{
+    const d=new Date((i.quote_date||'')+'T00:00:00');const dstr=i.quote_date?(d.getDate()+' '+MON[d.getMonth()]):'';
+    return `<div class="inq-item" data-id="${i.id}"><div class="inq-date">${dstr}</div><div class="inq-body"><div class="c">${esc(i.clients?.company_name||'—')}</div><div class="s">${esc(i.subject||'—')}</div></div><div class="inq-id">#${i.stage_id}</div></div>`;
   }).join('');
-
-  document.getElementById('orders-wrap').innerHTML = `
-    <table>
-      <thead><tr>
-        <th>ID</th><th>Client</th><th>Subject</th><th>Stage</th><th>Pick-up</th><th class="num">Total</th>
-      </tr></thead>
-      <tbody>${body}</tbody>
-    </table>`;
-
-  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>{
-    tr.addEventListener('click',()=> openOrder(tr.dataset.id));
-  });
+  document.querySelectorAll('.inq-item[data-id]').forEach(el=>el.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(el.dataset.id)));
 }
-
-function renderInquiries(list){
-  document.getElementById('inq-count').textContent = list.length;
-  if(!list.length){ document.getElementById('inq-wrap').innerHTML =
-    `<div class="state">No open inquiries.</div>`; return; }
-  document.getElementById('inq-wrap').innerHTML = list.map(i=>{
-    const d = new Date((i.quote_date||'')+'T00:00:00');
-    const dstr = i.quote_date ? (d.getDate()+' '+MON[d.getMonth()]) : '';
-    return `<div class="inq-item" data-id="${i.id}">
-      <div class="inq-date">${dstr}</div>
-      <div class="inq-body">
-        <div class="c">${esc(i.clients?.company_name||'—')}</div>
-        <div class="s">${esc(i.subject||'—')}</div>
-      </div>
-      <div class="inq-id">#${i.stage_id}</div>
-    </div>`;
-  }).join('');
-  document.querySelectorAll('.inq-item[data-id]').forEach(el=>{
-    el.addEventListener('click',()=>openOrder(el.dataset.id));
-  });
-}
-
-function openOrder(id){
-  window.location.href = 'order.html?id=' + encodeURIComponent(id);
-}
-
-function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
-
-// filters + search
-document.getElementById('filters').addEventListener('click',e=>{
-  if(!e.target.classList.contains('chip')) return;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-  e.target.classList.add('active');
-  CURRENT_FILTER = e.target.dataset.f;
-  renderOrders();
-});
-document.getElementById('search').addEventListener('input', renderOrders);
-
+document.getElementById('filters').addEventListener('click',e=>{if(!e.target.classList.contains('chip'))return;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));e.target.classList.add('active');FILTER=e.target.dataset.f;renderOrders();});
+document.getElementById('search').addEventListener('input',renderOrders);
 load();
 </script>
 </body>

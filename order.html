@@ -9,17 +9,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#14171c;--slate-900:#1b1f27;--slate-800:#232834;--slate-700:#2e3543;--slate-600:#3c4456;
-    --line:#e7e3da;--line-strong:#d6d0c4;--paper:#f7f5f0;--paper-2:#fff;
-    --brass:#9a7b3f;--brass-light:#c2a463;--brass-bg:#f3ecdc;--muted:#7b7768;--muted-2:#9b978a;
-    --st-art:#b4541f;--st-art-bg:#fbeadf;--st-due:#9a7b3f;--st-due-bg:#f3ecdc;
-    --st-approved:#3f7d52;--st-approved-bg:#e6f0e8;--st-process:#2f5e8a;--st-process-bg:#e4edf5;
-    --st-invoice:#6b4a8a;--st-invoice-bg:#efe8f5;--danger:#b4351f;
-    --radius:10px;--radius-sm:7px;--shadow-sm:0 1px 2px rgba(20,23,28,.04),0 1px 3px rgba(20,23,28,.06);
+    --bg:#101319;--bg-2:#15181e;--bg-3:#1c2028;--bg-4:#242a34;--sidebar:#0c0e13;
+    --line:#262c36;--line-2:#323948;--text:#e9ebef;--text-2:#aeb4c0;--text-3:#767d8c;
+    --brass:#caa75d;--brass-2:#e0c483;--brass-bg:rgba(202,167,93,.14);
+    --art:#ff6b35;--due:#ffb627;--approved:#3ddc84;--process:#3da5ff;--invoice:#b06bff;--nodata:#5a6273;--danger:#ff4d4d;
+    --radius:11px;--radius-sm:8px;--shadow-sm:0 2px 8px rgba(0,0,0,.4);
     --font-display:'Archivo',system-ui,sans-serif;--font-body:'Inter',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace;
+    --ink:var(--text);--slate-900:var(--bg-2);--slate-700:var(--bg-3);--paper:var(--bg);--paper-2:var(--bg-2);
+    --line-strong:var(--line-2);--muted:var(--text-3);--muted-2:var(--text-3);
+    --st-art-bg:var(--art);--st-due-bg:var(--due);--st-approved-bg:var(--approved);--st-process-bg:var(--process);--st-invoice-bg:var(--invoice);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:var(--font-body);background:var(--paper);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
 
   .topbar{height:58px;background:var(--paper-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 24px;position:sticky;top:0;z-index:30;}
   .back{display:inline-flex;align-items:center;gap:7px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;padding:7px 11px;border-radius:var(--radius-sm);border:1px solid var(--line-strong);background:var(--paper-2);}
@@ -40,7 +41,7 @@
 
   .card{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:18px;overflow:hidden;}
   .card-h{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
-  .card-h h3{font-family:var(--font-display);font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--slate-700);}
+  .card-h h3{font-family:var(--font-display);font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--brass-2);}
   .card-b{padding:18px;}
 
   /* client header block */
@@ -60,8 +61,8 @@
   tbody td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
   tbody tr:last-child td{border-bottom:none;}
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:6px 7px;border-radius:5px;font-size:13px;font-family:inherit;color:var(--ink);}
-  .li-input:hover{border-color:var(--line-strong);}
-  .li-input:focus{outline:none;border-color:var(--brass);background:#fff;}
+  .li-input:hover{border-color:var(--line-2);}
+  .li-input:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li-input.num{text-align:right;font-family:var(--font-mono);}
   .li-input.cat{font-family:var(--font-mono);font-size:12px;color:var(--brass);font-weight:600;}
   .li-amt{text-align:right;font-family:var(--font-mono);font-weight:600;font-size:13px;padding-right:10px;white-space:nowrap;}
@@ -74,29 +75,29 @@
   .status-pick{display:flex;flex-direction:column;gap:13px;}
   .seg{display:flex;flex-direction:column;gap:7px;}
   .seg label{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;}
-  select.input,input.input{width:100%;border:1px solid var(--line-strong);background:var(--paper-2);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--ink);}
+  select.input,input.input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--ink);}
   select.input:focus,input.input:focus{outline:none;border-color:var(--brass);}
 
-  .badge-st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:6px;}
-  .badge-st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
-  .st-send_art{color:var(--st-art);background:var(--st-art-bg);}
-  .st-approval_due{color:var(--st-due);background:var(--st-due-bg);}
-  .st-approved{color:var(--st-approved);background:var(--st-approved-bg);}
-  .st-in_process{color:var(--st-process);background:var(--st-process-bg);}
-  .st-invoice{color:var(--st-invoice);background:var(--st-invoice-bg);}
+  .badge-st{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;text-transform:uppercase;font-family:var(--font-display);}
+  .badge-st::before{content:'';width:7px;height:7px;border-radius:50%;background:rgba(0,0,0,.45);}
+  .st-send_art{background:var(--art);color:#1a0f08;}
+  .st-approval_due{background:var(--due);color:#231803;}
+  .st-approved{background:var(--approved);color:#04130a;}
+  .st-in_process{background:var(--process);color:#03101f;}
+  .st-invoice{background:var(--invoice);color:#15071f;}
 
   .totals{padding:4px 0;}
   .totals .t-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13.5px;}
   .totals .t-row .lbl{color:var(--muted);}
   .totals .t-row .amt{font-family:var(--font-mono);font-weight:600;}
-  .totals .t-grand{border-top:2px solid var(--ink);margin-top:6px;padding-top:12px;}
+  .totals .t-grand{border-top:2px solid var(--text);margin-top:6px;padding-top:12px;}
   .totals .t-grand .lbl{font-family:var(--font-display);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:13px;}
   .totals .t-grand .amt{font-family:var(--font-display);font-weight:800;font-size:21px;color:var(--brass);}
 
   .state{padding:60px;text-align:center;color:var(--muted);}
   .pipeline{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
   .pip{flex:1;min-width:60px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:7px 4px;border-radius:5px;background:var(--paper);color:var(--muted-2);border:1px solid var(--line);cursor:pointer;}
-  .pip.on{background:var(--slate-900);color:#fff;border-color:var(--slate-900);}
+  .pip.on{background:linear-gradient(135deg,var(--brass-2),var(--brass));color:#15110a;border-color:var(--brass);}
   .meta-foot{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted-2);padding:12px 18px;border-top:1px solid var(--line);background:var(--paper);}
   .meta-foot b{color:var(--muted);font-weight:600;}
   .save-bar{position:fixed;bottom:0;left:0;right:0;background:var(--paper-2);border-top:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:12px;justify-content:flex-end;z-index:40;box-shadow:0 -2px 10px rgba(20,23,28,.05);}
@@ -148,7 +149,10 @@
             </div>
             <div class="field"><label>Subject</label><div class="val" id="f-subject">—</div></div>
             <div class="field"><label>Client P.O. #</label><div class="val mono" id="f-po">—</div></div>
-            <div class="field"><label>Ship Mode</label><div class="val" id="f-ship">—</div></div>
+            <div class="field-row">
+              <div class="field"><label>Ship Mode</label><div class="val" id="f-ship">—</div></div>
+              <div class="field"><label>Event Date</label><div class="val mono" id="f-event">—</div></div>
+            </div>
           </div>
         </div>
       </div>
@@ -192,6 +196,10 @@
           <div class="seg">
             <label>Pick-up Date</label>
             <input type="date" class="input" id="i-pickup">
+          </div>
+          <div class="seg">
+            <label>Event Date</label>
+            <input type="date" class="input" id="i-event">
           </div>
           <div class="seg">
             <label>Sent to Client</label>
@@ -282,6 +290,7 @@ function render(){
   document.getElementById('f-subject').textContent=ORDER.subject||'—';
   document.getElementById('f-po').textContent=ORDER.po_number||'—';
   document.getElementById('f-ship').textContent={pickup:'Pick-up',courier:'Courier',deliver:'Deliver'}[ORDER.ship_mode]||'—';
+  document.getElementById('f-event').textContent=fmtD(ORDER.event_date);
 
   // status controls
   document.querySelectorAll('.pip').forEach(p=>{
@@ -289,6 +298,7 @@ function render(){
     p.addEventListener('click',()=>{ORDER.art_status=p.dataset.s;document.querySelectorAll('.pip').forEach(x=>x.classList.toggle('on',x.dataset.s===ORDER.art_status));document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;markDirty();});
   });
   const ip=document.getElementById('i-pickup');ip.value=ORDER.pickup_date||'';ip.addEventListener('change',()=>{ORDER.pickup_date=ip.value||null;markDirty();});
+  const ev=document.getElementById('i-event');ev.value=ORDER.event_date||'';ev.addEventListener('change',()=>{ORDER.event_date=ev.value||null;markDirty();});
   const is=document.getElementById('i-sent');is.value=ORDER.sent_status||'not_sent';is.addEventListener('change',()=>{ORDER.sent_status=is.value;markDirty();});
   const ia=document.getElementById('i-active');ia.value=ORDER.active_status||'active';ia.addEventListener('change',()=>{ORDER.active_status=ia.value;markDirty();});
 
@@ -356,7 +366,7 @@ async function save(){
   const c=ORDER._calc||{};
   // 1. update the quote
   const {error:e1}=await db.from('quotes').update({
-    art_status:ORDER.art_status,pickup_date:ORDER.pickup_date,sent_status:ORDER.sent_status,
+    art_status:ORDER.art_status,pickup_date:ORDER.pickup_date,event_date:ORDER.event_date,sent_status:ORDER.sent_status,
     active_status:ORDER.active_status,subtotal:c.subtotal||0,discount_total:c.discount_total||0,
     hst:c.hst||0,grand_total:c.grand_total||0
   }).eq('id',ORDER_ID);
