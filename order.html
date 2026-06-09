@@ -10,7 +10,7 @@
 <style>
   :root{
     --bg:#101319;--bg-2:#15181e;--bg-3:#1c2028;--bg-4:#242a34;--sidebar:#0c0e13;
-    --line:#262c36;--line-2:#323948;--text:#e9ebef;--text-2:#aeb4c0;--text-3:#767d8c;
+    --line:#262c36;--line-2:#323948;--text:#e9ebef;--text-2:#c4cad6;--text-3:#9098a8;
     --brass:#caa75d;--brass-2:#e0c483;--brass-bg:rgba(202,167,93,.14);
     --art:#ff6b35;--due:#ffb627;--approved:#3ddc84;--process:#3da5ff;--invoice:#b06bff;--nodata:#5a6273;--danger:#ff4d4d;
     --radius:11px;--radius-sm:8px;--shadow-sm:0 2px 8px rgba(0,0,0,.4);
@@ -134,24 +134,25 @@
       <div class="card-b">
         <div class="client-block">
           <div>
-            <div class="field"><label>Client</label><div class="val big" id="f-client">—</div></div>
-            <div class="field"><label>Location</label><div class="val" id="f-loc">—</div></div>
-            <div class="field-row">
-              <div class="field"><label>Contact</label><div class="val" id="f-contact">—</div></div>
-              <div class="field"><label>Telephone</label><div class="val mono" id="f-tel">—</div></div>
+            <div class="field"><label>Client</label>
+              <select class="input" id="i-client"></select>
             </div>
-            <div class="field"><label>Email</label><div class="val" id="f-email">—</div></div>
+            <div class="field"><label>Contact</label>
+              <select class="input" id="i-contact"></select>
+            </div>
+            <div class="field"><label>Location</label><div class="val" id="f-loc" style="font-size:13px;color:var(--text-2);">—</div></div>
           </div>
           <div>
             <div class="field-row">
-              <div class="field"><label>Quote Date</label><div class="val mono" id="f-qdate">—</div></div>
-              <div class="field"><label>Serviced By</label><div class="val" id="f-staff">—</div></div>
+              <div class="field"><label>Subject</label><input class="input" id="i-subject" placeholder="e.g. Trophies"></div>
+              <div class="field"><label>Serviced By</label><input class="input" id="i-staff" placeholder="Karan"></div>
             </div>
-            <div class="field"><label>Subject</label><div class="val" id="f-subject">—</div></div>
-            <div class="field"><label>Client P.O. #</label><div class="val mono" id="f-po">—</div></div>
+            <div class="field"><label>Client P.O. #</label><input class="input" id="i-po" placeholder="optional"></div>
             <div class="field-row">
-              <div class="field"><label>Ship Mode</label><div class="val" id="f-ship">—</div></div>
-              <div class="field"><label>Event Date</label><div class="val mono" id="f-event">—</div></div>
+              <div class="field"><label>Quote Date</label><input type="date" class="input" id="i-qdate"></div>
+              <div class="field"><label>Ship Mode</label>
+                <select class="input" id="i-ship"><option value="pickup">Pick-up</option><option value="courier">Courier</option><option value="deliver">Deliver</option></select>
+              </div>
             </div>
           </div>
         </div>
@@ -278,19 +279,13 @@ function render(){
   document.getElementById('t-id').textContent='#'+ORDER.stage_id;
   document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;
 
-  const c=ORDER.clients||{}, ct=ORDER.contacts||{};
-  document.getElementById('f-client').textContent=c.company_name||'—';
-  const loc=[c.bill_address,c.bill_city,c.bill_province,c.bill_postal].filter(Boolean).join(', ');
-  document.getElementById('f-loc').textContent=loc||'—';
-  document.getElementById('f-contact').textContent=((ct.first_name||'')+' '+(ct.last_name||'')).trim()||'—';
-  document.getElementById('f-tel').textContent=ct.tel1||'—';
-  document.getElementById('f-email').textContent=ct.email1||'—';
-  document.getElementById('f-qdate').textContent=fmtD(ORDER.quote_date);
-  document.getElementById('f-staff').textContent=ORDER.serviced_by||'—';
-  document.getElementById('f-subject').textContent=ORDER.subject||'—';
-  document.getElementById('f-po').textContent=ORDER.po_number||'—';
-  document.getElementById('f-ship').textContent={pickup:'Pick-up',courier:'Courier',deliver:'Deliver'}[ORDER.ship_mode]||'—';
-  document.getElementById('f-event').textContent=fmtD(ORDER.event_date);
+  // editable header fields
+  const subj=document.getElementById('i-subject');subj.value=ORDER.subject||'';subj.addEventListener('input',()=>{ORDER.subject=subj.value;markDirty();});
+  const stf=document.getElementById('i-staff');stf.value=ORDER.serviced_by||'';stf.addEventListener('input',()=>{ORDER.serviced_by=stf.value;markDirty();});
+  const po=document.getElementById('i-po');po.value=ORDER.po_number||'';po.addEventListener('input',()=>{ORDER.po_number=po.value;markDirty();});
+  const qd=document.getElementById('i-qdate');qd.value=ORDER.quote_date||'';qd.addEventListener('change',()=>{ORDER.quote_date=qd.value||null;markDirty();});
+  const sh=document.getElementById('i-ship');sh.value=ORDER.ship_mode||'pickup';sh.addEventListener('change',()=>{ORDER.ship_mode=sh.value;markDirty();});
+  populateClients();
 
   // status controls
   document.querySelectorAll('.pip').forEach(p=>{
@@ -314,6 +309,28 @@ function render(){
      <span><b>Record</b> ${esc(ORDER.record_type)}</span>`;
 
   renderLines();
+}
+
+
+let CLIENT_LIST=[];
+async function populateClients(){
+  if(!CLIENT_LIST.length){
+    const {data}=await db.from('clients').select('id,company_name,bill_address,bill_city,bill_province,bill_postal, contacts(id,first_name,last_name,tel1,email1)').order('company_name');
+    CLIENT_LIST=data||[];
+  }
+  const sel=document.getElementById('i-client');
+  sel.innerHTML='<option value="">— Select client —</option>'+CLIENT_LIST.map(c=>`<option value="${c.id}" ${ORDER.client_id===c.id?'selected':''}>${esc(c.company_name)}</option>`).join('');
+  sel.onchange=()=>{ORDER.client_id=sel.value||null;ORDER.contact_id=null;updateClientInfo();markDirty();};
+  updateClientInfo();
+}
+function updateClientInfo(){
+  const c=CLIENT_LIST.find(x=>x.id===ORDER.client_id);
+  const loc=c?[c.bill_address,c.bill_city,c.bill_province,c.bill_postal].filter(Boolean).join(', '):'';
+  document.getElementById('f-loc').textContent=loc||'—';
+  const csel=document.getElementById('i-contact');
+  const cts=c?(c.contacts||[]):[];
+  csel.innerHTML='<option value="">— Select contact —</option>'+cts.map(ct=>`<option value="${ct.id}" ${ORDER.contact_id===ct.id?'selected':''}>${esc(((ct.first_name||'')+' '+(ct.last_name||'')).trim())}</option>`).join('');
+  csel.onchange=()=>{ORDER.contact_id=csel.value||null;markDirty();};
 }
 
 function renderLines(){
@@ -366,6 +383,8 @@ async function save(){
   const c=ORDER._calc||{};
   // 1. update the quote
   const {error:e1}=await db.from('quotes').update({
+    client_id:ORDER.client_id,contact_id:ORDER.contact_id,subject:ORDER.subject,serviced_by:ORDER.serviced_by,
+    po_number:ORDER.po_number,quote_date:ORDER.quote_date,ship_mode:ORDER.ship_mode,
     art_status:ORDER.art_status,pickup_date:ORDER.pickup_date,event_date:ORDER.event_date,sent_status:ORDER.sent_status,
     active_status:ORDER.active_status,subtotal:c.subtotal||0,discount_total:c.discount_total||0,
     hst:c.hst||0,grand_total:c.grand_total||0

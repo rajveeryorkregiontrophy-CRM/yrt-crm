@@ -51,9 +51,9 @@
   .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
   .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;letter-spacing:.01em;color:#fff;line-height:1.12;text-transform:uppercase;}
   .brand .mark .amp{color:var(--brass-2);}
-  .brand .sub{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);margin-top:6px;}
+  .brand .sub{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#aab0c0;margin-top:6px;font-weight:600;}
   .nav{padding:14px 12px;flex:1;overflow-y:auto;}
-  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--text-3);padding:14px 10px 6px;}
+  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:14px 10px 6px;font-weight:700;}
   .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
   .nav a:hover{background:var(--bg-3);color:#fff;}
   .nav a.active{background:linear-gradient(90deg,var(--brass),#b6914a);color:#15110a;font-weight:700;}
@@ -89,7 +89,7 @@
   .kpi .k-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:700;}
   .kpi .k-value{font-family:var(--fd);font-size:32px;font-weight:900;line-height:1.05;margin-top:8px;letter-spacing:-.01em;color:#fff;}
   .kpi .k-value small{font-size:17px;color:var(--text-2);font-weight:600;}
-  .kpi .k-foot{font-size:11.5px;color:var(--text-3);margin-top:3px;}
+  .kpi .k-foot{font-size:11.5px;color:#aab0c0;margin-top:3px;}
 
   .row{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;}
   @media(max-width:1180px){.row{grid-template-columns:1fr;}}
@@ -111,7 +111,7 @@
   tbody tr:last-child td{border-bottom:none;}
   .stage-id{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--brass-2);}
   .client-cell .name{font-weight:700;color:#fff;}
-  .client-cell .sub{font-size:12px;color:var(--text-3);margin-top:1px;}
+  .client-cell .sub{font-size:12.5px;color:#aab0c0;margin-top:2px;font-weight:500;}
   .subject-tag{font-size:12.5px;color:var(--text-2);}
   .money-cell{font-family:var(--fm);font-weight:700;font-size:13.5px;color:#fff;}
 
@@ -127,12 +127,12 @@
   .badge-st::before{background:rgba(0,0,0,.45);box-shadow:none;}
 
   /* dual date cell */
-  .dates{display:flex;flex-direction:column;gap:5px;}
-  .date-line{display:flex;align-items:center;gap:8px;font-size:12.5px;}
-  .date-line .tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;width:38px;color:var(--text-3);font-family:var(--fd);}
+  .dates{display:flex;flex-direction:column;gap:6px;min-width:200px;}
+  .date-line{display:flex;align-items:center;gap:9px;font-size:12.5px;white-space:nowrap;}
+  .date-line .tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;width:40px;color:#9aa2b2;font-family:var(--fd);flex-shrink:0;}
   .date-line .d{font-family:var(--fm);font-weight:600;color:var(--text);}
   .date-line.event .d{color:var(--brass-2);}
-  .dot-days{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:800;font-family:var(--fm);}
+  .dot-days{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:800;font-family:var(--fm);flex-shrink:0;}
   .dot-days.d0{background:var(--danger);color:#fff;box-shadow:0 0 10px rgba(255,77,77,.5);}
   .dot-days.d1{background:var(--art);color:#1a0f08;}
   .dot-days.d2{background:var(--due);color:#231803;}
@@ -188,7 +188,7 @@
       <h1>Sales Inbox</h1>
       <span class="date" id="today"></span>
       <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="search" placeholder="Search orders, clients, ID…"></div>
-      <button class="btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>New Order</button>
+      <button class="btn-primary" id="new-order"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>New Order</button>
     </header>
 
     <div class="content">
@@ -297,7 +297,7 @@ function renderOrders(){
       <td>${datesCell(o.pickup_date,o.event_date)}</td>
       <td class="num money-cell">${money(o.grand_total)}</td>
     </tr>`;}).join('');
-  document.getElementById('orders-wrap').innerHTML=`<table><thead><tr><th>ID</th><th>Client</th><th>Subject</th><th>Stage</th><th>Dates</th><th class="num">Total</th></tr></thead><tbody>${body}</tbody></table>`;
+  document.getElementById('orders-wrap').innerHTML=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:30%;">Client</th><th>Subject</th><th style="width:140px;">Stage</th><th style="width:230px;">Dates</th><th class="num" style="width:110px;">Total</th></tr></thead><tbody>${body}</tbody></table>`;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.id)));
 }
 function renderInq(list){
@@ -311,6 +311,22 @@ function renderInq(list){
 }
 document.getElementById('filters').addEventListener('click',e=>{if(!e.target.classList.contains('chip'))return;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));e.target.classList.add('active');FILTER=e.target.dataset.f;renderOrders();});
 document.getElementById('search').addEventListener('input',renderOrders);
+
+// ---- New Order: create a blank order, then jump into the detail editor ----
+document.getElementById('new-order').addEventListener('click',async()=>{
+  const btn=document.getElementById('new-order');
+  btn.disabled=true;btn.style.opacity=.6;
+  // grab the first client as a default so the order has an owner; user can change later
+  const {data:cl}=await db.from('clients').select('id').order('company_name').limit(1);
+  const payload={record_type:'order',art_status:'send_art',sent_status:'not_sent',active_status:'active',
+    quote_date:new Date().toISOString().slice(0,10),subject:'New order',serviced_by:'',
+    client_id:cl&&cl[0]?cl[0].id:null};
+  const {data,error}=await db.from('quotes').insert(payload).select().single();
+  btn.disabled=false;btn.style.opacity=1;
+  if(error){alert('Could not create order: '+error.message);return;}
+  location.href='order.html?id='+encodeURIComponent(data.id);
+});
+
 load();
 </script>
 </body>
