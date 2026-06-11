@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client — YRT CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;
+    --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
+    --brass:#e7ebf3;--brass-2:#f4f6fb;--star:#ffb627;--approved:#3ddc84;--danger:#ff4d4d;
+    --art:#ff6b35;--due:#ffb627;--process:#3da5ff;--invoice:#b06bff;
+    --radius:11px;--radius-sm:8px;
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
+  .topbar{height:58px;background:var(--bg-2);border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:16px;padding:0 24px;position:sticky;top:0;z-index:30;}
+  .back{display:inline-flex;align-items:center;gap:7px;color:var(--text-2);text-decoration:none;font-weight:700;font-size:13px;padding:7px 11px;border-radius:var(--radius-sm);border:1px solid var(--line-2);background:var(--bg-3);}
+  .back:hover{border-color:var(--brass);color:var(--brass-2);}
+  .title{font-family:var(--fd);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:16px;}
+  .actions{margin-left:auto;display:flex;gap:8px;}
+  .btn{padding:8px 14px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text);}
+  .btn:hover{border-color:var(--brass);}
+  .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;}
+  .btn-brass:hover{filter:brightness(1.08);}
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 24px 70px;}
+  /* hero */
+  .hero{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:22px;margin-bottom:18px;display:flex;gap:22px;align-items:flex-start;}
+  .hero-badge{width:64px;height:64px;border-radius:14px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-family:var(--fd);font-weight:900;font-size:24px;flex-shrink:0;}
+  .hero-main{flex:1;min-width:0;}
+  .hero-name{font-family:var(--fd);font-size:24px;font-weight:800;color:#fff;letter-spacing:-.01em;}
+  .hero-sub{display:flex;gap:16px;flex-wrap:wrap;margin-top:7px;color:var(--text-2);font-size:13px;}
+  .hero-sub .it{display:inline-flex;align-items:center;gap:6px;}
+  .stars{color:var(--star);letter-spacing:1px;}.stars .off{color:var(--line-2);}
+  .blk{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:5px;background:rgba(255,77,77,.18);color:var(--danger);font-family:var(--fd);}
+  /* stat cards */
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:18px;}
+  .stat{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:15px 16px;}
+  .stat .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;}
+  .stat .v{font-family:var(--fd);font-size:22px;font-weight:900;color:#fff;margin-top:6px;}
+  .stat .v small{font-size:13px;color:var(--text-2);}
+  .stat .s{font-size:11px;color:var(--text-3);margin-top:1px;}
+  /* layout */
+  .cols{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start;}
+  @media(max-width:980px){.cols{grid-template-columns:1fr;}.stats{grid-template-columns:repeat(2,1fr);}}
+  .card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);margin-bottom:18px;overflow:hidden;}
+  .card-h{padding:14px 18px;border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:10px;}
+  .card-h h3{font-family:var(--fd);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#aab2c4;}
+  .card-h .count{font-family:var(--fm);font-size:11px;color:var(--text-2);background:var(--bg-4);padding:2px 8px;border-radius:20px;}
+  .card-h .add{margin-left:auto;font-size:12px;padding:5px 11px;border-radius:6px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;}
+  .card-h .add:hover{border-color:var(--brass);color:var(--brass-2);}
+  .card-b{padding:6px 0;}
+  /* contacts */
+  .contact{display:flex;gap:13px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line);}
+  .contact:last-child{border-bottom:none;}
+  .c-av{width:38px;height:38px;border-radius:9px;background:var(--bg-4);color:var(--brass-2);display:grid;place-items:center;font-weight:800;font-family:var(--fd);font-size:14px;flex-shrink:0;}
+  .c-info{flex:1;min-width:0;}
+  .c-name{font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;}
+  .c-prim{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:4px;background:var(--brass-2);color:#15171c;font-family:var(--fd);}
+  .c-desig{font-size:12px;color:var(--text-3);}
+  .c-meta{text-align:right;font-size:12.5px;}
+  .c-meta .tel{font-family:var(--fm);color:var(--text-2);}
+  .c-meta .em{color:var(--text-3);font-size:12px;}
+  /* history tables */
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#aab0c0;font-weight:700;padding:9px 18px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
+  thead th.num{text-align:right;}
+  tbody td{padding:11px 18px;border-bottom:1px solid var(--line);font-size:13px;}
+  tbody tr{cursor:pointer;}tbody tr:hover{background:var(--bg-3);}
+  tbody tr:last-child td{border-bottom:none;}
+  .stage-id{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
+  .money{font-family:var(--fm);font-weight:700;color:#fff;}.num{text-align:right;}
+  .mini-st{font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 8px;border-radius:5px;font-family:var(--fd);}
+  .ms-send_art{background:var(--art);color:#1a0f08;}.ms-approval_due{background:var(--due);color:#231803;}
+  .ms-approved{background:var(--approved);color:#04130a;}.ms-in_process{background:var(--process);color:#03101f;}.ms-invoice{background:var(--invoice);color:#15071f;}
+  .pay-unpaid{background:var(--art);color:#1a0f08;}.pay-partial{background:var(--due);color:#231803;}.pay-paid{background:var(--approved);color:#04130a;}
+  /* sidebar info */
+  .info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .info-row:last-child{border-bottom:none;}
+  .info-row .l{color:var(--text-3);}.info-row .v{font-weight:600;text-align:right;}
+  .info-row .v.mono{font-family:var(--fm);}
+  .notes{font-size:13px;color:var(--text-2);white-space:pre-wrap;line-height:1.5;}
+  .notes.internal{color:var(--text-2);background:rgba(202,167,93,.07);border:1px solid rgba(202,167,93,.2);border-radius:8px;padding:11px;}
+  .state{padding:30px 18px;text-align:center;color:var(--text-3);font-size:13px;}
+  /* drawer (edit) */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:.2s;z-index:50;}
+  .overlay.open{opacity:1;pointer-events:auto;}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:520px;max-width:94vw;background:var(--bg-2);border-left:1px solid var(--line-2);transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1);z-index:60;display:flex;flex-direction:column;}
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{padding:18px 22px;border-bottom:2px solid var(--line-2);display:flex;align-items:center;}
+  .drawer-head h3{font-family:var(--fd);font-size:16px;font-weight:800;text-transform:uppercase;}
+  .drawer-head .x{margin-left:auto;background:var(--bg-4);border:none;color:var(--text-2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;}
+  .drawer-body{padding:22px;overflow-y:auto;flex:1;}
+  .drawer-foot{padding:14px 22px;border-top:2px solid var(--line-2);display:flex;gap:10px;justify-content:flex-end;}
+  .fgroup{margin-bottom:20px;}.fgroup-t{font-family:var(--fd);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--brass-2);margin-bottom:11px;padding-bottom:7px;border-bottom:1px solid var(--line);}
+  .frow{display:flex;gap:12px;margin-bottom:12px;}.frow .field{flex:1;}.field{margin-bottom:12px;}
+  label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;margin-bottom:5px;}
+  input.in,select.in,textarea.in{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--text);}
+  input.in:focus,select.in:focus,textarea.in:focus{outline:none;border-color:var(--brass);}textarea.in{resize:vertical;min-height:60px;}
+  .contact-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;}
+  .add-contact{width:100%;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:var(--radius-sm);color:var(--text-3);font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;}
+  .add-contact:hover{border-color:var(--brass);color:var(--brass-2);}
+  .msg{margin-right:auto;font-size:13px;color:var(--text-3);align-self:center;}.msg.ok{color:var(--approved);}.msg.err{color:var(--danger);}
+  .btn-del-c{margin-left:auto;padding:5px 11px;font-size:12px;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="clients.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Clients</a>
+  <div class="title" id="t-title">Client</div>
+  <div class="actions"><button class="btn" id="btn-new-order">+ New Order</button><button class="btn-brass btn" id="btn-edit">Edit Client</button></div>
+</header>
+<div class="wrap" id="wrap"><div class="state">Loading client…</div></div>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head"><h3>Edit Client</h3><button class="x" id="d-close">×</button></div>
+  <div class="drawer-body" id="d-body"></div>
+  <div class="drawer-foot"><span class="msg" id="d-msg"></span><button class="btn" id="d-cancel">Cancel</button><button class="btn-brass btn" id="d-save">Save</button></div>
+</aside>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const db=createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
+const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Prince Edward Island','Quebec','Saskatchewan'];
+const ST_LABEL={send_art:'Send Art',approval_due:'Approval',approved:'Approved',in_process:'Process',invoice:'Invoice',no_data:'—'};
+const CID=new URLSearchParams(location.search).get('id');
+let CLIENT=null,CONTACTS=[],ORDERS=[],INVOICES=[],EDIT_CONTACTS=[];
+
+function stars(n){n=n||0;let s='';for(let i=1;i<=5;i++)s+=`<span class="${i<=n?'':'off'}">★</span>`;return `<span class="stars">${s}</span>`;}
+function initials(name){return (name||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+
+async function load(){
+  if(!CID){document.getElementById('wrap').innerHTML='<div class="state">No client specified.</div>';return;}
+  const {data,error}=await db.from('clients').select('*, contacts(*)').eq('id',CID).single();
+  if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load client. ${error?.message||''}</div>`;return;}
+  CLIENT=data;CONTACTS=(data.contacts||[]).sort((a,b)=>(b.is_primary?1:0)-(a.is_primary?1:0));
+  // orders + quotes for this client
+  const {data:ord}=await db.from('quotes').select('*').eq('client_id',CID).order('quote_date',{ascending:false});
+  ORDERS=ord||[];
+  const {data:inv}=await db.from('invoices').select('*').eq('client_id',CID).order('invoice_date',{ascending:false});
+  INVOICES=inv||[];
+  render();
+}
+
+function render(){
+  document.getElementById('t-title').textContent=CLIENT.company_name;
+  // compute stats
+  const realOrders=ORDERS.filter(o=>o.record_type==='order');
+  const totalSpend=INVOICES.reduce((s,i)=>s+Number(i.grand_total||0),0);
+  const balance=INVOICES.reduce((s,i)=>s+Number(i.balance_due||0),0);
+  const orderVals=realOrders.map(o=>Number(o.grand_total||0)).filter(v=>v>0);
+  const avgOrder=orderVals.length?orderVals.reduce((a,b)=>a+b,0)/orderVals.length:0;
+  const maxOrder=orderVals.length?Math.max(...orderVals):0;
+  const dates=ORDERS.map(o=>o.quote_date).filter(Boolean).sort();
+  const firstDate=CLIENT.client_since||dates[0];
+  const lastDate=CLIENT.last_transaction||dates[dates.length-1];
+  const loc=[CLIENT.bill_unit,CLIENT.bill_address,CLIENT.bill_city,CLIENT.bill_province,CLIENT.bill_postal].filter(Boolean).join(', ');
+
+  document.getElementById('wrap').innerHTML=`
+    <div class="hero">
+      <div class="hero-badge">${esc(initials(CLIENT.company_name))}</div>
+      <div class="hero-main">
+        <div class="hero-name">${esc(CLIENT.company_name)} ${CLIENT.blacklisted?'<span class="blk">Blacklisted</span>':''}</div>
+        <div class="hero-sub">
+          <span class="it">${stars(CLIENT.rating)}</span>
+          ${loc?`<span class="it">📍 ${esc(loc)}</span>`:''}
+          ${CLIENT.serviced_by?`<span class="it">Serviced by ${esc(CLIENT.serviced_by)}</span>`:''}
+          <span class="it">${CLIENT.terms_days?CLIENT.terms_days+' day terms':'Prepaid'}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="l">Total Orders</div><div class="v">${realOrders.length}</div><div class="s">all-time</div></div>
+      <div class="stat"><div class="l">Total Spend</div><div class="v"><small>$</small>${Math.round(totalSpend).toLocaleString('en-CA')}</div><div class="s">invoiced</div></div>
+      <div class="stat"><div class="l">Balance Due</div><div class="v" style="color:${balance>0?'var(--art)':'var(--approved)'}"><small>$</small>${Math.round(balance).toLocaleString('en-CA')}</div><div class="s">${balance>0?'owing':'clear'}</div></div>
+      <div class="stat"><div class="l">Avg Order</div><div class="v"><small>$</small>${Math.round(avgOrder).toLocaleString('en-CA')}</div><div class="s">max ${money(maxOrder)}</div></div>
+      <div class="stat"><div class="l">Contacts</div><div class="v">${CONTACTS.length}</div><div class="s">people</div></div>
+    </div>
+
+    <div class="cols">
+      <div>
+        <div class="card">
+          <div class="card-h"><h3>Contacts</h3><span class="count">${CONTACTS.length}</span></div>
+          <div class="card-b">${CONTACTS.length?CONTACTS.map(c=>{
+            const nm=((c.first_name||'')+' '+(c.last_name||'')).trim()||'—';
+            return `<div class="contact">
+              <div class="c-av">${esc(initials(nm))}</div>
+              <div class="c-info"><div class="c-name">${esc(nm)} ${c.is_primary?'<span class="c-prim">Primary</span>':''}</div><div class="c-desig">${esc(c.designation||'')}</div></div>
+              <div class="c-meta"><div class="tel">${esc(c.tel1||'—')}</div><div class="em">${esc(c.email1||'')}</div></div>
+            </div>`;}).join(''):'<div class="state">No contacts. Click “Edit Client” to add people.</div>'}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h3>Order &amp; Quote History</h3><span class="count">${ORDERS.length}</span></div>
+          ${ORDERS.length?`<table><thead><tr><th>ID</th><th>Subject</th><th>Date</th><th>Stage</th><th class="num">Total</th></tr></thead><tbody>${ORDERS.map(o=>`
+            <tr data-order="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td>${esc(o.subject||'—')}</td><td>${fmtD(o.quote_date)}</td><td><span class="mini-st ms-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td class="num"><span class="money">${money(o.grand_total)}</span></td></tr>`).join('')}</tbody></table>`:'<div class="state">No orders or quotes yet.</div>'}
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h3>Invoices</h3><span class="count">${INVOICES.length}</span></div>
+          ${INVOICES.length?`<table><thead><tr><th>Invoice</th><th>Date</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>${INVOICES.map(i=>`
+            <tr data-inv="${i.id}"><td><span class="stage-id">#${i.invoice_number||'—'}</span></td><td>${fmtD(i.invoice_date)}</td><td class="num"><span class="money">${money(i.grand_total)}</span></td><td class="num" style="color:${i.balance_due>0?'var(--art)':'var(--approved)'};font-family:var(--fm);font-weight:700;">${money(i.balance_due)}</td><td><span class="mini-st pay-${i.paid_status}">${i.paid_status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="state">No invoices yet.</div>'}
+        </div>
+      </div>
+
+      <div>
+        <div class="card"><div class="card-h"><h3>Account</h3></div><div class="card-b" style="padding:6px 18px;">
+          <div class="info-row"><span class="l">Client Since</span><span class="v mono">${fmtD(firstDate)}</span></div>
+          <div class="info-row"><span class="l">Last Transaction</span><span class="v mono">${fmtD(lastDate)}</span></div>
+          <div class="info-row"><span class="l">Payment Terms</span><span class="v">${CLIENT.terms_days?CLIENT.terms_days+' days':'Prepaid'}</span></div>
+          <div class="info-row"><span class="l">Shipment</span><span class="v">${{pickup:'Pick-up',courier:'Courier',deliver:'Deliver'}[CLIENT.shipment_mode]||'—'}</span></div>
+          <div class="info-row"><span class="l">Contact Cycle</span><span class="v">${CLIENT.contact_cycle_months?CLIENT.contact_cycle_months+' months':'—'}</span></div>
+          <div class="info-row"><span class="l">Referred By</span><span class="v">${esc(CLIENT.referred_by||'—')}</span></div>
+          <div class="info-row"><span class="l">Rating</span><span class="v">${stars(CLIENT.rating)}</span></div>
+        </div></div>
+
+        ${CLIENT.notes?`<div class="card"><div class="card-h"><h3>Notes</h3></div><div class="card-b" style="padding:16px 18px;"><div class="notes">${esc(CLIENT.notes)}</div></div></div>`:''}
+        ${CLIENT.internal_notes?`<div class="card"><div class="card-h"><h3>Internal Notes</h3></div><div class="card-b" style="padding:16px 18px;"><div class="notes internal">${esc(CLIENT.internal_notes)}</div></div></div>`:''}
+      </div>
+    </div>`;
+
+  document.querySelectorAll('tr[data-order]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.order)));
+  document.querySelectorAll('tr[data-inv]').forEach(tr=>tr.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(tr.dataset.inv)));
+}
+
+// ---- Edit drawer ----
+function openD(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
+function closeD(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.getElementById('d-msg').textContent='';}
+function editForm(){
+  const c=CLIENT;EDIT_CONTACTS=CONTACTS.map(x=>({...x}));if(!EDIT_CONTACTS.length)EDIT_CONTACTS=[{first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:true}];
+  const provOpts=PROV.map(p=>`<option ${c.bill_province===p?'selected':''}>${p}</option>`).join('');
+  document.getElementById('d-body').innerHTML=`
+    <div class="fgroup"><div class="fgroup-t">Company</div>
+      <div class="field"><label>Company Name *</label><input class="in" id="company_name" value="${esc(c.company_name||'')}"></div>
+      <div class="frow"><div class="field"><label>Rating</label><select class="in" id="rating">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${(c.rating||0)===n?'selected':''}>${n===0?'Unrated':n+' ★'}</option>`).join('')}</select></div>
+        <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
+        <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
+      <div class="frow"><div class="field"><label>Shipment</label><select class="in" id="shipment_mode"><option value="pickup" ${c.shipment_mode==='pickup'?'selected':''}>Pick-up</option><option value="courier" ${c.shipment_mode==='courier'?'selected':''}>Courier</option><option value="deliver" ${c.shipment_mode==='deliver'?'selected':''}>Deliver</option></select></div>
+        <div class="field"><label>Contact Cycle (months)</label><input class="in" id="contact_cycle_months" type="number" value="${c.contact_cycle_months||''}"></div>
+        <div class="field"><label>Referred By</label><input class="in" id="referred_by" value="${esc(c.referred_by||'')}"></div></div>
+      <div class="frow"><div class="field"><label>Client Since</label><input class="in" id="client_since" type="date" value="${c.client_since||''}"></div>
+        <div class="field"><label>Blacklisted</label><select class="in" id="blacklisted"><option value="false" ${!c.blacklisted?'selected':''}>No</option><option value="true" ${c.blacklisted?'selected':''}>Yes</option></select></div></div>
+    </div>
+    <div class="fgroup"><div class="fgroup-t">Billing Address</div>
+      <div class="frow"><div class="field" style="max-width:90px;"><label>Unit</label><input class="in" id="bill_unit" value="${esc(c.bill_unit||'')}"></div>
+        <div class="field"><label>Address</label><input class="in" id="bill_address" value="${esc(c.bill_address||'')}"></div></div>
+      <div class="frow"><div class="field"><label>City</label><input class="in" id="bill_city" value="${esc(c.bill_city||'')}"></div>
+        <div class="field" style="max-width:120px;"><label>Postal</label><input class="in" id="bill_postal" value="${esc(c.bill_postal||'')}"></div></div>
+      <div class="field"><label>Province</label><select class="in" id="bill_province">${provOpts}</select></div>
+    </div>
+    <div class="fgroup"><div class="fgroup-t">Contacts</div><div id="ec-list"></div><button class="add-contact" id="ec-add">+ Add contact</button></div>
+    <div class="fgroup"><div class="fgroup-t">Notes</div>
+      <div class="field"><label>General Notes</label><textarea class="in" id="notes">${esc(c.notes||'')}</textarea></div>
+      <div class="field"><label>Internal Notes</label><textarea class="in" id="internal_notes">${esc(c.internal_notes||'')}</textarea></div>
+    </div>`;
+  drawEditContacts();
+  document.getElementById('ec-add').addEventListener('click',()=>{EDIT_CONTACTS.push({first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:EDIT_CONTACTS.length===0});drawEditContacts();});
+}
+function drawEditContacts(){
+  document.getElementById('ec-list').innerHTML=EDIT_CONTACTS.map((ct,i)=>`
+    <div class="contact-card">
+      <div class="frow"><div class="field"><label>First</label><input class="in ec" data-i="${i}" data-k="first_name" value="${esc(ct.first_name||'')}"></div>
+        <div class="field"><label>Last</label><input class="in ec" data-i="${i}" data-k="last_name" value="${esc(ct.last_name||'')}"></div></div>
+      <div class="frow"><div class="field"><label>Designation</label><input class="in ec" data-i="${i}" data-k="designation" value="${esc(ct.designation||'')}"></div>
+        <div class="field"><label>Telephone</label><input class="in ec" data-i="${i}" data-k="tel1" value="${esc(ct.tel1||'')}"></div></div>
+      <div class="field"><label>Email</label><input class="in ec" data-i="${i}" data-k="email1" value="${esc(ct.email1||'')}"></div>
+      <div class="frow" style="align-items:center;margin-bottom:0;"><label style="margin:0;display:flex;gap:7px;align-items:center;cursor:pointer;color:var(--text-2);text-transform:none;letter-spacing:0;font-size:12.5px;"><input type="radio" name="eprimary" ${ct.is_primary?'checked':''} data-prim="${i}"> Primary</label>
+        ${EDIT_CONTACTS.length>1?`<button class="btn btn-del-c" data-del="${i}">Remove</button>`:''}</div>
+    </div>`).join('');
+  document.querySelectorAll('.ec').forEach(inp=>inp.addEventListener('input',()=>{EDIT_CONTACTS[+inp.dataset.i][inp.dataset.k]=inp.value;}));
+  document.querySelectorAll('[data-prim]').forEach(r=>r.addEventListener('change',()=>{EDIT_CONTACTS.forEach((c,i)=>c.is_primary=(i===+r.dataset.prim));}));
+  document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{EDIT_CONTACTS.splice(+b.dataset.del,1);if(!EDIT_CONTACTS.some(c=>c.is_primary)&&EDIT_CONTACTS.length)EDIT_CONTACTS[0].is_primary=true;drawEditContacts();}));
+}
+async function save(){
+  const msg=document.getElementById('d-msg');const name=document.getElementById('company_name').value.trim();
+  if(!name){msg.textContent='Company name required';msg.className='msg err';return;}
+  msg.textContent='Saving…';msg.className='msg';
+  const payload={company_name:name,rating:+document.getElementById('rating').value||null,terms_days:+document.getElementById('terms_days').value||0,
+    serviced_by:document.getElementById('serviced_by').value||null,shipment_mode:document.getElementById('shipment_mode').value,
+    contact_cycle_months:+document.getElementById('contact_cycle_months').value||null,referred_by:document.getElementById('referred_by').value||null,
+    client_since:document.getElementById('client_since').value||null,blacklisted:document.getElementById('blacklisted').value==='true',
+    bill_unit:document.getElementById('bill_unit').value||null,bill_address:document.getElementById('bill_address').value||null,
+    bill_city:document.getElementById('bill_city').value||null,bill_postal:document.getElementById('bill_postal').value||null,
+    bill_province:document.getElementById('bill_province').value||null,notes:document.getElementById('notes').value||null,internal_notes:document.getElementById('internal_notes').value||null};
+  const {error}=await db.from('clients').update(payload).eq('id',CID);
+  if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
+  await db.from('contacts').delete().eq('client_id',CID);
+  const valid=EDIT_CONTACTS.filter(c=>(c.first_name||c.last_name||c.tel1||c.email1));
+  if(valid.length){const rows=valid.map(c=>({client_id:CID,first_name:c.first_name||null,last_name:c.last_name||null,designation:c.designation||null,tel1:c.tel1||null,email1:c.email1||null,is_primary:!!c.is_primary}));
+    const {error:e2}=await db.from('contacts').insert(rows);if(e2){msg.textContent='Contacts error: '+e2.message;msg.className='msg err';return;}}
+  msg.textContent='Saved ✓';msg.className='msg ok';await load();setTimeout(closeD,500);
+}
+document.getElementById('btn-edit').addEventListener('click',()=>{editForm();openD();});
+document.getElementById('d-close').addEventListener('click',closeD);
+document.getElementById('d-cancel').addEventListener('click',closeD);
+document.getElementById('overlay').addEventListener('click',closeD);
+document.getElementById('d-save').addEventListener('click',save);
+document.getElementById('btn-new-order').addEventListener('click',async()=>{
+  const {data,error}=await db.from('quotes').insert({record_type:'order',art_status:'send_art',sent_status:'not_sent',active_status:'active',quote_date:new Date().toISOString().slice(0,10),subject:'New order',client_id:CID}).select().single();
+  if(error){alert('Could not create order: '+error.message);return;}
+  location.href='order.html?id='+encodeURIComponent(data.id);
+});
+load();
+</script>
+</body>
+</html>
