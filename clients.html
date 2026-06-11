@@ -164,8 +164,9 @@ function render(){
   const q=(document.getElementById('search').value||'').toLowerCase();
   let rows=CLIENTS.filter(c=>{
     if(!q)return true;
-    const prim=(c.contacts||[]).find(x=>x.is_primary)||(c.contacts||[])[0]||{};
-    const hay=((c.company_name||'')+' '+(c.bill_city||'')+' '+(prim.first_name||'')+' '+(prim.last_name||'')).toLowerCase();
+    // search company + city + EVERY contact (name, designation, phone, email)
+    const contactText=(c.contacts||[]).map(ct=>[ct.first_name,ct.last_name,ct.designation,ct.tel1,ct.tel2,ct.email1,ct.email2].filter(Boolean).join(' ')).join(' ');
+    const hay=((c.company_name||'')+' '+(c.bill_city||'')+' '+(c.bill_province||'')+' '+contactText).toLowerCase();
     return hay.includes(q);
   });
   document.getElementById('count').textContent=rows.length+(rows.length===1?' client':' clients');
