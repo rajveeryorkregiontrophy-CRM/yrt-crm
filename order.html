@@ -257,7 +257,6 @@
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { generateDocument } from './pdf.js';
 const db = createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
 
 const HST_RATE = 0.13;
@@ -441,7 +440,10 @@ async function save(){
   DIRTY=false;msg.textContent='Saved ✓';msg.className='status-msg saved';
 }
 
-function printQuotation(){
+async function printQuotation(){
+  let generateDocument;
+  try{ ({generateDocument}=await import('./pdf.js')); }
+  catch(err){ alert('Could not load the PDF generator (pdf.js). Make sure pdf.js is deployed alongside order.html.'); return; }
   const c=ORDER.clients||{}; const ct=ORDER.contacts||{};
   const lines=[c.bill_address,c.bill_city,c.bill_postal,c.bill_province].filter(Boolean);
   const calc=ORDER._calc||{subtotal:ORDER.subtotal,hst:ORDER.hst,grandTotal:ORDER.grand_total};
