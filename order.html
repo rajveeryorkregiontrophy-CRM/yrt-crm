@@ -9,9 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#101319;--bg-2:#15181e;--bg-3:#1c2028;--bg-4:#242a34;--sidebar:#0c0e13;
-    --line:#262c36;--line-2:#323948;--text:#e9ebef;--text-2:#c4cad6;--text-3:#9098a8;
-    --brass:#caa75d;--brass-2:#e0c483;--brass-bg:rgba(202,167,93,.14);
+    --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
+    --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
+    --brass:#e7ebf3;--brass-2:#f4f6fb;--brass-bg:rgba(231,235,243,.10);
     --art:#ff6b35;--due:#ffb627;--approved:#3ddc84;--process:#3da5ff;--invoice:#b06bff;--nodata:#5a6273;--danger:#ff4d4d;
     --radius:11px;--radius-sm:8px;--shadow-sm:0 2px 8px rgba(0,0,0,.4);
     --font-display:'Archivo',system-ui,sans-serif;--font-body:'Inter',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace;
@@ -22,18 +22,18 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
 
-  .topbar{height:58px;background:var(--paper-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 24px;position:sticky;top:0;z-index:30;}
+  .topbar{height:58px;background:var(--paper-2);border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:16px;padding:0 24px;position:sticky;top:0;z-index:30;}
   .back{display:inline-flex;align-items:center;gap:7px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;padding:7px 11px;border-radius:var(--radius-sm);border:1px solid var(--line-strong);background:var(--paper-2);}
-  .back:hover{border-color:var(--brass);color:var(--brass);}
+  .back:hover{border-color:var(--brass);color:var(--brass-2);}
   .topbar .title{font-family:var(--font-display);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:16px;}
-  .topbar .title .id{color:var(--brass);}
+  .topbar .title .id{color:var(--brass-2);}
   .topbar .actions{margin-left:auto;display:flex;gap:8px;}
   .btn{padding:8px 14px;border-radius:var(--radius-sm);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--line-strong);background:var(--paper-2);color:var(--ink);display:inline-flex;align-items:center;gap:7px;}
-  .btn:hover{border-color:var(--brass);}
-  .btn-dark{background:var(--slate-900);color:#fff;border-color:var(--slate-900);}
-  .btn-dark:hover{background:var(--slate-700);}
-  .btn-brass{background:var(--brass);color:#fff;border-color:var(--brass);}
-  .btn-brass:hover{background:#876a35;}
+  .btn:hover{border-color:var(--brass-2);}
+  .btn-dark{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
+  .btn-dark:hover{filter:brightness(1.04);}
+  .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
+  .btn-brass:hover{background:#c3cad8;}
 
   .wrap{max-width:1280px;margin:0 auto;padding:22px 24px 80px;}
   .grid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start;}
@@ -41,7 +41,7 @@
 
   .card{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:18px;overflow:hidden;}
   .card-h{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
-  .card-h h3{font-family:var(--font-display);font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--brass-2);}
+  .card-h h3{font-family:var(--font-display);font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#aab2c4;}
   .card-b{padding:18px;}
 
   /* client header block */
@@ -69,14 +69,14 @@
   .li-del{border:none;background:transparent;color:var(--muted-2);cursor:pointer;padding:5px;border-radius:5px;font-size:15px;line-height:1;}
   .li-del:hover{background:var(--st-art-bg);color:var(--danger);}
   .add-line{margin:12px 18px 4px;padding:9px;width:calc(100% - 36px);border:1px dashed var(--line-strong);background:transparent;border-radius:var(--radius-sm);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
-  .add-line:hover{border-color:var(--brass);color:var(--brass);}
+  .add-line:hover{border-color:var(--brass);color:var(--brass-2);}
 
   /* totals sidebar */
   .status-pick{display:flex;flex-direction:column;gap:13px;}
   .seg{display:flex;flex-direction:column;gap:7px;}
   .seg label{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;}
   select.input,input.input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--ink);}
-  select.input:focus,input.input:focus{outline:none;border-color:var(--brass);}
+  select.input:focus,input.input:focus{outline:none;border-color:var(--brass-2);}
 
   .badge-st{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;text-transform:uppercase;font-family:var(--font-display);}
   .badge-st::before{content:'';width:7px;height:7px;border-radius:50%;background:rgba(0,0,0,.45);}
@@ -92,12 +92,16 @@
   .totals .t-row .amt{font-family:var(--font-mono);font-weight:600;}
   .totals .t-grand{border-top:2px solid var(--text);margin-top:6px;padding-top:12px;}
   .totals .t-grand .lbl{font-family:var(--font-display);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:13px;}
-  .totals .t-grand .amt{font-family:var(--font-display);font-weight:800;font-size:21px;color:var(--brass);}
+  .totals .t-grand .amt{font-family:var(--font-display);font-weight:800;font-size:21px;color:var(--brass-2);}
 
   .state{padding:60px;text-align:center;color:var(--muted);}
   .pipeline{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
   .pip{flex:1;min-width:60px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:7px 4px;border-radius:5px;background:var(--paper);color:var(--muted-2);border:1px solid var(--line);cursor:pointer;}
-  .pip.on{background:linear-gradient(135deg,var(--brass-2),var(--brass));color:#15110a;border-color:var(--brass);}
+  .rtype{display:flex;gap:5px;}
+  .rt{flex:1;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 4px;border-radius:6px;background:var(--paper);color:var(--muted-2);border:1px solid var(--line-strong);cursor:pointer;font-family:var(--fd);}
+  .rt:hover{border-color:var(--brass);color:var(--text);}
+  .rt.on{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}
+  .pip.on{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:var(--brass-2);}
   .meta-foot{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted-2);padding:12px 18px;border-top:1px solid var(--line);background:var(--paper);}
   .meta-foot b{color:var(--muted);font-weight:600;}
   .save-bar{position:fixed;bottom:0;left:0;right:0;background:var(--paper-2);border-top:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:12px;justify-content:flex-end;z-index:40;box-shadow:0 -2px 10px rgba(20,23,28,.05);}
@@ -185,6 +189,14 @@
       <div class="card-b">
         <div class="status-pick">
           <div class="seg">
+            <label>Record Type</label>
+            <div class="rtype" id="rtype">
+              <button class="rt" data-r="inquiry">Inquiry</button>
+              <button class="rt" data-r="quote">Quotation</button>
+              <button class="rt" data-r="order">Sales Order</button>
+            </div>
+          </div>
+          <div class="seg" id="stage-seg">
             <label>Production Stage</label>
             <div class="pipeline" id="pipeline">
               <div class="pip" data-s="send_art">Send Art</div>
@@ -245,6 +257,7 @@
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { generateDocument } from './pdf.js';
 const db = createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
 
 const HST_RATE = 0.13;
@@ -271,6 +284,20 @@ async function load(){
   render();
 }
 
+function applyRecordType(){
+  const T={inquiry:'Inquiry',quote:'Quotation',order:'Sales Order'};
+  document.querySelector('.topbar .title').childNodes[0].nodeValue=(T[ORDER.record_type]||'Record')+' ';
+  // stage pipeline only relevant for sales orders
+  const stageSeg=document.getElementById('stage-seg');
+  if(stageSeg)stageSeg.style.display=ORDER.record_type==='order'?'':'none';
+  // Print Quotation: allowed on quote + order, NOT inquiry
+  const bq=document.getElementById('btn-quote');
+  if(bq)bq.style.display=ORDER.record_type==='inquiry'?'none':'';
+  // Convert to Invoice only really makes sense on an order
+  const bi=document.getElementById('btn-invoice');
+  if(bi)bi.style.display=ORDER.record_type==='order'?'':'none';
+}
+
 function render(){
   const wrap=document.getElementById('wrap');
   wrap.innerHTML='';
@@ -278,6 +305,17 @@ function render(){
 
   document.getElementById('t-id').textContent='#'+ORDER.stage_id;
   document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;
+  applyRecordType();
+
+  // record type switcher
+  document.querySelectorAll('.rt').forEach(b=>{
+    b.classList.toggle('on',b.dataset.r===ORDER.record_type);
+    b.addEventListener('click',()=>{
+      ORDER.record_type=b.dataset.r;
+      document.querySelectorAll('.rt').forEach(x=>x.classList.toggle('on',x.dataset.r===ORDER.record_type));
+      applyRecordType();markDirty();
+    });
+  });
 
   // editable header fields
   const subj=document.getElementById('i-subject');subj.value=ORDER.subject||'';subj.addEventListener('input',()=>{ORDER.subject=subj.value;markDirty();});
@@ -299,8 +337,8 @@ function render(){
 
   document.getElementById('add-line').addEventListener('click',addLine);
   document.getElementById('btn-save').addEventListener('click',save);
-  document.getElementById('btn-quote').addEventListener('click',()=>alert('Quotation PDF generation is the next build — it will reproduce your YRT letterhead exactly.'));
-  document.getElementById('btn-invoice').addEventListener('click',()=>alert('Convert to Invoice will be wired in Phase C alongside the Invoices screen.'));
+  document.getElementById('btn-quote').addEventListener('click',printQuotation);
+  document.getElementById('btn-invoice').addEventListener('click',convertToInvoice);
 
   // meta footer
   document.getElementById('meta').innerHTML=
@@ -383,7 +421,7 @@ async function save(){
   const c=ORDER._calc||{};
   // 1. update the quote
   const {error:e1}=await db.from('quotes').update({
-    client_id:ORDER.client_id,contact_id:ORDER.contact_id,subject:ORDER.subject,serviced_by:ORDER.serviced_by,
+    client_id:ORDER.client_id,contact_id:ORDER.contact_id,subject:ORDER.subject,serviced_by:ORDER.serviced_by,record_type:ORDER.record_type,
     po_number:ORDER.po_number,quote_date:ORDER.quote_date,ship_mode:ORDER.ship_mode,
     art_status:ORDER.art_status,pickup_date:ORDER.pickup_date,event_date:ORDER.event_date,sent_status:ORDER.sent_status,
     active_status:ORDER.active_status,subtotal:c.subtotal||0,discount_total:c.discount_total||0,
@@ -401,6 +439,41 @@ async function save(){
     if(e2){msg.textContent='Lines error: '+e2.message;msg.className='status-msg err';return;}
   }
   DIRTY=false;msg.textContent='Saved ✓';msg.className='status-msg saved';
+}
+
+function printQuotation(){
+  const c=ORDER.clients||{}; const ct=ORDER.contacts||{};
+  const lines=[c.bill_address,c.bill_city,c.bill_postal,c.bill_province].filter(Boolean);
+  const calc=ORDER._calc||{subtotal:ORDER.subtotal,hst:ORDER.hst,grandTotal:ORDER.grand_total};
+  generateDocument('QUOTATION',{
+    number:String(ORDER.stage_id), date:ORDER.quote_date, servicedBy:ORDER.serviced_by||'',
+    clientContact:((ct.first_name||'')+' '+(ct.last_name||'')).trim(), pageNo:1,
+    client:{company:c.company_name||'', lines, tel:ct.tel1||'', email:ct.email1||''},
+    items:LINES.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.net_amount})),
+    subtotal:calc.subtotal||0, hst:calc.hst||0, grandTotal:calc.grand_total||calc.grandTotal||0
+  });
+}
+
+async function convertToInvoice(){
+  if(DIRTY){ if(!confirm('You have unsaved changes. Save first, then convert?')) return; await save(); }
+  if(!confirm('Create an invoice from this order?')) return;
+  const c=ORDER._calc||{subtotal:ORDER.subtotal,discount_total:ORDER.discount_total,hst:ORDER.hst,grand_total:ORDER.grand_total};
+  // get next invoice number
+  const {data:seq,error:se}=await db.rpc('nextval_invoice');
+  let invNum=null;
+  // fallback: compute max+1 if rpc not present
+  if(se||seq==null){ const {data:mx}=await db.from('invoices').select('invoice_number').order('invoice_number',{ascending:false}).limit(1); invNum=(mx&&mx[0]&&mx[0].invoice_number?mx[0].invoice_number:20000)+1; }
+  else invNum=seq;
+  const {data:inv,error}=await db.from('invoices').insert({
+    invoice_number:invNum, quote_id:ORDER_ID, client_id:ORDER.client_id, subject:ORDER.subject,
+    serviced_by:ORDER.serviced_by, invoice_date:new Date().toISOString().slice(0,10),
+    subtotal:c.subtotal||0, discount_total:c.discount_total||0, hst:c.hst||0, grand_total:c.grand_total||0,
+    balance_due:c.grand_total||0, paid_status:'unpaid'
+  }).select().single();
+  if(error){alert('Could not create invoice: '+error.message);return;}
+  // mark the order as invoiced stage
+  await db.from('quotes').update({art_status:'invoice'}).eq('id',ORDER_ID);
+  location.href='invoice.html?id='+encodeURIComponent(inv.id);
 }
 
 function label(s){return {send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice',no_data:'No Data'}[s]||s;}
