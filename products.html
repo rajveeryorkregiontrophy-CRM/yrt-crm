@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Products — YRT CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
+    --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
+    --brass:#e7ebf3;--brass-2:#f4f6fb;--approved:#3ddc84;--danger:#ff4d4d;
+    --radius:11px;--radius-sm:8px;
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+  .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
+  .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
+  .brand .mark .amp{color:var(--text);}
+  .brand .sub{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#aab0c0;margin-top:6px;font-weight:600;}
+  .nav{padding:14px 12px;flex:1;overflow-y:auto;}
+  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:14px 10px 6px;font-weight:700;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
+  .nav a:hover{background:var(--bg-3);color:#fff;}
+  .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
+  .nav a .ico{width:17px;height:17px;flex-shrink:0;}
+  .nav a .badge{margin-left:auto;background:var(--bg-4);color:var(--text);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;font-family:var(--fm);}
+  .nav a.active .badge{background:rgba(0,0,0,.25);color:#15171c;}
+  .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-weight:900;font-size:10px;}
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;position:sticky;top:0;z-index:20;}
+  .topbar h1{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
+  .search{margin-left:auto;position:relative;width:280px;}
+  .search input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 12px 9px 34px;font-size:13px;font-family:inherit;color:var(--text);}
+  .search input:focus{outline:none;border-color:var(--brass);}.search input::placeholder{color:var(--text-3);}
+  .search svg{position:absolute;left:11px;top:10px;width:15px;height:15px;color:var(--text-3);}
+  .btn-primary{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;padding:10px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .content{padding:24px 26px 70px;max-width:1560px;width:100%;}
+  .cat-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .cat-chip{font-size:12px;padding:7px 13px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
+  .cat-chip:hover{border-color:var(--text-3);color:var(--text);}
+  .cat-chip.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
+  .cat-chip .n{font-family:var(--fm);font-size:10.5px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.06);}
+  .cat-chip.active .n{background:rgba(0,0,0,.15);}
+  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
+  .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
+  .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
+  .panel-head .count{font-family:var(--fd);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);background:transparent;border:1px solid var(--line-2);padding:3px 9px;border-radius:5px;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;padding:11px 16px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
+  thead th.num{text-align:right;}
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr{cursor:pointer;transition:background .1s;}tbody tr:hover{background:var(--bg-3);}
+  tbody tr:last-child td{border-bottom:none;}
+  .cat-code{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
+  .cat-name{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:var(--text-2);}
+  .cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .p-name{font-weight:700;color:#fff;}
+  .p-desc{font-size:12px;color:#aab0c0;margin-top:1px;max-width:480px;}
+  .p-style{font-family:var(--fm);font-size:12px;color:var(--text-2);}
+  .p-price{font-family:var(--fm);font-weight:700;color:#fff;font-size:14px;}
+  /* drawer */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:.2s;z-index:50;}
+  .overlay.open{opacity:1;pointer-events:auto;}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:480px;max-width:94vw;background:var(--bg-2);border-left:1px solid var(--line-2);transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1);z-index:60;display:flex;flex-direction:column;}
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{padding:18px 22px;border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:12px;}
+  .drawer-head h3{font-family:var(--fd);font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;}
+  .drawer-head .x{margin-left:auto;background:var(--bg-4);border:none;color:var(--text-2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;}
+  .drawer-body{padding:22px;overflow-y:auto;flex:1;}
+  .drawer-foot{padding:14px 22px;border-top:2px solid var(--line-2);display:flex;gap:10px;justify-content:flex-end;}
+  .frow{display:flex;gap:12px;margin-bottom:14px;}.frow .field{flex:1;}.field{margin-bottom:14px;}
+  label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;margin-bottom:5px;}
+  input.in,select.in,textarea.in{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--text);}
+  input.in:focus,select.in:focus,textarea.in:focus{outline:none;border-color:var(--brass);}textarea.in{resize:vertical;min-height:64px;}
+  .btn{padding:9px 15px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text);}
+  .btn:hover{border-color:var(--brass);}
+  .btn-save{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;}
+  .btn-del{margin-right:auto;color:var(--danger);border-color:transparent;background:transparent;}
+  .btn-del:hover{background:rgba(255,77,77,.12);}
+  .state{padding:44px;text-align:center;color:var(--text-3);}
+  .msg{margin-right:auto;font-size:13px;color:var(--text-3);align-self:center;}.msg.ok{color:var(--approved);}.msg.err{color:var(--danger);}
+  @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div><div class="sub">Operations</div></div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Sales Inbox</a>
+      <a href="quotes.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Quotes &amp; Inquiries</a>
+      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients</a>
+      <a href="products.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Products <span class="badge" id="nav-products">0</span></a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <div class="nav-label">Production</div>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Production Lineup</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Reports</a>
+    </nav>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div></div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><h1>Products</h1>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="search" placeholder="Search products, style #, category…"></div>
+      <button class="btn-primary" id="new-product"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>New Product</button>
+    </header>
+    <div class="content">
+      <div class="cat-bar" id="cat-bar"></div>
+      <section class="panel">
+        <div class="panel-head"><h2>Catalogue</h2><span class="count" id="count">—</span></div>
+        <div id="wrap"><div class="state">Loading…</div></div>
+      </section>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head"><h3 id="d-title">New Product</h3><button class="x" id="d-close">×</button></div>
+  <div class="drawer-body" id="d-body"></div>
+  <div class="drawer-foot"><button class="btn btn-del" id="d-del" style="display:none;">Delete</button><span class="msg" id="d-msg"></span><button class="btn" id="d-cancel">Cancel</button><button class="btn-save btn" id="d-save">Save</button></div>
+</aside>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const db=createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+let PRODUCTS=[],EDITING=null,CAT='all';
+
+async function load(){
+  const {data,error}=await db.from('products').select('*').order('category_code').order('name');
+  if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
+  PRODUCTS=data||[];
+  document.getElementById('nav-products').textContent=PRODUCTS.length;
+  renderCats();render();
+}
+function renderCats(){
+  const cats={};PRODUCTS.forEach(p=>{const k=(p.category_code||'')+'|'+(p.category_name||'Uncategorized');cats[k]=(cats[k]||0)+1;});
+  const bar=document.getElementById('cat-bar');
+  let html=`<button class="cat-chip ${CAT==='all'?'active':''}" data-c="all">All <span class="n">${PRODUCTS.length}</span></button>`;
+  Object.entries(cats).sort().forEach(([k,n])=>{const[code,name]=k.split('|');html+=`<button class="cat-chip ${CAT===k?'active':''}" data-c="${esc(k)}"><span class="cat-dot" style="background:${catColor(name)}"></span>${esc(name)} <span class="n">${n}</span></button>`;});
+  bar.innerHTML=html;
+  bar.querySelectorAll('.cat-chip').forEach(c=>c.addEventListener('click',()=>{CAT=c.dataset.c;renderCats();render();}));
+}
+function render(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  let rows=PRODUCTS.filter(p=>{
+    if(CAT!=='all'){const k=(p.category_code||'')+'|'+(p.category_name||'Uncategorized');if(k!==CAT)return false;}
+    if(q){const hay=((p.name||'')+' '+(p.style_number||'')+' '+(p.category_name||'')+' '+(p.category_code||'')).toLowerCase();if(!hay.includes(q))return false;}
+    return true;
+  });
+  document.getElementById('count').textContent=rows.length+(rows.length===1?' item':' items');
+  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No products found. Click “New Product” to add one.</div>`;return;}
+  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:70px;">Code</th><th style="width:160px;">Category</th><th style="width:120px;">Style #</th><th>Product</th><th class="num" style="width:120px;">Base Price</th></tr></thead><tbody>${rows.map(p=>`
+    <tr data-id="${p.id}">
+      <td><span class="cat-code">${esc(p.category_code||'—')}</span></td>
+      <td><span class="cat-name"><span class="cat-dot" style="background:${catColor(p.category_name||p.category_code)}"></span>${esc(p.category_name||'—')}</span></td>
+      <td><span class="p-style">${esc(p.style_number||'—')}</span></td>
+      <td><div class="p-name">${esc(p.name)}</div>${p.description?`<div class="p-desc">${esc(p.description)}</div>`:''}</td>
+      <td class="num"><span class="p-price">${money(p.base_price)}</span></td>
+    </tr>`).join('')}</tbody></table>`;
+  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>edit(tr.dataset.id)));
+}
+const CAT_COLORS=['#3da5ff','#3ddc84','#ffb627','#b06bff','#ff6b35','#ff4d8f','#4ddbd0','#a0b0c8'];
+function catColor(key){let h=0;const s=String(key||'');for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return CAT_COLORS[h%CAT_COLORS.length];}
+function openD(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
+function closeD(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.getElementById('d-msg').textContent='';}
+function form(p){
+  document.getElementById('d-body').innerHTML=`
+    <div class="frow"><div class="field"><label>Category Code</label><input class="in" id="category_code" value="${esc(p.category_code||'')}" placeholder="0041"></div>
+      <div class="field"><label>Category Name</label><input class="in" id="category_name" value="${esc(p.category_name||'')}" placeholder="Medals"></div></div>
+    <div class="field"><label>Style Number</label><input class="in" id="style_number" value="${esc(p.style_number||'')}" placeholder="MS36000"></div>
+    <div class="field"><label>Product Name *</label><input class="in" id="name" value="${esc(p.name||'')}"></div>
+    <div class="field"><label>Description</label><textarea class="in" id="description">${esc(p.description||'')}</textarea></div>
+    <div class="frow"><div class="field"><label>Unit</label><input class="in" id="unit" value="${esc(p.unit||'Pc')}"></div>
+      <div class="field"><label>Base Price</label><input class="in" id="base_price" type="number" step="0.01" value="${p.base_price??0}"></div></div>`;
+}
+function newP(){EDITING=null;document.getElementById('d-title').textContent='New Product';document.getElementById('d-del').style.display='none';form({});openD();}
+function edit(id){const p=PRODUCTS.find(x=>x.id===id);EDITING=p;document.getElementById('d-title').textContent='Edit Product';document.getElementById('d-del').style.display='inline-flex';form(p);openD();}
+async function save(){
+  const msg=document.getElementById('d-msg');const name=document.getElementById('name').value.trim();
+  if(!name){msg.textContent='Product name required';msg.className='msg err';return;}
+  msg.textContent='Saving…';msg.className='msg';
+  const payload={category_code:document.getElementById('category_code').value||null,category_name:document.getElementById('category_name').value||null,
+    style_number:document.getElementById('style_number').value||null,name,description:document.getElementById('description').value||null,
+    unit:document.getElementById('unit').value||'Pc',base_price:parseFloat(document.getElementById('base_price').value)||0};
+  let err;
+  if(EDITING){({error:err}=await db.from('products').update(payload).eq('id',EDITING.id));}
+  else{({error:err}=await db.from('products').insert(payload));}
+  if(err){msg.textContent='Error: '+err.message;msg.className='msg err';return;}
+  msg.textContent='Saved ✓';msg.className='msg ok';await load();setTimeout(closeD,500);
+}
+async function del(){
+  if(!EDITING||!confirm('Delete this product? This cannot be undone.'))return;
+  const {error}=await db.from('products').delete().eq('id',EDITING.id);
+  if(error){document.getElementById('d-msg').textContent='Error: '+error.message;document.getElementById('d-msg').className='msg err';return;}
+  await load();closeD();
+}
+document.getElementById('new-product').addEventListener('click',newP);
+document.getElementById('d-close').addEventListener('click',closeD);
+document.getElementById('d-cancel').addEventListener('click',closeD);
+document.getElementById('overlay').addEventListener('click',closeD);
+document.getElementById('d-save').addEventListener('click',save);
+document.getElementById('d-del').addEventListener('click',del);
+document.getElementById('search').addEventListener('input',render);
+load();
+</script>
+</body>
+</html>

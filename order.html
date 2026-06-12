@@ -30,6 +30,8 @@
   .topbar .actions{margin-left:auto;display:flex;gap:8px;}
   .btn{padding:8px 14px;border-radius:var(--radius-sm);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--line-strong);background:var(--paper-2);color:var(--ink);display:inline-flex;align-items:center;gap:7px;}
   .btn:hover{border-color:var(--brass-2);}
+  .btn-danger{color:var(--danger);border-color:transparent;}
+  .btn-danger:hover{border-color:var(--danger);background:rgba(255,77,77,.10);}
   .btn-dark{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
   .btn-dark:hover{filter:brightness(1.04);}
   .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
@@ -61,6 +63,14 @@
   tbody td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
   tbody tr:last-child td{border-bottom:none;}
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:6px 7px;border-radius:5px;font-size:13px;font-family:inherit;color:var(--ink);}
+  .cb-cell{position:relative;}
+  .cb-menu{display:none;position:absolute;top:calc(100% + 2px);left:0;min-width:240px;max-width:320px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:50;overflow:hidden;max-height:260px;overflow-y:auto;}
+  .cb-menu.open{display:block;}
+  .cb-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .cb-opt:last-child{border-bottom:none;}
+  .cb-opt:hover{background:var(--bg-3);}
+  .cb-opt .cb-main{font-weight:600;color:var(--text);font-size:13px;}
+  .cb-opt .cb-side{font-family:var(--fm);font-size:11px;color:var(--text-3);white-space:nowrap;}
   .li-input:hover{border-color:var(--line-2);}
   .li-input:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li-input.num{text-align:right;font-family:var(--font-mono);}
@@ -120,6 +130,7 @@
   <div class="title">Sales Order <span class="id" id="t-id">#----</span></div>
   <div id="t-badge"></div>
   <div class="actions">
+    <button class="btn btn-danger" id="btn-delete">Delete</button>
     <button class="btn" id="btn-quote">Print Quotation</button>
     <button class="btn-brass btn" id="btn-invoice">Convert to Invoice</button>
   </div>
@@ -168,12 +179,14 @@
       <div class="card-h"><h3>Product Listing</h3></div>
       <table>
         <thead><tr>
-          <th style="width:62px;">Cat</th><th>Description</th>
-          <th class="num" style="width:60px;">Qty</th>
-          <th style="width:54px;">Unit</th>
-          <th class="num" style="width:88px;">Unit Price</th>
-          <th class="num" style="width:96px;">Amount</th>
-          <th style="width:34px;"></th>
+          <th style="width:150px;">Category</th>
+          <th style="width:130px;">Style #</th>
+          <th>Description</th>
+          <th class="num" style="width:54px;">Qty</th>
+          <th style="width:48px;">Unit</th>
+          <th class="num" style="width:84px;">Unit Price</th>
+          <th class="num" style="width:92px;">Amount</th>
+          <th style="width:30px;"></th>
         </tr></thead>
         <tbody id="lines"></tbody>
       </table>
@@ -267,7 +280,7 @@ const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;r
 const params=new URLSearchParams(location.search);
 const ORDER_ID=params.get('id');
 
-let ORDER=null, LINES=[], DIRTY=false;
+let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[];
 
 function markDirty(){DIRTY=true;const m=document.getElementById('save-msg');m.textContent='Unsaved changes';m.className='status-msg';}
 
@@ -280,6 +293,9 @@ async function load(){
   ORDER=data;
   const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
   LINES=items||[];
+  // load product catalogue for line-item comboboxes
+  const {data:prods}=await db.from('products').select('category_code,category_name,style_number,name,unit,base_price').order('category_name').order('name');
+  PRODUCTS=prods||[];
   render();
 }
 
@@ -338,6 +354,7 @@ function render(){
   document.getElementById('btn-save').addEventListener('click',save);
   document.getElementById('btn-quote').addEventListener('click',printQuotation);
   document.getElementById('btn-invoice').addEventListener('click',convertToInvoice);
+  document.getElementById('btn-delete').addEventListener('click',deleteOrder);
 
   // meta footer
   document.getElementById('meta').innerHTML=
@@ -376,32 +393,101 @@ function renderLines(){
   LINES.forEach((ln,i)=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td><input class="li-input cat" value="${esc(ln.category_code||'')}" data-i="${i}" data-k="category_code" placeholder="0000"></td>
+      <td class="cb-cell"><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Category" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
+      <td class="cb-cell"><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Style #" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
       <td><input class="li-input" value="${esc(ln.description||'')}" data-i="${i}" data-k="description" placeholder="Description"></td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
-      <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:46px;"></td>
+      <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
       <td class="li-amt">${money(ln.net_amount)}</td>
       <td><button class="li-del" data-del="${i}">×</button></td>`;
     tb.appendChild(tr);
   });
-  tb.querySelectorAll('.li-input').forEach(inp=>{
+  // plain inputs (description, qty, unit, price)
+  tb.querySelectorAll('.li-input:not(.cb-cat):not(.cb-style)').forEach(inp=>{
     inp.addEventListener('input',()=>{
       const i=+inp.dataset.i,k=inp.dataset.k;let v=inp.value;
       if(k==='quantity'||k==='unit_price')v=parseFloat(v)||0;
       LINES[i][k]=v;
-      LINES[i].amount=(parseFloat(LINES[i].quantity)||0)*(parseFloat(LINES[i].unit_price)||0);
-      LINES[i].net_amount=LINES[i].amount-(LINES[i].amount*((parseFloat(LINES[i].discount_pct)||0)/100));
-      // update just the amount cell + totals
-      inp.closest('tr').querySelector('.li-amt').textContent=money(LINES[i].net_amount);
-      recalc();markDirty();
+      recompute(i,inp.closest('tr'));markDirty();
     });
   });
+  // comboboxes
+  tb.querySelectorAll('.cb-cat').forEach(inp=>wireCombo(inp,'cat'));
+  tb.querySelectorAll('.cb-style').forEach(inp=>wireCombo(inp,'style'));
   tb.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>{LINES.splice(+b.dataset.del,1);renderLines();recalc();markDirty();}));
   recalc();
 }
 
-function addLine(){LINES.push({category_code:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
+function recompute(i,tr){
+  LINES[i].amount=(parseFloat(LINES[i].quantity)||0)*(parseFloat(LINES[i].unit_price)||0);
+  LINES[i].net_amount=LINES[i].amount-(LINES[i].amount*((parseFloat(LINES[i].discount_pct)||0)/100));
+  if(tr)tr.querySelector('.li-amt').textContent=money(LINES[i].net_amount);
+  recalc();
+}
+
+// ---- Combobox: type freely, see catalogue suggestions, click to autofill ----
+function wireCombo(inp,kind){
+  const i=+inp.dataset.i;
+  const menu=inp.parentElement.querySelector('.cb-menu');
+  const close=()=>{menu.classList.remove('open');menu.innerHTML='';};
+  const open=()=>{
+    const q=inp.value.toLowerCase().trim();
+    let matches;
+    if(kind==='cat'){
+      // unique categories from products
+      const seen=new Set();matches=[];
+      PRODUCTS.forEach(p=>{const key=(p.category_name||'')+'|'+(p.category_code||'');
+        if(seen.has(key))return;seen.add(key);
+        const label=p.category_name||p.category_code||'';
+        if(!q||label.toLowerCase().includes(q)||(p.category_code||'').toLowerCase().includes(q))matches.push({label,code:p.category_code,name:p.category_name});
+      });
+      matches=matches.slice(0,8);
+    }else{
+      // styles within the line's chosen category (if any), else all
+      const cat=(LINES[i].category_name||'').toLowerCase();
+      matches=PRODUCTS.filter(p=>{
+        if(cat&&(p.category_name||'').toLowerCase()!==cat)return false;
+        if(!q)return true;
+        return (p.style_number||'').toLowerCase().includes(q)||(p.name||'').toLowerCase().includes(q);
+      }).slice(0,8);
+    }
+    if(!matches.length){close();return;}
+    menu.innerHTML=matches.map((m,idx)=>{
+      if(kind==='cat')return `<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.label)}</span>${m.code?`<span class="cb-side">${esc(m.code)}</span>`:''}</div>`;
+      return `<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.style_number||'—')}</span><span class="cb-side">${esc(m.name||'')}</span></div>`;
+    }).join('');
+    menu.classList.add('open');
+    menu.querySelectorAll('.cb-opt').forEach(opt=>opt.addEventListener('mousedown',e=>{
+      e.preventDefault();const m=matches[+opt.dataset.idx];
+      if(kind==='cat'){
+        LINES[i].category_name=m.name||m.label;LINES[i].category_code=m.code||null;
+        inp.value=m.name||m.label;
+        // reset style if it no longer belongs (optional, keep simple: leave as-is)
+      }else{
+        LINES[i].style_number=m.style_number||'';
+        LINES[i].category_name=m.category_name||LINES[i].category_name;
+        LINES[i].category_code=m.category_code||LINES[i].category_code;
+        LINES[i].description=m.name||LINES[i].description;
+        LINES[i].unit=m.unit||LINES[i].unit||'Pc';
+        LINES[i].unit_price=m.base_price!=null?m.base_price:LINES[i].unit_price;
+        LINES[i].amount=(parseFloat(LINES[i].quantity)||0)*(parseFloat(LINES[i].unit_price)||0);
+        LINES[i].net_amount=LINES[i].amount-(LINES[i].amount*((parseFloat(LINES[i].discount_pct)||0)/100));
+        inp.value=m.style_number||'';
+      }
+      close();renderLines();recalc();markDirty();
+    }));
+  };
+  inp.addEventListener('focus',open);
+  inp.addEventListener('input',()=>{
+    LINES[i][inp.dataset.k==='category'?'category_name':'style_number']=inp.value;
+    if(inp.dataset.k==='category')LINES[i].category_code=null; // typed custom; clear code unless a pick sets it
+    open();markDirty();
+  });
+  inp.addEventListener('blur',()=>setTimeout(close,120));
+}
+
+function addLine(){LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
 
 function recalc(){
   const sub=LINES.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
@@ -454,6 +540,17 @@ async function printQuotation(){
     items:LINES.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.net_amount})),
     subtotal:calc.subtotal||0, hst:calc.hst||0, grandTotal:calc.grand_total||calc.grandTotal||0
   });
+}
+
+async function deleteOrder(){
+  const T={inquiry:'inquiry',quote:'quotation',order:'order'}[ORDER.record_type]||'record';
+  if(!confirm('Delete this '+T+' (#'+ORDER.stage_id+')? This cannot be undone.'))return;
+  // remove line items first, then the record
+  await db.from('quote_items').delete().eq('quote_id',ORDER_ID);
+  const {error}=await db.from('quotes').delete().eq('id',ORDER_ID);
+  if(error){alert('Could not delete: '+error.message);return;}
+  DIRTY=false;
+  location.href='index.html';
 }
 
 async function convertToInvoice(){

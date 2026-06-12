@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quotes & Inquiries — YRT CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
+    --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
+    --brass:#e7ebf3;--brass-2:#f4f6fb;
+    --art:#ff6b35;--due:#ffb627;--approved:#3ddc84;--process:#3da5ff;--invoice:#b06bff;--nodata:#5a6273;--danger:#ff4d4d;
+    --radius:11px;--radius-sm:8px;
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+  .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
+  .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
+  .brand .mark .amp{color:var(--brass-2);}
+  .brand .sub{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#aab0c0;margin-top:6px;font-weight:600;}
+  .nav{padding:14px 12px;flex:1;overflow-y:auto;}
+  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:14px 10px 6px;font-weight:700;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
+  .nav a:hover{background:var(--bg-3);color:#fff;}
+  .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
+  .nav a .ico{width:17px;height:17px;flex-shrink:0;}
+  .nav a .badge{margin-left:auto;background:var(--bg-4);color:var(--text);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;font-family:var(--fm);}
+  .nav a.active .badge{background:rgba(0,0,0,.25);color:#15171c;}
+  .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-weight:900;font-size:10px;}
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;position:sticky;top:0;z-index:20;}
+  .topbar h1{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
+  .search{margin-left:auto;position:relative;width:280px;}
+  .search input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 12px 9px 34px;font-size:13px;font-family:inherit;color:var(--text);}
+  .search input:focus{outline:none;border-color:var(--brass);}.search input::placeholder{color:var(--text-3);}
+  .search svg{position:absolute;left:11px;top:10px;width:15px;height:15px;color:var(--text-3);}
+  .btn-primary{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;padding:10px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .content{padding:24px 26px 70px;max-width:1560px;width:100%;}
+  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
+  .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
+  .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
+  .panel-head .count{font-family:var(--fd);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);background:transparent;border:1px solid var(--line-2);padding:3px 9px;border-radius:5px;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;padding:11px 16px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
+  thead th.num{text-align:right;}
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr{cursor:pointer;transition:background .1s;}tbody tr:hover{background:var(--bg-3);}
+  tbody tr:last-child td{border-bottom:none;}
+  .stage-id{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
+  .c-name{font-weight:700;color:#fff;}.c-sub{font-size:12px;color:#aab0c0;margin-top:1px;}
+  .q-date{font-family:var(--fm);font-size:12.5px;color:var(--text-2);}
+  .money{font-family:var(--fm);font-weight:700;color:#fff;font-size:13.5px;}
+  .badge-st{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.02em;padding:6px 11px;border-radius:7px;text-transform:uppercase;font-family:var(--fd);}
+  .badge-st::before{content:'';width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.45);}
+  .st-send_art{background:var(--art);color:#1a0f08;}.st-approval_due{background:var(--due);color:#231803;}
+  .st-approved{background:var(--approved);color:#04130a;}.st-in_process{background:var(--process);color:#03101f;}
+  .st-invoice{background:var(--invoice);color:#15071f;}.st-no_data{background:var(--nodata);color:#fff;}
+  .btn-convert{padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:700;font-family:var(--fd);text-transform:uppercase;letter-spacing:.03em;border:1px solid var(--brass);background:transparent;color:var(--brass-2);cursor:pointer;}
+  .btn-convert:hover{background:var(--brass);color:#15171c;}
+  .tabs{display:flex;gap:6px;}
+  .tab{font-size:12.5px;padding:7px 14px;border-radius:6px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;}
+  .tab.active{background:var(--brass);color:#15171c;border-color:var(--brass);}
+  .state{padding:44px;text-align:center;color:var(--text-3);}
+  @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div><div class="sub">Operations</div></div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Sales Inbox</a>
+      <a href="quotes.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Quotes &amp; Inquiries <span class="badge" id="nav-q">0</span></a>
+      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients</a>
+      <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Products</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <div class="nav-label">Production</div>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Production Lineup</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Reports</a>
+    </nav>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div></div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><h1>Quotes &amp; Inquiries</h1>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="search" placeholder="Search quotes, clients, ID…"></div>
+      <button class="btn-primary" id="new-quote"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>New Quote</button>
+    </header>
+    <div class="content">
+      <section class="panel">
+        <div class="panel-head"><h2>Quotes &amp; Inquiries</h2><span class="count" id="count">—</span>
+          <div class="tabs" style="margin-left:auto;"><button class="tab active" data-t="all">All</button><button class="tab" data-t="not_sent">Not Sent</button><button class="tab" data-t="sent">Sent</button></div>
+        </div>
+        <div id="wrap"><div class="state">Loading…</div></div>
+      </section>
+    </div>
+  </div>
+</div>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const db=createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
+const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const ST={send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice',no_data:'No Data'};
+let ALL=[],TAB='all';
+async function load(){
+  const {data,error}=await db.from('quotes').select('*, clients(company_name), contacts(first_name,last_name)').in('record_type',['quote','inquiry']).order('quote_date',{ascending:false});
+  if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
+  ALL=data||[];document.getElementById('nav-q').textContent=ALL.length;render();
+}
+function render(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  let rows=ALL.filter(o=>{
+    if(TAB!=='all'&&o.sent_status!==TAB)return false;
+    if(q){const hay=((o.clients?.company_name||'')+' '+(o.subject||'')+' '+o.stage_id).toLowerCase();if(!hay.includes(q))return false;}
+    return true;
+  });
+  document.getElementById('count').textContent=rows.length+(rows.length===1?' quote':' quotes');
+  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No quotes match this view.</div>`;return;}
+  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:30%;">Client</th><th>Subject</th><th style="width:130px;">Date</th><th style="width:130px;">Stage</th><th class="num" style="width:120px;">Total</th><th style="width:120px;"></th></tr></thead><tbody>${rows.map(o=>{
+    const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
+    return `<tr data-id="${o.id}">
+      <td><span class="stage-id">#${o.stage_id}</span></td>
+      <td><div class="c-name">${esc(o.clients?.company_name||'—')}</div><div class="c-sub">${esc(ct||o.serviced_by||'')}</div></td>
+      <td>${esc(o.subject||'—')}</td>
+      <td><span class="q-date">${fmtD(o.quote_date)}</span></td>
+      <td><span class="badge-st st-${o.art_status}">${ST[o.art_status]||o.art_status}</span></td>
+      <td class="num"><span class="money">${money(o.grand_total)}</span></td>
+      <td><button class="btn-convert" data-conv="${o.id}">→ Order</button></td>
+    </tr>`;}).join('')}</tbody></table>`;
+  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',e=>{if(e.target.classList.contains('btn-convert'))return;location.href='order.html?id='+encodeURIComponent(tr.dataset.id);}));
+  document.querySelectorAll('[data-conv]').forEach(b=>b.addEventListener('click',async e=>{
+    e.stopPropagation();
+    if(!confirm('Convert this inquiry/quote into an active order? It will move to the Sales Inbox.'))return;
+    const {error}=await db.from('quotes').update({record_type:'order'}).eq('id',b.dataset.conv);
+    if(error){alert('Error: '+error.message);return;}
+    await load();
+  }));
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');TAB=t.dataset.t;render();}));
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('new-quote').addEventListener('click',async()=>{
+  const {data:cl}=await db.from('clients').select('id').order('company_name').limit(1);
+  const {data,error}=await db.from('quotes').insert({record_type:'quote',art_status:'approval_due',sent_status:'not_sent',active_status:'active',quote_date:new Date().toISOString().slice(0,10),subject:'New quote',client_id:cl&&cl[0]?cl[0].id:null}).select().single();
+  if(error){alert('Could not create quote: '+error.message);return;}
+  location.href='order.html?id='+encodeURIComponent(data.id);
+});
+load();
+</script>
+</body>
+</html>
