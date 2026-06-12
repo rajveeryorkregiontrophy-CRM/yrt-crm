@@ -52,11 +52,20 @@
   .card-h .count{font-family:var(--fm);font-size:11px;color:var(--text-2);background:var(--bg-4);padding:2px 8px;border-radius:20px;}
   .card-h .add{margin-left:auto;font-size:12px;padding:5px 11px;border-radius:6px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;}
   .card-h .add:hover{border-color:var(--brass);color:var(--brass-2);}
+  /* history tabs */
+  .htabs{display:flex;gap:4px;margin-left:auto;}
+  .htab{font-size:11.5px;padding:6px 12px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:6px;}
+  .htab:hover{border-color:var(--brass);color:var(--text);}
+  .htab.on{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
+  .htab .tn{font-family:var(--fm);font-size:10px;padding:1px 6px;border-radius:10px;background:var(--bg-4);color:var(--text-2);}
+  .htab.on .tn{background:rgba(0,0,0,.18);color:#15171c;}
   .card-b{padding:6px 0;}
   /* contacts */
-  .contact{display:flex;gap:13px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line);}
+  .contacts-scroll{max-height:280px;overflow-y:auto;}
+  .contacts-scroll::-webkit-scrollbar{width:8px;}.contacts-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--bg-2);}
+  .contact{display:flex;gap:12px;align-items:center;padding:9px 18px;border-bottom:1px solid var(--line);}
   .contact:last-child{border-bottom:none;}
-  .c-av{width:38px;height:38px;border-radius:9px;background:var(--bg-4);color:var(--brass-2);display:grid;place-items:center;font-weight:800;font-family:var(--fd);font-size:14px;flex-shrink:0;}
+  .c-av{width:34px;height:34px;border-radius:8px;background:var(--bg-4);color:var(--brass-2);display:grid;place-items:center;font-weight:800;font-family:var(--fd);font-size:13px;flex-shrink:0;}
   .c-info{flex:1;min-width:0;}
   .c-name{font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;}
   .c-prim{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:4px;background:var(--brass-2);color:#15171c;font-family:var(--fd);}
@@ -133,6 +142,7 @@ const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','N
 const ST_LABEL={send_art:'Send Art',approval_due:'Approval',approved:'Approved',in_process:'Process',invoice:'Invoice',no_data:'—'};
 const CID=new URLSearchParams(location.search).get('id');
 let CLIENT=null,CONTACTS=[],ORDERS=[],INVOICES=[],EDIT_CONTACTS=[];
+let INQ=[],QUOTE=[],SALES=[],HTAB='inquiry';
 
 function stars(n){n=n||0;let s='';for(let i=1;i<=5;i++)s+=`<span class="${i<=n?'':'off'}">★</span>`;return `<span class="stars">${s}</span>`;}
 function initials(name){return (name||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
@@ -152,8 +162,12 @@ async function load(){
 
 function render(){
   document.getElementById('t-title').textContent=CLIENT.company_name;
+  // split history by record type
+  INQ=ORDERS.filter(o=>o.record_type==='inquiry');
+  QUOTE=ORDERS.filter(o=>o.record_type==='quote');
+  SALES=ORDERS.filter(o=>o.record_type==='order');
   // compute stats
-  const realOrders=ORDERS.filter(o=>o.record_type==='order');
+  const realOrders=SALES;
   const totalSpend=INVOICES.reduce((s,i)=>s+Number(i.grand_total||0),0);
   const balance=INVOICES.reduce((s,i)=>s+Number(i.balance_due||0),0);
   const orderVals=realOrders.map(o=>Number(o.grand_total||0)).filter(v=>v>0);
@@ -190,7 +204,7 @@ function render(){
       <div>
         <div class="card">
           <div class="card-h"><h3>Contacts</h3><span class="count">${CONTACTS.length}</span></div>
-          <div class="card-b">${CONTACTS.length?CONTACTS.map(c=>{
+          <div class="card-b contacts-scroll">${CONTACTS.length?CONTACTS.map(c=>{
             const nm=((c.first_name||'')+' '+(c.last_name||'')).trim()||'—';
             return `<div class="contact">
               <div class="c-av">${esc(initials(nm))}</div>
@@ -201,15 +215,15 @@ function render(){
         </div>
 
         <div class="card">
-          <div class="card-h"><h3>Order &amp; Quote History</h3><span class="count">${ORDERS.length}</span></div>
-          ${ORDERS.length?`<table><thead><tr><th>ID</th><th>Subject</th><th>Date</th><th>Stage</th><th class="num">Total</th></tr></thead><tbody>${ORDERS.map(o=>`
-            <tr data-order="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td>${esc(o.subject||'—')}</td><td>${fmtD(o.quote_date)}</td><td><span class="mini-st ms-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td class="num"><span class="money">${money(o.grand_total)}</span></td></tr>`).join('')}</tbody></table>`:'<div class="state">No orders or quotes yet.</div>'}
-        </div>
-
-        <div class="card">
-          <div class="card-h"><h3>Invoices</h3><span class="count">${INVOICES.length}</span></div>
-          ${INVOICES.length?`<table><thead><tr><th>Invoice</th><th>Date</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>${INVOICES.map(i=>`
-            <tr data-inv="${i.id}"><td><span class="stage-id">#${i.invoice_number||'—'}</span></td><td>${fmtD(i.invoice_date)}</td><td class="num"><span class="money">${money(i.grand_total)}</span></td><td class="num" style="color:${i.balance_due>0?'var(--art)':'var(--approved)'};font-family:var(--fm);font-weight:700;">${money(i.balance_due)}</td><td><span class="mini-st pay-${i.paid_status}">${i.paid_status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="state">No invoices yet.</div>'}
+          <div class="card-h"><h3>History</h3>
+            <div class="htabs" id="htabs">
+              <button class="htab on" data-tab="inquiry">Inquiries <span class="tn">${INQ.length}</span></button>
+              <button class="htab" data-tab="quote">Quotations <span class="tn">${QUOTE.length}</span></button>
+              <button class="htab" data-tab="order">Sales Orders <span class="tn">${SALES.length}</span></button>
+              <button class="htab" data-tab="invoice">Invoices <span class="tn">${INVOICES.length}</span></button>
+            </div>
+          </div>
+          <div id="htab-body"></div>
         </div>
       </div>
 
@@ -229,8 +243,30 @@ function render(){
       </div>
     </div>`;
 
-  document.querySelectorAll('tr[data-order]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.order)));
-  document.querySelectorAll('tr[data-inv]').forEach(tr=>tr.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(tr.dataset.inv)));
+  // history tabs — default to first tab that has data
+  HTAB = INQ.length ? 'inquiry' : QUOTE.length ? 'quote' : SALES.length ? 'order' : INVOICES.length ? 'invoice' : 'inquiry';
+  document.querySelectorAll('#htabs .htab').forEach(x=>x.classList.toggle('on',x.dataset.tab===HTAB));
+  document.querySelectorAll('#htabs .htab').forEach(t=>t.addEventListener('click',()=>{
+    HTAB=t.dataset.tab;
+    document.querySelectorAll('#htabs .htab').forEach(x=>x.classList.toggle('on',x.dataset.tab===HTAB));
+    renderHistoryTab();
+  }));
+  renderHistoryTab();
+}
+
+function renderHistoryTab(){
+  const body=document.getElementById('htab-body');if(!body)return;
+  const orderRows=list=>list.length?`<table><thead><tr><th>ID</th><th>Subject</th><th>Date</th><th>Stage</th><th class="num">Total</th></tr></thead><tbody>${list.map(o=>`
+    <tr data-order="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td>${esc(o.subject||'—')}</td><td>${fmtD(o.quote_date)}</td><td><span class="mini-st ms-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td class="num"><span class="money">${money(o.grand_total)}</span></td></tr>`).join('')}</tbody></table>`:null;
+  if(HTAB==='inquiry'){body.innerHTML=orderRows(INQ)||'<div class="state">No inquiries for this client.</div>';}
+  else if(HTAB==='quote'){body.innerHTML=orderRows(QUOTE)||'<div class="state">No quotations for this client.</div>';}
+  else if(HTAB==='order'){body.innerHTML=orderRows(SALES)||'<div class="state">No sales orders for this client.</div>';}
+  else if(HTAB==='invoice'){
+    body.innerHTML=INVOICES.length?`<table><thead><tr><th>Invoice</th><th>Date</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>${INVOICES.map(i=>`
+      <tr data-inv="${i.id}"><td><span class="stage-id">#${i.invoice_number||'—'}</span></td><td>${fmtD(i.invoice_date)}</td><td class="num"><span class="money">${money(i.grand_total)}</span></td><td class="num" style="color:${i.balance_due>0?'var(--art)':'var(--approved)'};font-family:var(--fm);font-weight:700;">${money(i.balance_due)}</td><td><span class="mini-st pay-${i.paid_status}">${i.paid_status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="state">No invoices for this client.</div>';
+  }
+  body.querySelectorAll('tr[data-order]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.order)));
+  body.querySelectorAll('tr[data-inv]').forEach(tr=>tr.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(tr.dataset.inv)));
 }
 
 // ---- Edit drawer ----
