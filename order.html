@@ -85,6 +85,9 @@
   .li-disc:focus{outline:none;border-color:var(--brass);}
   .disc-waived{font-family:var(--fm);font-size:10.5px;color:var(--danger);margin-top:3px;}
   .sup-id-tag{font-family:var(--fm);font-size:10px;color:var(--brass-2);margin-top:2px;font-weight:700;}
+  .lines-scroll{max-height:340px;overflow-y:auto;}
+  .lines-scroll::-webkit-scrollbar{width:9px;}.lines-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2);}
+  .lines-scroll thead th{position:sticky;top:0;background:var(--paper-2);z-index:2;}
   .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
   .sup-id-tag.in-po-tag{color:var(--danger);}
   .li-input:hover{border-color:var(--line-2);}
@@ -238,6 +241,7 @@
     <!-- Line items -->
     <div class="card">
       <div class="card-h"><h3>Product Listing</h3></div>
+      <div class="lines-scroll">
       <table>
         <thead><tr>
           <th style="width:150px;">Category</th>
@@ -253,6 +257,7 @@
         </tr></thead>
         <tbody id="lines"></tbody>
       </table>
+      </div>
       <button class="add-line" id="add-line">+ Add line item</button>
       <div class="meta-foot" id="meta"></div>
     </div>
@@ -736,6 +741,8 @@ async function save(){
 // Push each line that has a supplier with an OPEN PO into that PO. Returns warnings.
 async function syncToPOs(insertedItems){
   const warnings=[];
+  // PO linking only applies to Sales Orders — not inquiries or quotations
+  if(ORDER.record_type!=='order') return warnings;
   // group lines by supplier_id (only those with a supplier and a quantity)
   const bySup={};
   insertedItems.forEach(it=>{ if(it.supplier_id&&Number(it.quantity)>0){ (bySup[it.supplier_id]=bySup[it.supplier_id]||[]).push(it); } });
@@ -785,21 +792,29 @@ async function reloadLines(){
 
 async function printQuotation(){
   if(!LINES.length){await alertModal('Nothing to print','Add at least one line item before printing a quotation.','warn');return;}
-  const ok=await confirmModal('Print quotation?','This opens a preview of quotation #'+ORDER.stage_id+'. From the preview you can save it as a PDF or send it to your printer.',{confirmText:'Proceed',cancelText:'Cancel'});
+  const ok=await confirmModal('Print quotation?','Continue to output quotation #'+ORDER.stage_id+'?',{confirmText:'Continue',cancelText:'Cancel'});
   if(!ok)return;
-  let generateDocument;
-  try{ ({generateDocument}=await import('./pdf.js')); }
-  catch(err){ await alertModal('Couldn’t open preview','The PDF generator (pdf.js) didn’t load. Make sure pdf.js is deployed alongside order.html.','danger'); return; }
+  const choice=await choiceModal('Quotation #'+ORDER.stage_id,'How would you like to output it?',[
+    {key:'pdf',label:'Save as PDF',primary:true},
+    {key:'print',label:'Print'},
+    {key:'cancel',label:'Cancel',plain:true}
+  ]);
+  if(!choice||choice==='cancel')return;
+  let mod;
+  try{ mod=await import('./pdf.js'); }
+  catch(err){ await alertModal('Couldn’t load','The PDF generator (pdf.js) didn’t load.','danger'); return; }
   const c=ORDER.clients||{}; const ct=ORDER.contacts||{};
   const lines=[c.bill_address,c.bill_city,c.bill_postal,c.bill_province].filter(Boolean);
   const calc=ORDER._calc||{subtotal:ORDER.subtotal,hst:ORDER.hst,grandTotal:ORDER.grand_total};
-  generateDocument('QUOTATION',{
+  const payload={
     number:String(ORDER.stage_id), date:ORDER.quote_date, servicedBy:ORDER.serviced_by||'',
     clientContact:((ct.first_name||'')+' '+(ct.last_name||'')).trim(), pageNo:1,
     client:{company:c.company_name||'', lines, tel:ct.tel1||'', email:ct.email1||''},
     items:LINES.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.amount,discountPct:l.discount_pct||0})),
     subtotal:calc.subtotal||0, hst:calc.hst||0, grandTotal:calc.grand_total||calc.grandTotal||0
-  });
+  };
+  if(choice==='pdf'){ await mod.makePDF('QUOTATION',payload); }
+  else{ mod.printDoc('QUOTATION',payload); }
 }
 
 async function deleteOrder(){

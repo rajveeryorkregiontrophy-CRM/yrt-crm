@@ -48,6 +48,10 @@
   .li:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li.num{text-align:right;font-family:var(--fm);}
   .li-amt{text-align:right;font-family:var(--fm);font-weight:700;font-size:13px;padding-right:10px;white-space:nowrap;}
+  .from-order{display:flex;flex-direction:column;gap:1px;}
+  .fo-num{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--brass-2);}
+  .fo-name{font-size:11.5px;color:var(--text-2);}
+  .fo-manual{font-size:11.5px;color:var(--text-3);font-style:italic;}
   .li-del{border:none;background:transparent;color:var(--text-3);cursor:pointer;padding:5px;border-radius:5px;font-size:15px;}
   .li-del:hover{background:rgba(255,77,77,.15);color:var(--danger);}
   .add-line{margin:12px 18px;padding:9px;width:calc(100% - 36px);border:1px dashed var(--line-2);background:transparent;border-radius:var(--radius-sm);color:var(--text-3);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
@@ -83,7 +87,6 @@
       <div class="grid2">
         <div class="field"><label>Supplier</label><select class="in" id="i-supplier"></select></div>
         <div class="field"><label>Subject</label><input class="in" id="i-subject" placeholder="e.g. Medal restock"></div>
-        <div class="field"><label>For Sales Order</label><select class="in" id="i-quote"></select></div>
         <div class="field"><label>Order Date</label><input type="date" class="in" id="i-date"></div>
         <div class="field"><label>In-Hand Date</label><input type="date" class="in" id="i-inhand"></div>
         <div class="field"><label>Dispatch Mode</label><select class="in" id="i-dispatch"><option value="pickup">Pick-Up</option><option value="dispatch">Dispatch</option></select></div>
@@ -99,7 +102,7 @@
         <th class="num" style="width:70px;">Qty</th>
         <th class="num" style="width:90px;">Rate</th>
         <th class="num" style="width:100px;">Amount</th>
-        <th style="width:150px;">Ordered For</th>
+        <th style="width:160px;">From Order</th>
         <th style="width:34px;"></th>
       </tr></thead>
       <tbody id="lines"></tbody>
@@ -132,8 +135,13 @@ async function load(){
   const {data:items}=await db.from('po_items').select('*').eq('po_id',PO_ID).order('line_order');
   LINES=items||[];
   SUP=(await db.from('suppliers').select('id,short_name').order('short_name')).data||[];
-  QUOTES=(await db.from('quotes').select('id,stage_id,subject,clients(company_name)').eq('record_type','order').order('stage_id',{ascending:false}).limit(50)).data||[];
+  QUOTES=(await db.from('quotes').select('id,stage_id,subject,clients(company_name)').eq('record_type','order').order('stage_id',{ascending:false}).limit(200)).data||[];
   render();
+}
+
+function orderName(stageId){
+  const o=QUOTES.find(x=>String(x.stage_id)===String(stageId));
+  return o?(o.clients?.company_name||''):'';
 }
 
 function render(){
@@ -146,9 +154,6 @@ function render(){
   sup.onchange=()=>{PO.supplier_id=sup.value||null;dirty();};
 
   const subj=document.getElementById('i-subject');subj.value=PO.subject||'';subj.oninput=()=>{PO.subject=subj.value;dirty();};
-  const q=document.getElementById('i-quote');
-  q.innerHTML='<option value="">— None —</option>'+QUOTES.map(o=>`<option value="${o.id}" ${PO.quote_id===o.id?'selected':''}>#${o.stage_id} · ${esc(o.clients?.company_name||'')} (${esc(o.subject||'')})</option>`).join('');
-  q.onchange=()=>{PO.quote_id=q.value||null;dirty();};
   const dt=document.getElementById('i-date');dt.value=PO.order_date||'';dt.onchange=()=>{PO.order_date=dt.value||null;dirty();};
   const ih=document.getElementById('i-inhand');ih.value=PO.in_hand_date||'';ih.onchange=()=>{PO.in_hand_date=ih.value||null;dirty();};
   const dm=document.getElementById('i-dispatch');dm.value=PO.dispatch_mode||'pickup';dm.onchange=()=>{PO.dispatch_mode=dm.value;dirty();};
@@ -169,7 +174,7 @@ function renderLines(){
       <td><input class="li num" data-i="${i}" data-k="quantity" value="${l.quantity??''}" placeholder="0"></td>
       <td><input class="li num" data-i="${i}" data-k="rate" value="${l.rate??''}" placeholder="0.00"></td>
       <td class="li-amt">${money(l.amount)}</td>
-      <td><input class="li" data-i="${i}" data-k="ordered_for" value="${esc(l.ordered_for||'')}" placeholder="SO / client"></td>
+      <td><div class="from-order">${l.ordered_for?`<span class="fo-num">#${esc(String(l.ordered_for))}</span>${orderName(l.ordered_for)?`<span class="fo-name">${esc(orderName(l.ordered_for))}</span>`:''}`:'<span class="fo-manual">Manual</span>'}</div></td>
       <td><button class="li-del" data-del="${i}">×</button></td>`;
     tb.appendChild(tr);
   });
@@ -188,7 +193,7 @@ function recalc(){document.getElementById('t-total').textContent=money(LINES.red
 
 async function save(silent){
   const msg=document.getElementById('msg');msg.textContent='Saving…';msg.className='msg';
-  const {error:e1}=await db.from('purchase_orders').update({supplier_id:PO.supplier_id,subject:PO.subject,quote_id:PO.quote_id,order_date:PO.order_date,in_hand_date:PO.in_hand_date,dispatch_mode:PO.dispatch_mode,status:PO.status}).eq('id',PO_ID);
+  const {error:e1}=await db.from('purchase_orders').update({supplier_id:PO.supplier_id,subject:PO.subject,order_date:PO.order_date,in_hand_date:PO.in_hand_date,dispatch_mode:PO.dispatch_mode,status:PO.status}).eq('id',PO_ID);
   if(e1){msg.textContent='Error: '+e1.message;msg.className='msg err';return false;}
   await db.from('po_items').delete().eq('po_id',PO_ID);
   if(LINES.length){

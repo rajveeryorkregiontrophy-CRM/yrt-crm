@@ -81,6 +81,14 @@
   .state{padding:44px;text-align:center;color:var(--text-3);}
   .msg{margin-right:auto;font-size:13px;color:var(--text-3);align-self:center;}.msg.ok{color:var(--approved);}.msg.err{color:var(--danger);}
   @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
+  .ov2{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:300;padding:20px;}
+  .ov2.open{display:flex;}
+  .cmod{background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;width:100%;max-width:400px;padding:0 0 22px;text-align:center;overflow:hidden;}
+  .cmod-ico{width:46px;height:46px;border-radius:11px;background:rgba(255,77,77,.14);color:var(--danger);display:grid;place-items:center;margin:24px auto 0;}.cmod-ico svg{width:24px;height:24px;}
+  .cmod-title{font-family:var(--fd);font-size:17px;font-weight:800;margin:16px 0 7px;}
+  .cmod-msg{font-size:13.5px;color:var(--text-2);padding:0 26px;line-height:1.5;}
+  .cmod-foot{display:flex;gap:10px;padding:22px 26px 0;}.cmod-foot .btn{flex:1;justify-content:center;}
+  .cmod-del{background:var(--danger);color:#fff;border-color:var(--danger);}
 </style>
 </head>
 <body>
@@ -115,6 +123,14 @@
   </div>
 </div>
 <div class="overlay" id="overlay"></div>
+<div class="ov2" id="confirm-ov">
+  <div class="cmod">
+    <div class="cmod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+    <div class="cmod-title" id="cmod-title">Delete?</div>
+    <div class="cmod-msg" id="cmod-msg"></div>
+    <div class="cmod-foot"><button class="btn" id="cmod-cancel">Cancel</button><button class="btn cmod-del" id="cmod-ok">Delete</button></div>
+  </div>
+</div>
 <aside class="drawer" id="drawer">
   <div class="drawer-head"><h3 id="d-title">New Supplier</h3><span class="sid" id="d-sid"></span><button class="x" id="d-close">×</button></div>
   <div class="drawer-body" id="d-body"></div>
@@ -228,7 +244,12 @@ async function save(){
 
 async function del(){
   if(!EDIT)return;
-  if(!confirm('Delete supplier "'+(EDIT.company_name||EDIT.short_name)+'"? This cannot be undone.'))return;
+  document.getElementById('cmod-msg').textContent='Delete supplier “'+(EDIT.company_name||EDIT.short_name)+'”? This cannot be undone.';
+  document.getElementById('confirm-ov').classList.add('open');
+}
+async function doDelete(){
+  document.getElementById('confirm-ov').classList.remove('open');
+  if(!EDIT)return;
   const {error}=await db.from('suppliers').delete().eq('id',EDIT.id);
   if(error){document.getElementById('d-msg').textContent=error.message;document.getElementById('d-msg').className='msg err';return;}
   closeDrawer();await load();
@@ -240,6 +261,8 @@ document.getElementById('d-cancel').addEventListener('click',closeDrawer);
 document.getElementById('overlay').addEventListener('click',closeDrawer);
 document.getElementById('d-save').addEventListener('click',save);
 document.getElementById('d-del').addEventListener('click',del);
+document.getElementById('cmod-cancel').addEventListener('click',()=>document.getElementById('confirm-ov').classList.remove('open'));
+document.getElementById('cmod-ok').addEventListener('click',doDelete);
 document.getElementById('search').addEventListener('input',render);
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
 load();
