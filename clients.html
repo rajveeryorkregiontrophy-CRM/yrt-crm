@@ -34,6 +34,9 @@
   .nav a .badge{margin-left:auto;background:var(--bg-4);color:var(--text);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;font-family:var(--fm);}
   .nav a.active .badge{background:rgba(0,0,0,.25);color:#15171c;}
   .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .logout-btn{margin-left:auto;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-3);width:32px;height:32px;border-radius:8px;cursor:pointer;display:grid;place-items:center;transition:.13s;}
+  .logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+  .logout-btn svg{width:16px;height:16px;}
   .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-weight:900;font-size:10px;}
 
   .main{display:flex;flex-direction:column;min-width:0;}
@@ -118,7 +121,7 @@
       <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Production Lineup</a>
       <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Reports</a>
     </nav>
-    <div class="sidebar-foot"><div class="avatar">YRT</div><div><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div></div>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
   </aside>
 
   <div class="main">
@@ -144,8 +147,8 @@
 </aside>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const db=createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
+import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+await requireAuth();
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Prince Edward Island','Quebec','Saskatchewan'];
 
@@ -269,6 +272,7 @@ document.getElementById('d-cancel').addEventListener('click',closeDrawer);
 document.getElementById('overlay').addEventListener('click',closeDrawer);
 document.getElementById('d-save').addEventListener('click',save);
 document.getElementById('search').addEventListener('input',render);
+const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
 load();
 </script>
 </body>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Lineup — YRT CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
+    --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
+    --brass:#e7ebf3;--brass-2:#f4f6fb;
+    --art:#ff6b35;--due:#ffb627;--approved:#3ddc84;--process:#3da5ff;--invoice:#b06bff;--danger:#ff4d4d;
+    --radius:11px;--radius-sm:8px;
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+  .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
+  .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
+  .brand .mark .amp{color:var(--brass-2);}
+  .brand .sub{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#aab0c0;margin-top:6px;font-weight:600;}
+  .nav{padding:14px 12px;flex:1;overflow-y:auto;}
+  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:14px 10px 6px;font-weight:700;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
+  .nav a:hover{background:var(--bg-3);color:#fff;}
+  .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
+  .nav a .ico{width:17px;height:17px;flex-shrink:0;}
+  .nav a .badge{margin-left:auto;background:var(--bg-4);color:var(--text);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;font-family:var(--fm);}
+  .nav a.active .badge{background:rgba(0,0,0,.25);color:#15171c;}
+  .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .logout-btn{margin-left:auto;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-3);width:32px;height:32px;border-radius:8px;cursor:pointer;display:grid;place-items:center;transition:.13s;}
+  .logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+  .logout-btn svg{width:16px;height:16px;}
+  .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-weight:900;font-size:10px;}
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;position:sticky;top:0;z-index:20;}
+  .topbar h1{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
+  .seg-toggle{margin-left:auto;display:flex;gap:6px;}
+  .seg-toggle .t{font-size:12.5px;padding:7px 14px;border-radius:20px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;}
+  .seg-toggle .t.active{background:var(--brass);color:#15171c;border-color:var(--brass);}
+  .content{padding:24px 26px 70px;max-width:1400px;width:100%;}
+  .lane{margin-bottom:26px;}
+  .lane-h{display:flex;align-items:center;gap:11px;margin-bottom:12px;}
+  .lane-h .dot{width:11px;height:11px;border-radius:50%;}
+  .lane-h h2{font-family:var(--fd);font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;}
+  .lane-h .n{font-family:var(--fm);font-size:12px;color:var(--text-2);background:var(--bg-3);padding:2px 9px;border-radius:20px;border:1px solid var(--line-2);}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:13px;}
+  .job{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:15px;cursor:pointer;transition:.13s;position:relative;overflow:hidden;}
+  .job::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+  .job:hover{border-color:var(--brass);transform:translateY(-1px);}
+  .job.l-send_art::before{background:var(--art);}.job.l-approval_due::before{background:var(--due);}
+  .job.l-approved::before{background:var(--approved);}.job.l-in_process::before{background:var(--process);}.job.l-invoice::before{background:var(--invoice);}
+  .job-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .job-id{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
+  .job-days{font-family:var(--fm);font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;}
+  .d-over{background:var(--danger);color:#fff;}.d-soon{background:var(--art);color:#1a0f08;}.d-ok{background:var(--bg-4);color:var(--text-2);}
+  .job-client{font-weight:700;color:#fff;font-size:14px;margin-bottom:3px;}
+  .job-subject{font-size:12.5px;color:#aab0c0;margin-bottom:10px;}
+  .job-foot{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--text-2);border-top:1px solid var(--line);padding-top:9px;}
+  .job-foot .pick{font-family:var(--fm);}
+  .job-staff{font-size:11px;background:var(--bg-4);padding:2px 8px;border-radius:20px;}
+  .state{padding:50px;text-align:center;color:var(--text-3);}
+  .empty-lane{font-size:12.5px;color:var(--text-3);padding:14px;border:1px dashed var(--line-2);border-radius:var(--radius);}
+  @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div><div class="sub">Operations</div></div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Sales Inbox</a>
+      <a href="quotes.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Quotes &amp; Inquiries</a>
+      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients</a>
+      <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Products</a>
+      <a href="invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <div class="nav-label">Production</div>
+      <a href="production.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Production Lineup</a>
+      <a href="reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Reports</a>
+    </nav>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><h1>Production Lineup</h1>
+      <div class="seg-toggle"><button class="t active" data-v="stage">By Stage</button><button class="t" data-v="deadline">By Deadline</button></div>
+    </header>
+    <div class="content" id="content"><div class="state">Loading production lineup…</div></div>
+  </div>
+</div>
+<script type="module">
+import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+await requireAuth();
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const today=new Date();today.setHours(0,0,0,0);
+const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return DOW[x.getDay()]+' '+x.getDate()+' '+MON[x.getMonth()];};
+const days=d=>{if(!d)return null;const x=new Date(d+'T00:00:00');return Math.round((x-today)/86400000);};
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const STAGES=[['send_art','Send Art','var(--art)'],['approval_due','Approval Due','var(--due)'],['approved','Approved','var(--approved)'],['in_process','In Process','var(--process)'],['invoice','Ready to Invoice','var(--invoice)']];
+const ST_LABEL={send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice'};
+let ALL=[],VIEW='stage';
+async function load(){
+  const {data,error}=await db.from('quotes').select('*, clients(company_name)').eq('record_type','order').neq('active_status','completed').order('pickup_date',{ascending:true});
+  if(error){document.getElementById('content').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
+  ALL=data||[];render();
+}
+function jobCard(o){
+  const n=days(o.pickup_date);
+  const dcls=n===null?'d-ok':n<0?'d-over':n<=2?'d-soon':'d-ok';
+  const dtxt=n===null?'—':n<0?Math.abs(n)+'d late':n===0?'today':n+'d';
+  return `<div class="job l-${o.art_status}" data-id="${o.id}">
+    <div class="job-top"><span class="job-id">#${o.stage_id}</span><span class="job-days ${dcls}">${dtxt}</span></div>
+    <div class="job-client">${esc(o.clients?.company_name||'—')}</div>
+    <div class="job-subject">${esc(o.subject||'—')}</div>
+    <div class="job-foot"><span class="pick">Pick: ${fmtD(o.pickup_date)}</span><span class="job-staff">${esc(o.serviced_by||'—')}</span></div>
+  </div>`;
+}
+function render(){
+  const c=document.getElementById('content');
+  if(!ALL.length){c.innerHTML='<div class="state">No active jobs in production.</div>';return;}
+  if(VIEW==='stage'){
+    c.innerHTML=STAGES.map(([key,label,color])=>{
+      const jobs=ALL.filter(o=>o.art_status===key);
+      return `<div class="lane">
+        <div class="lane-h"><span class="dot" style="background:${color}"></span><h2>${label}</h2><span class="n">${jobs.length}</span></div>
+        ${jobs.length?`<div class="cards">${jobs.map(jobCard).join('')}</div>`:`<div class="empty-lane">Nothing in this stage.</div>`}
+      </div>`;
+    }).join('');
+  }else{
+    // group by deadline buckets
+    const buckets=[['Overdue',o=>days(o.pickup_date)<0],['Today',o=>days(o.pickup_date)===0],['This Week',o=>{const n=days(o.pickup_date);return n>0&&n<=7;}],['Later',o=>{const n=days(o.pickup_date);return n===null||n>7;}]];
+    c.innerHTML=buckets.map(([label,fn])=>{
+      const jobs=ALL.filter(fn);
+      const color=label==='Overdue'?'var(--danger)':label==='Today'?'var(--art)':label==='This Week'?'var(--due)':'var(--text-3)';
+      return `<div class="lane"><div class="lane-h"><span class="dot" style="background:${color}"></span><h2>${label}</h2><span class="n">${jobs.length}</span></div>
+        ${jobs.length?`<div class="cards">${jobs.map(jobCard).join('')}</div>`:`<div class="empty-lane">Nothing here.</div>`}</div>`;
+    }).join('');
+  }
+  document.querySelectorAll('.job[data-id]').forEach(j=>j.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(j.dataset.id)));
+}
+document.querySelectorAll('.seg-toggle .t').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.seg-toggle .t').forEach(x=>x.classList.remove('active'));t.classList.add('active');VIEW=t.dataset.v;render();}));
+const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
+load();
+</script>
+</body>
+</html>

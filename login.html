@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;
+    --line:#262b33;--line-2:#353b47;--text:#eef0f4;--text-2:#c4cad6;--text-3:#8a92a2;
+    --accent:#e7ebf3;--accent-2:#f4f6fb;--danger:#ff5c5c;--ok:#3ddc84;
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;display:grid;place-items:center;padding:24px;-webkit-font-smoothing:antialiased;}
+  .card{width:100%;max-width:380px;}
+  .head{text-align:center;margin-bottom:30px;}
+  .logo{width:46px;height:46px;border-radius:11px;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text);display:grid;place-items:center;font-family:var(--fd);font-weight:800;font-size:15px;letter-spacing:.04em;margin:0 auto 18px;}
+  .head h1{font-family:var(--fd);font-size:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);}
+  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;padding:26px 26px 28px;}
+  .field{margin-bottom:15px;}
+  .field label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);font-weight:700;margin-bottom:7px;}
+  .field input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:9px;padding:11px 13px;font-size:14px;font-family:inherit;color:var(--text);transition:border-color .12s;}
+  .field input:focus{outline:none;border-color:var(--accent);}
+  .field input::placeholder{color:var(--text-3);}
+  .btn{width:100%;padding:12px;border-radius:9px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;border:none;background:var(--accent-2);color:#15171c;margin-top:8px;transition:filter .12s;}
+  .btn:hover{filter:brightness(.94);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .msg{margin-top:15px;font-size:13px;text-align:center;min-height:17px;}
+  .msg.err{color:var(--danger);}.msg.ok{color:var(--ok);}
+  .link{color:var(--text-3);font-size:12px;text-align:center;display:block;margin-top:18px;cursor:pointer;text-decoration:none;transition:color .12s;}
+  .link:hover{color:var(--text-2);}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div class="logo">YRT</div>
+      <h1>Sign in</h1>
+    </div>
+    <div class="panel">
+      <form id="login-form" autocomplete="on">
+        <div class="field"><label>Email</label><input type="email" id="email" autocomplete="username" required></div>
+        <div class="field"><label>Password</label><input type="password" id="password" autocomplete="current-password" required></div>
+        <button class="btn" type="submit" id="submit">Continue</button>
+      </form>
+      <div class="msg" id="msg"></div>
+      <a class="link" id="forgot">Forgot password?</a>
+    </div>
+  </div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const db = createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
+const msg=document.getElementById('msg');
+const setMsg=(t,cls='')=>{msg.textContent=t;msg.className='msg '+cls;};
+
+(async()=>{const {data}=await db.auth.getSession();if(data?.session)location.replace('index.html');})();
+
+document.getElementById('login-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const btn=document.getElementById('submit');
+  if(!email||!password){setMsg('Enter your email and password.','err');return;}
+  btn.disabled=true;setMsg('Checking…');
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(error){btn.disabled=false;setMsg(error.message.includes('Invalid')?'Incorrect email or password.':error.message,'err');return;}
+  location.replace('index.html');
+});
+
+document.getElementById('forgot').addEventListener('click',async()=>{
+  const email=document.getElementById('email').value.trim();
+  if(!email){setMsg('Enter your email above, then click this.','err');return;}
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/reset.html'});
+  setMsg(error?error.message:'Reset link sent to your email.',error?'err':'ok');
+});
+</script>
+</body>
+</html>
