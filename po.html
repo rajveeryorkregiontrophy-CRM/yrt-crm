@@ -154,8 +154,8 @@ function render(){
   sup.onchange=()=>{PO.supplier_id=sup.value||null;dirty();};
 
   const subj=document.getElementById('i-subject');subj.value=PO.subject||'';subj.oninput=()=>{PO.subject=subj.value;dirty();};
-  const dt=document.getElementById('i-date');dt.value=PO.order_date||'';dt.onchange=()=>{PO.order_date=dt.value||null;dirty();};
-  const ih=document.getElementById('i-inhand');ih.value=PO.in_hand_date||'';ih.onchange=()=>{PO.in_hand_date=ih.value||null;dirty();};
+  const dt=document.getElementById('i-date');dt.value=PO.order_date||'';dt.addEventListener('click',()=>{try{dt.showPicker&&dt.showPicker();}catch(e){}});dt.onchange=()=>{PO.order_date=dt.value||null;dirty();};
+  const ih=document.getElementById('i-inhand');ih.value=PO.in_hand_date||'';ih.addEventListener('click',()=>{try{ih.showPicker&&ih.showPicker();}catch(e){}});ih.onchange=()=>{PO.in_hand_date=ih.value||null;dirty();};
   const dm=document.getElementById('i-dispatch');dm.value=PO.dispatch_mode||'pickup';dm.onchange=()=>{PO.dispatch_mode=dm.value;dirty();};
 
   document.getElementById('add-line').onclick=addLine;

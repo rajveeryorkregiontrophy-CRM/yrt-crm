@@ -36,102 +36,123 @@ export async function makePDF(docType, data){
   const jsPDF = await loadJsPDF();
   const doc = new jsPDF({ unit:'pt', format:'letter' });
   const PW = 612, M = 40, RIGHT = PW - M;
-  let y = 44;
+  let y = 40;
 
-  doc.setFont('helvetica','bolditalic'); doc.setFontSize(19); doc.setTextColor(17,17,17);
-  doc.text(YRT.name, PW/2, y, {align:'center'}); y += 16;
-  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(34,34,34);
-  doc.text(YRT.addr, PW/2, y, {align:'center'}); y += 11;
-  doc.text(YRT.web, PW/2, y, {align:'center'}); y += 10;
-  doc.setDrawColor(17,17,17); doc.setLineWidth(1.6); doc.line(M, y, RIGHT, y); y += 22;
+  // ---- address line FIRST (top), then centered company name ----
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(20,20,20);
+  doc.text(YRT.addr, PW/2, y, {align:'center'}); y += 16;
+  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(0,0,0);
+  doc.text(YRT.name, PW/2, y, {align:'center'}); y += 13;
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(20,20,20);
+  doc.text(YRT.web, PW/2, y, {align:'center'}); y += 18;
 
+  // ---- bill-to (left) + doc meta (right) ----
   const metaTop = y;
-  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(17,17,17);
-  doc.text(data.client?.company||'', M, y);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(40,40,40);
-  let ly = y + 14;
-  (data.client?.lines||[]).forEach(l=>{ doc.text(String(l), M, ly); ly += 12; });
-  if(data.client?.tel){ doc.text(String(data.client.tel), M, ly); ly += 12; }
-  if(data.client?.email){ doc.text(String(data.client.email), M, ly); ly += 12; }
+  // right-side title
+  doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(0,0,0);
+  doc.text(docType, RIGHT, metaTop, {align:'right'});
 
-  doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(17,17,17);
-  doc.text(docType, RIGHT, metaTop+4, {align:'right'});
-  const meta = [['Number', String(data.number||'')],['Date', fmtLong(data.date)],['Serviced By', data.servicedBy||'']];
-  if(docType==='INVOICE' && data.dueDate) meta.push(['Due', fmtLong(data.dueDate)]);
-  if(data.clientContact) meta.push(['Client Contact', data.clientContact]);
-  meta.push(['Page', String(data.pageNo||1)]);
-  let my = metaTop + 22;
-  const metaLabelX = RIGHT - 150, metaValX = RIGHT;
-  doc.setFontSize(9.5);
+  // left: client block
+  doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(0,0,0);
+  doc.text(data.client?.company||'', M, metaTop);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(30,30,30);
+  let ly = metaTop + 13;
+  (data.client?.lines||[]).forEach(l=>{ doc.text(String(l), M, ly); ly += 11; });
+  if(data.client?.tel){ doc.text(String(data.client.tel), M, ly); ly += 11; }
+  if(data.client?.email){ doc.text(String(data.client.email), M, ly); ly += 11; }
+
+  // right: meta rows (label : value), values right-aligned with underline like FileMaker
+  const meta = [
+    ['Number:', String(data.number||'')],
+    ['Date:', fmtLong(data.date)],
+    ['Serviced By:', data.servicedBy||''],
+  ];
+  if(docType==='INVOICE' && data.dueDate) meta.push(['Due:', fmtLong(data.dueDate)]);
+  if(data.clientContact) meta.push(['Client Contact:', data.clientContact]);
+  meta.push(['Page #:', String(data.pageNo||1)]);
+  let my = metaTop + 16;
+  doc.setFontSize(9);
   meta.forEach(([k,v])=>{
-    doc.setFont('helvetica','normal'); doc.setTextColor(70,70,70);
-    doc.text(k, metaLabelX, my, {align:'left'});
-    doc.setFont('helvetica','bold'); doc.setTextColor(17,17,17);
-    doc.text(String(v), metaValX, my, {align:'right'});
-    my += 15;
+    doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
+    doc.text(k, RIGHT-130, my, {align:'left'});
+    doc.setFont('helvetica','bold');
+    doc.text(String(v), RIGHT, my, {align:'right'});
+    my += 13;
   });
-  y = Math.max(ly, my) + 14;
 
-  const cols = { item:M, code:M+78, desc:M+150, qty:M+322, unit:M+352, price:M+430, amount:RIGHT };
-  doc.setDrawColor(17,17,17); doc.setLineWidth(1.2); doc.line(M, y, RIGHT, y); y += 13;
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(17,17,17);
-  doc.text('ITEM', cols.item, y); doc.text('CODE', cols.code, y); doc.text('DESCRIPTION', cols.desc, y);
-  doc.text('QTY', cols.qty, y, {align:'right'}); doc.text('UNIT', cols.unit, y);
-  doc.text('UNIT PRICE', cols.price, y, {align:'right'}); doc.text('AMOUNT', cols.amount, y, {align:'right'});
-  y += 6; doc.setLineWidth(0.6); doc.setDrawColor(120,120,120); doc.line(M, y, RIGHT, y); y += 14;
+  y = Math.max(ly, my) + 10;
 
-  const descWidth = cols.qty - cols.desc - 12;
+  // ---- items table header ----
+  const cols = { item:M, code:M+82, desc:M+150, qty:M+340, unit:M+372, price:M+438, amount:RIGHT };
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(0,0,0);
+  doc.text('Item', cols.item, y);
+  doc.text('Code', cols.code, y);
+  doc.text('Description', cols.desc, y);
+  doc.text('Qty', cols.qty, y, {align:'right'});
+  doc.text('Unit', cols.unit, y);
+  doc.text('Unit Price', cols.price, y, {align:'right'});
+  doc.text('Amount', cols.amount, y, {align:'right'});
+  y += 4; doc.setDrawColor(0,0,0); doc.setLineWidth(0.6); doc.line(M, y, RIGHT, y); y += 14;
+
+  // ---- items ----
+  const descWidth = cols.qty - cols.desc - 14;
   let grossTotal = 0, discTotal = 0;
+  doc.setFontSize(9);
   (data.items||[]).forEach(it=>{
     const gross = Number(it.amount)||0; grossTotal += gross;
     const discPct = parseFloat(it.discountPct)||0;
     const waived = gross*(discPct/100); discTotal += waived;
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(26,26,26);
     const descLines = doc.splitTextToSize(String(it.description||''), descWidth);
-    const rowH = Math.max(descLines.length*11, 12);
-    doc.setFont('helvetica','bold'); doc.text(String(it.category||''), cols.item, y);
-    doc.setFont('courier','normal'); doc.setFontSize(8.5); doc.setTextColor(51,51,51);
+    const rowH = Math.max(descLines.length*10.5, 11);
+
+    doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
+    doc.text(String(it.category||''), cols.item, y);
     doc.text(String(it.code||''), cols.code, y);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(26,26,26);
     doc.text(descLines, cols.desc, y);
     doc.text(String(it.qty!=null?it.qty:''), cols.qty, y, {align:'right'});
-    doc.text(String(it.unit||''), cols.unit, y);
     doc.text(money(it.unitPrice), cols.price, y, {align:'right'});
     doc.text(money(gross), cols.amount, y, {align:'right'});
-    y += rowH + 4;
+    // unit sits just under qty area like the reference
+    doc.text(String(it.unit||''), cols.unit, y + (rowH>11? 11 : 0) );
+    y += rowH + 3;
+
     if(discPct>0){
-      doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(70,70,70);
+      doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
       doc.text('Discount', cols.item, y);
       doc.text('Special Discount '+discPct.toFixed(2)+'%', cols.desc, y);
-      doc.setTextColor(160,0,0); doc.setFont('helvetica','normal');
       doc.text('-'+money(waived), cols.amount, y, {align:'right'});
-      y += 14;
+      y += 12;
     }
-    doc.setDrawColor(216,216,216); doc.setLineWidth(0.4); doc.line(M, y-4, RIGHT, y-4);
+    y += 4;
   });
 
-  y += 16;
-  const tLabelX = RIGHT - 150, tValX = RIGHT;
-  const totalRow = (label,val,opts={})=>{
-    doc.setFont('helvetica', opts.bold?'bold':'normal');
-    doc.setFontSize(opts.big?13:10);
-    doc.setTextColor(opts.muted?85:17, opts.muted?85:17, opts.muted?85:17);
-    doc.text(label, tLabelX, y); doc.text(val, tValX, y, {align:'right'});
-    y += opts.big?20:15;
-  };
-  if(discTotal>0){ totalRow('Total', '$'+money(grossTotal), {muted:true}); totalRow('Discount', '-$'+money(discTotal), {muted:true}); }
-  totalRow('Sub Total', '$'+money(data.subtotal), {bold:true});
-  totalRow('G.S.T. / H.S.T.', '$'+money(data.hst), {bold:true});
-  doc.setDrawColor(17,17,17); doc.setLineWidth(1.4); doc.line(tLabelX, y-6, RIGHT, y-6); y += 6;
-  totalRow('Grand Total CAD', '$'+money(data.grandTotal), {bold:true, big:true});
+  // ---- totals block (right) ----
+  y += 10;
+  const tValX = RIGHT, tLabelX = RIGHT - 200;
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(0,0,0);
+  doc.text('Sub Total:', tLabelX, y, {align:'left'}); doc.text('$'+money(data.subtotal), tValX, y, {align:'right'}); y += 15;
+  doc.text('G.S.T. / H.S.T.:', tLabelX, y, {align:'left'}); doc.text('$'+money(data.hst), tValX, y, {align:'right'}); y += 15;
+  doc.text('Grand Total CAD:', tLabelX, y, {align:'left'}); doc.text('$'+money(data.grandTotal), tValX, y, {align:'right'}); y += 24;
 
-  const fy = 792 - 40;
-  doc.setDrawColor(150,150,150); doc.setLineWidth(0.5); doc.line(M, fy-12, RIGHT, fy-12);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(85,85,85);
-  doc.text(YRT.gst, M, fy); doc.text(YRT.div, M, fy+10);
-  doc.text(YRT.name, RIGHT, fy, {align:'right'}); doc.text(YRT.web, RIGHT, fy+10, {align:'right'});
+  // ---- Customer's Acceptance ----
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(0,0,0);
+  doc.text("Customer's Acceptance", M, y); 
+  doc.setDrawColor(0,0,0); doc.setLineWidth(0.4); doc.line(M+130, y, M+300, y);
+  y += 20;
 
-  const fname = (docType==='INVOICE'?'Invoice':docType==='PURCHASE ORDER'?'PurchaseOrder':'Quotation')+'-'+(data.number||'doc')+'.pdf';
+  // ---- Total / Discount summary line (like the reference bottom) ----
+  if(discTotal>0){
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(0,0,0);
+    doc.text('Total: $'+money(grossTotal)+'    Discount: $-'+money(discTotal), M, y);
+  }
+
+  // ---- footer ----
+  const fy = 792 - 36;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(0,0,0);
+  doc.text(YRT.gst, M, fy);
+  doc.text(YRT.div, M, fy+10);
+
+  const fname = (docType==='INVOICE'?'Invoice':docType==='PURCHASE ORDER'?'PurchaseOrder':'Quotation')+'.pdf';
   doc.save(fname);
 }
 
