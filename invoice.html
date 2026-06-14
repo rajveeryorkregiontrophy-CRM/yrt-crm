@@ -194,6 +194,8 @@ async function printInvoice(){
   let generateDocument;
   try{ ({generateDocument}=await import('./pdf.js')); }
   catch(err){ alert('Could not load the PDF generator (pdf.js). Make sure pdf.js is deployed alongside invoice.html.'); return; }
+  // simple choice: OK = Save as PDF, Cancel = send to printer
+  const mode = confirm('Save this invoice as a PDF?\n\nOK = Save as PDF\nCancel = Print') ? 'pdf' : 'print';
   const lines=[CLIENT.bill_address,CLIENT.bill_city,CLIENT.bill_postal,CLIENT.bill_province].filter(Boolean);
   generateDocument('INVOICE',{
     number:String(INV.invoice_number||''), date:INV.invoice_date, dueDate:INV.due_date, servicedBy:INV.serviced_by||'',
@@ -201,7 +203,7 @@ async function printInvoice(){
     client:{company:CLIENT.company_name||'', lines, tel:CONTACT?.tel1||'', email:CONTACT?.email1||''},
     items:ITEMS.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.net_amount})),
     subtotal:INV.subtotal||0, hst:INV.hst||0, grandTotal:INV.grand_total||0
-  });
+  }, mode);
 }
 load();
 </script>

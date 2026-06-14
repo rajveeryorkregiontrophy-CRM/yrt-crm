@@ -142,6 +142,10 @@
   .modal-btn-primary:hover{filter:brightness(1.04);}
   .modal-btn-danger{background:var(--danger);color:#fff;}
   .modal-foot.single{justify-content:center;}
+  .modal-foot.stacked{flex-direction:column;gap:9px;}
+  .modal-foot.stacked .btn,.modal-foot.stacked .modal-btn-primary{width:100%;}
+  .modal-plain{background:transparent;border-color:transparent;color:var(--text-3);}
+  .modal-plain:hover{color:var(--text);border-color:transparent;}
 </style>
 </head>
 <body>
@@ -335,6 +339,24 @@ function showModal({type='info',title='',msg='',confirmText='OK',cancelText=null
 }
 const confirmModal=(title,msg,opts={})=>showModal({type:opts.danger?'danger':'warn',title,msg,confirmText:opts.confirmText||'Confirm',cancelText:opts.cancelText||'Cancel',danger:opts.danger});
 const alertModal=(title,msg,type='info')=>showModal({type,title,msg,confirmText:'Got it'});
+
+// multi-option modal — returns the key of the button clicked (or null)
+function choiceModal(title,msg,buttons){
+  return new Promise(resolve=>{
+    const ov=document.getElementById('modal-overlay');
+    document.getElementById('modal-ico').className='modal-ico info';
+    document.getElementById('modal-ico').innerHTML=ICONS.info;
+    document.getElementById('modal-title').textContent=title;
+    document.getElementById('modal-msg').innerHTML=msg;
+    const foot=document.getElementById('modal-foot');
+    foot.className='modal-foot stacked';
+    foot.innerHTML=buttons.map(b=>`<button class="${b.primary?'modal-btn-primary':(b.plain?'btn modal-plain':'btn')}" data-k="${b.key}">${esc(b.label)}</button>`).join('');
+    const close=v=>{ov.classList.remove('open');setTimeout(()=>resolve(v),120);};
+    foot.querySelectorAll('button').forEach(btn=>btn.onclick=()=>close(btn.dataset.k));
+    ov.onclick=e=>{if(e.target===ov)close(null);};
+    ov.classList.add('open');
+  });
+}
 
 const params=new URLSearchParams(location.search);
 const ORDER_ID=params.get('id');
@@ -605,8 +627,12 @@ async function save(){
 
 async function printQuotation(){
   if(!LINES.length){await alertModal('Nothing to print','Add at least one line item before printing a quotation.','warn');return;}
-  const ok=await confirmModal('Print quotation?','This opens a print-ready quotation for #'+ORDER.stage_id+'. You can save it as a PDF or send it to your printer.',{confirmText:'Proceed',cancelText:'Cancel'});
-  if(!ok)return;
+  const choice=await choiceModal('Quotation #'+ORDER.stage_id,'How would you like to output this quotation?',[
+    {key:'pdf',label:'Save as PDF',primary:true},
+    {key:'print',label:'Print'},
+    {key:'cancel',label:'Cancel',plain:true}
+  ]);
+  if(!choice||choice==='cancel')return;
   let generateDocument;
   try{ ({generateDocument}=await import('./pdf.js')); }
   catch(err){ await alertModal('Couldn’t open PDF','The PDF generator (pdf.js) didn’t load. Make sure pdf.js is deployed alongside order.html.','danger'); return; }
@@ -619,7 +645,7 @@ async function printQuotation(){
     client:{company:c.company_name||'', lines, tel:ct.tel1||'', email:ct.email1||''},
     items:LINES.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.net_amount})),
     subtotal:calc.subtotal||0, hst:calc.hst||0, grandTotal:calc.grand_total||calc.grandTotal||0
-  });
+  }, choice);
 }
 
 async function deleteOrder(){
