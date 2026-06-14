@@ -73,7 +73,7 @@
   tbody tr:last-child td{border-bottom:none;}
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:6px 7px;border-radius:5px;font-size:13px;font-family:inherit;color:var(--ink);}
   .cb-cell{position:relative;}
-  .cb-menu{display:none;position:absolute;top:calc(100% + 2px);left:0;min-width:240px;max-width:320px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:50;overflow:hidden;max-height:260px;overflow-y:auto;}
+  .cb-menu{display:none;position:fixed;min-width:240px;max-width:340px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:9000;overflow:hidden;max-height:260px;overflow-y:auto;}
   .cb-menu.open{display:block;}
   .cb-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);}
   .cb-opt:last-child{border-bottom:none;}
@@ -88,6 +88,15 @@
   .lines-scroll{max-height:340px;overflow-y:auto;}
   .lines-scroll::-webkit-scrollbar{width:9px;}.lines-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2);}
   .lines-scroll thead th{position:sticky;top:0;background:var(--paper-2);z-index:2;}
+  /* inline totals under product listing (modern CRM style) */
+  .order-totals{display:flex;justify-content:flex-end;padding:16px 16px 18px;border-top:1px solid var(--line);margin-top:4px;}
+  .ot-inner{width:300px;}
+  .ot-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13.5px;}
+  .ot-row .ot-lbl{color:var(--muted);font-weight:500;}
+  .ot-row .ot-amt{font-family:var(--fm);font-weight:600;color:var(--ink);}
+  .ot-grand{border-top:2px solid var(--line-2);margin-top:6px;padding-top:12px;}
+  .ot-grand .ot-lbl{font-family:var(--fd);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:13px;color:var(--ink);}
+  .ot-grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:20px;color:var(--brass-2);}
   .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
   .cb-sup{text-overflow:ellipsis;}
   .sup-id-tag.in-po-tag{color:var(--danger);}
@@ -260,6 +269,14 @@
       </table>
       </div>
       <button class="add-line" id="add-line">+ Add line item</button>
+      <div class="order-totals">
+        <div class="ot-inner">
+          <div class="ot-row"><span class="ot-lbl">Subtotal</span><span class="ot-amt" id="t-sub">$0.00</span></div>
+          <div class="ot-row"><span class="ot-lbl">Discount</span><span class="ot-amt" id="t-disc">$0.00</span></div>
+          <div class="ot-row"><span class="ot-lbl">HST (13%)</span><span class="ot-amt" id="t-hst">$0.00</span></div>
+          <div class="ot-row ot-grand"><span class="ot-lbl">Grand Total</span><span class="ot-amt" id="t-grand">$0.00</span></div>
+        </div>
+      </div>
       <div class="meta-foot" id="meta"></div>
     </div>
   </div>
@@ -312,18 +329,6 @@
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-h"><h3>Totals</h3></div>
-      <div class="card-b">
-        <div class="totals">
-          <div class="t-row"><span class="lbl">Subtotal</span><span class="amt" id="t-sub">$0.00</span></div>
-          <div class="t-row"><span class="lbl">Discount</span><span class="amt" id="t-disc">$0.00</span></div>
-          <div class="t-row"><span class="lbl">HST (13%)</span><span class="amt" id="t-hst">$0.00</span></div>
-          <div class="t-row t-grand"><span class="lbl">Grand Total</span><span class="amt" id="t-grand">$0.00</span></div>
         </div>
       </div>
     </div>
@@ -584,6 +589,19 @@ function recompute(i,tr){
 }
 
 // ---- Combobox: type freely, see catalogue suggestions, click to autofill ----
+// position a fixed dropdown menu right under its input, flipping up if near the bottom
+function positionMenu(inp,menu){
+  const r=inp.getBoundingClientRect();
+  menu.style.left=r.left+'px';
+  menu.style.width=Math.max(r.width,240)+'px';
+  const spaceBelow=window.innerHeight-r.bottom;
+  if(spaceBelow<260 && r.top>260){
+    menu.style.top='';menu.style.bottom=(window.innerHeight-r.top+2)+'px';
+  }else{
+    menu.style.bottom='';menu.style.top=(r.bottom+2)+'px';
+  }
+}
+
 function wireCombo(inp,kind){
   const i=+inp.dataset.i;
   const menu=inp.parentElement.querySelector('.cb-menu');
@@ -610,6 +628,7 @@ function wireCombo(inp,kind){
       }).slice(0,8);
     }
     if(!matches.length){close();return;}
+    positionMenu(inp,menu);
     menu.innerHTML=matches.map((m,idx)=>{
       if(kind==='cat')return `<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.label)}</span>${m.code?`<span class="cb-side">${esc(m.code)}</span>`:''}</div>`;
       return `<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.style_number||'—')}</span><span class="cb-side">${esc(m.name||'')}</span></div>`;
@@ -656,6 +675,7 @@ function wireSupplierCombo(inp){
       return (s.company_name||s.short_name||'').toLowerCase().includes(q)||String(s.supplier_number||'').includes(q);
     }).slice(0,8);
     if(!matches.length){close();return;}
+    positionMenu(inp,menu);
     menu.innerHTML=matches.map((m,idx)=>`<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.company_name||m.short_name||'')}</span><span class="cb-side">#${esc(String(m.supplier_number||''))}</span></div>`).join('');
     menu.classList.add('open');
     menu.querySelectorAll('.cb-opt').forEach(opt=>opt.addEventListener('mousedown',e=>{
@@ -665,6 +685,8 @@ function wireSupplierCombo(inp){
       LINES[i]._supplier_number=m.supplier_number;
       inp.value=LINES[i]._supplier_name;
       close();renderLines();markDirty();
+      // auto-save so the item flows into the supplier's open PO without manual save
+      maybeAutoSyncPO(m.id);
     }));
   };
   inp.addEventListener('focus',open);
@@ -702,9 +724,9 @@ function updateSummary(){
   document.getElementById('sum-total').textContent=money(grand);
 }
 
-async function save(){
+async function save(silent){
   const msg=document.getElementById('save-msg');
-  msg.textContent='Saving…';msg.className='status-msg';
+  if(msg){msg.textContent=silent?'Adding to open PO…':'Saving…';msg.className='status-msg';}
   const c=ORDER._calc||{};
   // 1. update the quote
   const {error:e1}=await db.from('quotes').update({
@@ -714,7 +736,7 @@ async function save(){
     active_status:ORDER.active_status,subtotal:c.subtotal||0,discount_total:c.discount_total||0,
     hst:c.hst||0,grand_total:c.grand_total||0
   }).eq('id',ORDER_ID);
-  if(e1){msg.textContent='Error: '+e1.message;msg.className='status-msg err';return;}
+  if(e1){if(msg){msg.textContent='Error: '+e1.message;msg.className='status-msg err';}return;}
   // 2. replace line items (simple + reliable)
   await db.from('quote_items').delete().eq('quote_id',ORDER_ID);
   let insertedItems=[];
@@ -725,18 +747,29 @@ async function save(){
       amount:parseFloat(l.amount)||0,discount_pct:parseFloat(l.discount_pct)||0,net_amount:parseFloat(l.net_amount)||0,
       supplier_id:l.supplier_id||null,in_po:false,po_id:null}));
     const {data:ins,error:e2}=await db.from('quote_items').insert(rows).select();
-    if(e2){msg.textContent='Lines error: '+e2.message;msg.className='status-msg err';return;}
+    if(e2){if(msg){msg.textContent='Lines error: '+e2.message;msg.className='status-msg err';}return;}
     insertedItems=ins||[];
   }
   // 3. sync supplier lines into their open POs
   const warnings=await syncToPOs(insertedItems);
   DIRTY=false;
-  msg.textContent='Saved ✓';msg.className='status-msg saved';
-  if(warnings.length){
+  if(msg){msg.textContent='Saved ✓';msg.className='status-msg saved';}
+  // only surface the "no open PO" warnings on an explicit (non-silent) save
+  if(warnings.length && !silent){
     await alertModal('Saved — but check suppliers','Saved successfully. However:<br><br>'+warnings.map(w=>'• '+esc(w)).join('<br>'),'warn');
   }
   // reload to reflect the red "in PO" state
   await reloadLines();
+}
+
+// When a supplier with an open PO is chosen on a sales order, auto-save so the
+// line flows into that PO immediately — the user doesn't have to click Save.
+async function maybeAutoSyncPO(supplierId){
+  if(ORDER.record_type!=='order')return;
+  if(!supplierId)return;
+  const {data:openPOs}=await db.from('purchase_orders').select('id').eq('status','open').eq('supplier_id',supplierId).limit(1);
+  if(!openPOs||!openPOs.length)return;   // no open PO -> on-save warning handles it
+  await save(true);                       // silent save + sync
 }
 
 // Push each line that has a supplier with an OPEN PO into that PO. Returns warnings.
@@ -813,10 +846,14 @@ async function printQuotation(){
     subtotal:calc.subtotal||0, hst:calc.hst||0, grandTotal:calc.grand_total||calc.grandTotal||0
   };
   if(choice==='print'){ mod.printDoc('QUOTATION',payload); return; }
-  const saved=await mod.makePDF('QUOTATION',payload);
-  if(!saved)return;
-  const done=await confirmModal('Quotation saved','Did the quotation save successfully?',{confirmText:'Complete',cancelText:'Not yet'});
-  if(done){ location.href='index.html'; }
+  // PDF: keep offering the save until it succeeds or the user gives up
+  while(true){
+    const saved=await mod.makePDF('QUOTATION',payload);
+    if(!saved)return; // user cancelled the OS save dialog
+    const done=await confirmModal('Quotation saved','Did the quotation save successfully?',{confirmText:'Complete',cancelText:'Not yet'});
+    if(done){ location.href='index.html'; return; }
+    // "Not yet" -> loop and re-open the save dialog
+  }
 }
 
 async function deleteOrder(){

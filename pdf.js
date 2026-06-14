@@ -61,16 +61,16 @@ export async function makePDF(docType, data){
   const jsPDF = await loadJsPDF();
   const doc = new jsPDF({ unit:'pt', format:'letter' });
   const PW = 612, M = 40, RIGHT = PW - M;
-  let y = 48;
+  let y = 50;
 
   // ---- address line FIRST (top), then centered company name ----
   doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(20,20,20);
-  doc.text(YRT.addr, PW/2, y, {align:'center'}); y += 18;
-  doc.setFont('helvetica','bolditalic'); doc.setFontSize(21); doc.setTextColor(0,0,0);
-  doc.text(YRT.name, PW/2, y, {align:'center'}); y += 15;
+  doc.text(YRT.addr, PW/2, y, {align:'center'}); y += 22;
+  doc.setFont('helvetica','bolditalic'); doc.setFontSize(20); doc.setTextColor(0,0,0);
+  doc.text(YRT.name, PW/2, y, {align:'center'}); y += 16;
   doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(20,20,20);
-  doc.text(YRT.web, PW/2, y, {align:'center'}); y += 12;
-  doc.setDrawColor(0,0,0); doc.setLineWidth(1.4); doc.line(M, y, RIGHT, y); y += 26;
+  doc.text(YRT.web, PW/2, y, {align:'center'}); y += 14;
+  doc.setDrawColor(0,0,0); doc.setLineWidth(1.4); doc.line(M, y, RIGHT, y); y += 28;
 
   // ---- bill-to (left) + doc meta (right) ----
   const metaTop = y;

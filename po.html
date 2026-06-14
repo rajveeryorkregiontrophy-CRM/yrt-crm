@@ -246,15 +246,19 @@ async function savePDF(){
     subtotal:LINES.reduce((s,l)=>s+((parseFloat(l.quantity)||0)*(parseFloat(l.rate)||0)),0),
     hst:0, grandTotal:LINES.reduce((s,l)=>s+((parseFloat(l.quantity)||0)*(parseFloat(l.rate)||0)),0)
   };
-  const saved=await mod.makePDF('PURCHASE ORDER',payload);   // saves as "Purchase Order.pdf"
-  if(!saved)return;
-  if(alreadySent)return;   // re-download only; don't re-run the send flow
-  const done=await pConfirm('Purchase Order saved','Did the Purchase Order save successfully? Marking it complete will set this PO to <b>Sent</b> and remove it from Open POs.',{confirmText:'Complete',cancelText:'Not yet',type:'info'});
-  if(done){
-    PO.status='sent';
-    await save(true);
-    document.getElementById('msg').textContent='PO marked sent ✓';document.getElementById('msg').className='msg ok';
-    setTimeout(()=>location.href='po-list.html',700);
+  if(alreadySent){ await mod.makePDF('PURCHASE ORDER',payload); return; }   // re-download only
+  while(true){
+    const saved=await mod.makePDF('PURCHASE ORDER',payload);   // saves as "Purchase Order.pdf"
+    if(!saved)return;   // user cancelled the OS save dialog
+    const done=await pConfirm('Purchase Order saved','Did the Purchase Order save successfully? Marking it complete will set this PO to <b>Sent</b> and remove it from Open POs.',{confirmText:'Complete',cancelText:'Not yet',type:'info'});
+    if(done){
+      PO.status='sent';
+      await save(true);
+      document.getElementById('msg').textContent='PO marked sent ✓';document.getElementById('msg').className='msg ok';
+      setTimeout(()=>location.href='po-list.html',700);
+      return;
+    }
+    // "Not yet" -> loop and re-open the save dialog
   }
 }
 
