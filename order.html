@@ -627,15 +627,11 @@ async function save(){
 
 async function printQuotation(){
   if(!LINES.length){await alertModal('Nothing to print','Add at least one line item before printing a quotation.','warn');return;}
-  const choice=await choiceModal('Quotation #'+ORDER.stage_id,'How would you like to output this quotation?',[
-    {key:'pdf',label:'Save as PDF',primary:true},
-    {key:'print',label:'Print'},
-    {key:'cancel',label:'Cancel',plain:true}
-  ]);
-  if(!choice||choice==='cancel')return;
+  const ok=await confirmModal('Print quotation?','This opens a preview of quotation #'+ORDER.stage_id+'. From the preview you can save it as a PDF or send it to your printer.',{confirmText:'Proceed',cancelText:'Cancel'});
+  if(!ok)return;
   let generateDocument;
   try{ ({generateDocument}=await import('./pdf.js')); }
-  catch(err){ await alertModal('Couldn’t open PDF','The PDF generator (pdf.js) didn’t load. Make sure pdf.js is deployed alongside order.html.','danger'); return; }
+  catch(err){ await alertModal('Couldn’t open preview','The PDF generator (pdf.js) didn’t load. Make sure pdf.js is deployed alongside order.html.','danger'); return; }
   const c=ORDER.clients||{}; const ct=ORDER.contacts||{};
   const lines=[c.bill_address,c.bill_city,c.bill_postal,c.bill_province].filter(Boolean);
   const calc=ORDER._calc||{subtotal:ORDER.subtotal,hst:ORDER.hst,grandTotal:ORDER.grand_total};
@@ -645,7 +641,7 @@ async function printQuotation(){
     client:{company:c.company_name||'', lines, tel:ct.tel1||'', email:ct.email1||''},
     items:LINES.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.net_amount})),
     subtotal:calc.subtotal||0, hst:calc.hst||0, grandTotal:calc.grand_total||calc.grandTotal||0
-  }, choice);
+  });
 }
 
 async function deleteOrder(){

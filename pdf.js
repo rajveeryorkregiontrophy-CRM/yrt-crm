@@ -32,7 +32,7 @@ export function buildDocumentHTML(docType, data){
 
   const clientLines = (data.client?.lines||[]).map(l=>`<div>${esc(l)}</div>`).join('');
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(data.client?.company||docType)}</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title> </title>
   <style>
     @page { size: letter; margin: 0.5in; }
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -128,31 +128,66 @@ export function buildDocumentHTML(docType, data){
   </body></html>`;
 }
 
-// mode: 'print' -> open print dialog; 'pdf' -> open in a new tab so the user can Save as PDF
-export function generateDocument(docType, data, mode='print'){
-  const html = buildDocumentHTML(docType, data);
+// Opens a full preview of the document in a new tab with a Print / Save-as-PDF toolbar.
+// Uses a Blob URL (not about:blank) so the browser footer doesn't show "about:blank".
+export function generateDocument(docType, data, mode){
+  const docHtml = buildDocumentHTML(docType, data);
 
-  if(mode==='pdf'){
-    // open in a new tab; the print dialog there defaults to "Save as PDF"
-    const win = window.open('', '_blank');
-    if(!win){ alert('Please allow pop-ups to save the PDF.'); return; }
-    win.document.open(); win.document.write(html); win.document.close();
-    win.onload = ()=>{ setTimeout(()=>{ win.focus(); win.print(); }, 300); };
+  // If a specific mode is forced (legacy callers), honor it via hidden iframe for print.
+  if(mode==='print'){
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(iframe);
+    const d=iframe.contentWindow.document; d.open(); d.write(docHtml); d.close();
+    iframe.onload=()=>{ setTimeout(()=>{ iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(()=>iframe.remove(),1500); },250); };
     return;
   }
 
-  // print mode: hidden iframe -> browser print dialog
-  const iframe = document.createElement('iframe');
-  iframe.style.position='fixed'; iframe.style.right='0'; iframe.style.bottom='0';
-  iframe.style.width='0'; iframe.style.height='0'; iframe.style.border='0';
-  document.body.appendChild(iframe);
-  const doc = iframe.contentWindow.document;
-  doc.open(); doc.write(html); doc.close();
-  iframe.onload = ()=>{
-    setTimeout(()=>{
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      setTimeout(()=>document.body.removeChild(iframe), 1500);
-    }, 250);
-  };
+  // Default: open a preview page with a toolbar.
+  const previewHtml = buildPreviewPage(docHtml);
+  const blob = new Blob([previewHtml], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if(!win){ alert('Please allow pop-ups for this site to preview and save the document.'); URL.revokeObjectURL(url); return; }
+  // revoke shortly after load to free memory
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+
+// Wraps the document in a preview shell with a floating toolbar (Print / Save as PDF).
+function buildPreviewPage(docHtml){
+  // strip the doc's <html>/<head>/<body> wrappers and inline its <style> + body
+  const styleMatch = docHtml.match(/<style>([\s\S]*?)<\/style>/);
+  const bodyMatch  = docHtml.match(/<body>([\s\S]*?)<\/body>/);
+  const docStyle = styleMatch ? styleMatch[1] : '';
+  const docBody  = bodyMatch ? bodyMatch[1] : docHtml;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title> </title>
+  <style>
+    ${docStyle}
+    /* preview shell */
+    @media screen{
+      body{background:#3a3d44;padding:30px 16px 60px;}
+      .sheet{background:#fff;max-width:8.5in;margin:0 auto;padding:0.5in;box-shadow:0 8px 40px rgba(0,0,0,.4);}
+      .pv-bar{position:fixed;top:0;left:0;right:0;height:56px;background:#16181d;border-bottom:1px solid #414a5c;display:flex;align-items:center;justify-content:center;gap:12px;z-index:1000;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+      .pv-bar .t{position:absolute;left:20px;color:#c4cad6;font-family:Arial,sans-serif;font-size:13px;font-weight:600;}
+      .pv-btn{font-family:Arial,sans-serif;font-size:13.5px;font-weight:700;padding:10px 20px;border-radius:8px;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}
+      .pv-btn:hover{border-color:#9098a8;}
+      .pv-btn.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}
+      .pv-btn.primary:hover{filter:brightness(.95);}
+      body{padding-top:86px;}
+    }
+    /* when printing, hide the shell entirely — only the sheet prints */
+    @media print{
+      .pv-bar{display:none !important;}
+      body{background:#fff;padding:0;}
+      .sheet{box-shadow:none;max-width:none;margin:0;padding:0;}
+    }
+  </style></head>
+  <body>
+    <div class="pv-bar">
+      <span class="t">Preview — review before saving or printing</span>
+      <button class="pv-btn primary" onclick="window.print()">Save as PDF / Print</button>
+      <button class="pv-btn" onclick="window.close()">Close</button>
+    </div>
+    <div class="sheet">${docBody}</div>
+  </body></html>`;
 }
