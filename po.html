@@ -162,6 +162,28 @@ function render(){
   document.getElementById('btn-save').onclick=()=>save(false);
   document.getElementById('btn-pdf').onclick=savePDF;
   renderLines();
+
+  // sent/received/etc POs are view-only — lock all editing
+  if(PO.status!=='open'){ applyViewOnly(); }
+}
+
+function applyViewOnly(){
+  // disable every input/select in the editor
+  document.querySelectorAll('#wrap input, #wrap select').forEach(el=>{el.disabled=true;el.style.opacity='.85';el.style.cursor='default';});
+  // hide add-line and save buttons
+  const add=document.getElementById('add-line'); if(add) add.style.display='none';
+  const save=document.getElementById('btn-save'); if(save) save.style.display='none';
+  // repurpose the PDF button to just re-download (still allowed), relabel
+  const pdf=document.getElementById('btn-pdf'); if(pdf) pdf.textContent='Save as PDF';
+  // remove per-line delete buttons
+  document.querySelectorAll('.li-del').forEach(b=>b.style.display='none');
+  // show a view-only banner
+  if(!document.getElementById('vo-banner')){
+    const b=document.createElement('div');b.id='vo-banner';
+    b.style.cssText='background:rgba(61,165,255,.12);border:1px solid rgba(61,165,255,.35);color:#9ccbff;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;margin-bottom:14px;';
+    b.innerHTML='🔒 This Purchase Order has been sent and is view-only. No further changes can be made.';
+    const wrap=document.getElementById('wrap'); if(wrap&&wrap.firstChild) wrap.insertBefore(b,wrap.firstChild);
+  }
 }
 
 function renderLines(){
@@ -206,14 +228,67 @@ async function save(silent){
 }
 
 async function savePDF(){
-  if(!confirm('Save this PO as sent? It will leave the Open POs list. (PDF generation comes next — for now this marks it sent.)'))return;
-  PO.status='sent';
-  const ok=await save(true);
-  if(ok){document.getElementById('msg').textContent='PO marked sent ✓';document.getElementById('msg').className='msg ok';setTimeout(()=>location.href='index.html',700);}
+  if(!LINES.length){ await pConfirm('No items','Add at least one product before sending this PO.',{confirmText:'OK',cancelText:'Close',type:'warn'}); return; }
+  const alreadySent = PO.status!=='open';
+  if(!alreadySent){
+    const ok=await pConfirm('Proceed with this PO?','Are you sure you want to proceed? This Purchase Order uses <b>wholesale prices only</b>.',{confirmText:'Yes, proceed',cancelText:'Cancel',type:'warn'});
+    if(!ok)return;
+    await save(true);   // persist edits before generating
+  }
+  let mod;
+  try{ mod=await import('./pdf.js'); }
+  catch(err){ await pConfirm('Couldn’t load','The PDF generator (pdf.js) didn’t load.',{confirmText:'OK',cancelText:'Close',type:'warn'}); return; }
+  const sup=SUP.find(s=>s.id===PO.supplier_id)||{};
+  const payload={
+    number:String(PO.po_number), date:PO.order_date, servicedBy:'',
+    client:{company:sup.short_name||'', lines:[], tel:'', email:''},
+    items:LINES.map(l=>({category:l.category_name||'',code:l.part_no||l.style_number||'',description:l.product_name||l.description||'',qty:l.quantity,unit:'Pc',unitPrice:l.rate,amount:(parseFloat(l.quantity)||0)*(parseFloat(l.rate)||0),discountPct:0})),
+    subtotal:LINES.reduce((s,l)=>s+((parseFloat(l.quantity)||0)*(parseFloat(l.rate)||0)),0),
+    hst:0, grandTotal:LINES.reduce((s,l)=>s+((parseFloat(l.quantity)||0)*(parseFloat(l.rate)||0)),0)
+  };
+  const saved=await mod.makePDF('PURCHASE ORDER',payload);   // saves as "Purchase Order.pdf"
+  if(!saved)return;
+  if(alreadySent)return;   // re-download only; don't re-run the send flow
+  const done=await pConfirm('Purchase Order saved','Did the Purchase Order save successfully? Marking it complete will set this PO to <b>Sent</b> and remove it from Open POs.',{confirmText:'Complete',cancelText:'Not yet',type:'info'});
+  if(done){
+    PO.status='sent';
+    await save(true);
+    document.getElementById('msg').textContent='PO marked sent ✓';document.getElementById('msg').className='msg ok';
+    setTimeout(()=>location.href='po-list.html',700);
+  }
 }
 
 window.addEventListener('beforeunload',e=>{if(DIRTY){e.preventDefault();e.returnValue='';}});
 load();
+
+// ---- lightweight modal system ----
+function ensureModal(){
+  if(document.getElementById('pmodal-ov'))return;
+  const css=document.createElement('style');
+  css.textContent=`#pmodal-ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:400;padding:20px;}#pmodal-ov.open{display:flex;}#pmodal{background:#16181d;border:1px solid #414a5c;border-radius:14px;width:100%;max-width:410px;overflow:hidden;}#pmodal .ph{display:flex;gap:13px;align-items:flex-start;padding:22px 24px 0;}#pmodal .pi{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;}#pmodal .pi.warn{background:rgba(255,182,39,.15);color:#ffb627;}#pmodal .pi.info{background:rgba(61,165,255,.15);color:#3da5ff;}#pmodal .pi svg{width:22px;height:22px;}#pmodal .pt{font-family:Archivo,sans-serif;font-weight:800;font-size:16px;color:#eef0f4;margin-bottom:5px;}#pmodal .pm{font-size:13.5px;color:#c4cad6;line-height:1.5;}#pmodal .pf{display:flex;gap:10px;padding:20px 24px 22px;justify-content:flex-end;}#pmodal .pb{padding:10px 17px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}#pmodal .pb:hover{border-color:#9098a8;}#pmodal .pb.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}#pmodal .pb.plain{background:transparent;border-color:transparent;color:#9098a8;}`;
+  document.head.appendChild(css);
+  const ov=document.createElement('div');ov.id='pmodal-ov';
+  ov.innerHTML=`<div id="pmodal"><div class="ph"><div class="pi warn" id="pmodal-ico"></div><div><div class="pt" id="pmodal-title"></div><div class="pm" id="pmodal-msg"></div></div></div><div class="pf" id="pmodal-foot"></div></div>`;
+  document.body.appendChild(ov);
+}
+const PICONS={warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'};
+function pConfirm(title,msg,{confirmText='Confirm',cancelText='Cancel',type='warn'}={}){
+  ensureModal();
+  return new Promise(resolve=>{
+    document.getElementById('pmodal-ico').className='pi '+type;
+    document.getElementById('pmodal-ico').innerHTML=PICONS[type]||PICONS.warn;
+    document.getElementById('pmodal-title').textContent=title;
+    document.getElementById('pmodal-msg').innerHTML=msg;
+    const foot=document.getElementById('pmodal-foot');
+    foot.innerHTML=`<button class="pb plain" id="pm-cancel">${esc(cancelText)}</button><button class="pb primary" id="pm-ok">${esc(confirmText)}</button>`;
+    const ov=document.getElementById('pmodal-ov');
+    const close=v=>{ov.classList.remove('open');resolve(v);};
+    foot.querySelector('#pm-ok').onclick=()=>close(true);
+    foot.querySelector('#pm-cancel').onclick=()=>close(false);
+    ov.onclick=e=>{if(e.target===ov)close(false);};
+    ov.classList.add('open');
+  });
+}
 </script>
 </body>
 </html>

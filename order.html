@@ -793,8 +793,6 @@ async function reloadLines(){
 
 async function printQuotation(){
   if(!LINES.length){await alertModal('Nothing to print','Add at least one line item before printing a quotation.','warn');return;}
-  const ok=await confirmModal('Print quotation?','Continue to output quotation #'+ORDER.stage_id+'?',{confirmText:'Continue',cancelText:'Cancel'});
-  if(!ok)return;
   const choice=await choiceModal('Quotation #'+ORDER.stage_id,'How would you like to output it?',[
     {key:'pdf',label:'Save as PDF',primary:true},
     {key:'print',label:'Print'},
@@ -814,8 +812,11 @@ async function printQuotation(){
     items:LINES.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.amount,discountPct:l.discount_pct||0})),
     subtotal:calc.subtotal||0, hst:calc.hst||0, grandTotal:calc.grand_total||calc.grandTotal||0
   };
-  if(choice==='pdf'){ await mod.makePDF('QUOTATION',payload); }
-  else{ mod.printDoc('QUOTATION',payload); }
+  if(choice==='print'){ mod.printDoc('QUOTATION',payload); return; }
+  const saved=await mod.makePDF('QUOTATION',payload);
+  if(!saved)return;
+  const done=await confirmModal('Quotation saved','Did the quotation save successfully?',{confirmText:'Complete',cancelText:'Not yet'});
+  if(done){ location.href='index.html'; }
 }
 
 async function deleteOrder(){
