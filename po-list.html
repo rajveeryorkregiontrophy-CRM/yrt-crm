@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purchase Orders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
+    --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
+    --brass:#e7ebf3;--brass-2:#f4f6fb;--danger:#ff4d4d;--approved:#3ddc84;--process:#3da5ff;--due:#ffb627;
+    --radius:11px;--radius-sm:8px;
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+  .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
+  .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
+  .brand .mark .amp{color:var(--brass-2);}
+  .brand .sub{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#aab0c0;margin-top:6px;font-weight:600;}
+  .nav{padding:14px 12px;flex:1;overflow-y:auto;}
+  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:14px 10px 6px;font-weight:700;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
+  .nav a:hover{background:var(--bg-3);color:#fff;}
+  .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
+  .nav a .ico{width:17px;height:17px;flex-shrink:0;}
+  .nav a .badge{margin-left:auto;background:var(--bg-4);color:var(--text);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;font-family:var(--fm);}
+  .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .logout-btn{margin-left:auto;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-3);width:32px;height:32px;border-radius:8px;cursor:pointer;display:grid;place-items:center;transition:.13s;}
+  .logout-btn:hover{border-color:var(--danger);color:var(--danger);}.logout-btn svg{width:16px;height:16px;}
+  .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#f4f6fb,#cfd6e3);color:#15171c;display:grid;place-items:center;font-weight:900;font-size:10px;}
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;position:sticky;top:0;z-index:20;}
+  .topbar h1{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
+  .btn-primary{margin-left:auto;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;padding:10px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .content{padding:24px 26px 70px;max-width:1560px;width:100%;}
+  .tabs{display:flex;gap:6px;margin-bottom:18px;}
+  .tab{font-size:12.5px;padding:8px 15px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
+  .tab:hover{border-color:var(--text-3);color:var(--text);}
+  .tab.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
+  .tab .n{font-family:var(--fm);font-size:10.5px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.07);}
+  .tab.active .n{background:rgba(0,0,0,.15);}
+  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
+  .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
+  .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
+  .panel-head .count{font-family:var(--fd);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border:1px solid var(--line-2);padding:3px 9px;border-radius:5px;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;padding:11px 16px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
+  thead th.num{text-align:right;}
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr{cursor:pointer;transition:background .1s;}tbody tr:hover{background:var(--bg-3);}
+  tbody tr:last-child td{border-bottom:none;}
+  .po-num{font-family:var(--fm);font-size:13px;font-weight:700;color:#b9c1d2;}
+  .po-supplier{font-weight:700;color:#fff;}
+  .po-sub{font-size:12px;color:#8a92a2;margin-top:1px;}
+  .badge-st{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.02em;padding:5px 11px;border-radius:7px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);}
+  .badge-st::before{content:'';width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.4);}
+  .st-open{background:var(--due);color:#231803;}.st-sent{background:var(--process);color:#03101f;}
+  .st-received{background:var(--approved);color:#04130a;}.st-verified{background:#4ddbd0;color:#06201d;}.st-cancelled{background:#5a6273;color:#fff;}
+  .po-items-count{font-family:var(--fm);font-size:12px;color:var(--text-2);}
+  .po-total{font-family:var(--fm);font-weight:700;color:#fff;font-size:13.5px;}
+  .state{padding:44px;text-align:center;color:var(--text-3);}
+  /* modal for new PO */
+  .ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+  .ov.open{display:flex;}
+  .mod{background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;width:100%;max-width:420px;overflow:hidden;}
+  .mod-h{padding:18px 22px;border-bottom:1px solid var(--line);font-family:var(--fd);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:15px;}
+  .mod-b{padding:22px;}
+  .field{margin-bottom:14px;}label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;margin-bottom:6px;}
+  .in{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:var(--text);}
+  .in:focus{outline:none;border-color:var(--brass);}
+  .mod-f{padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;}
+  .btn{padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text);}
+  .btn:hover{border-color:var(--brass);}
+  .btn-save{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;}
+  .msg{font-size:12.5px;color:var(--danger);margin-top:8px;min-height:16px;}
+  @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div><div class="sub">Operations</div></div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Sales Timeline</a>
+      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients</a>
+      <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Products</a>
+      <a href="suppliers.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9M3 5h18v16H3z"/></svg>Suppliers</a>
+      <a href="po-list.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg>Purchase Orders <span class="badge" id="nav-po">0</span></a>
+      <a href="invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <div class="nav-label">Production</div>
+      <a href="production.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Production Lineup</a>
+      <a href="reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Reports</a>
+    </nav>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><h1>Purchase Orders</h1>
+      <button class="btn-primary" id="new-po"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>New Open PO</button>
+    </header>
+    <div class="content">
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-f="open">Open <span class="n" id="n-open">0</span></button>
+        <button class="tab" data-f="sent">Sent <span class="n" id="n-sent">0</span></button>
+        <button class="tab" data-f="all">All <span class="n" id="n-all">0</span></button>
+      </div>
+      <section class="panel">
+        <div class="panel-head"><h2 id="list-title">Open Purchase Orders</h2><span class="count" id="count">—</span></div>
+        <div id="wrap"><div class="state">Loading…</div></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov">
+  <div class="mod">
+    <div class="mod-h">New Open PO</div>
+    <div class="mod-b">
+      <div class="field"><label>Supplier</label><select class="in" id="m-supplier"></select></div>
+      <div class="field"><label>Subject (optional)</label><input class="in" id="m-subject" placeholder="e.g. Medal restock"></div>
+      <div class="msg" id="m-msg"></div>
+    </div>
+    <div class="mod-f"><button class="btn" id="m-cancel">Cancel</button><button class="btn btn-save" id="m-create">Create PO</button></div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase as db, requireAuth, signOut } from './auth.js';
+await requireAuth();
+
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
+const ST_LABEL={open:'Open',sent:'Sent',received:'Received',verified:'Verified',cancelled:'Cancelled'};
+
+let POS=[],SUPPLIERS=[],FILTER='open';
+
+async function load(){
+  const {data:pos,error}=await db.from('purchase_orders').select('*, suppliers(company_name,short_name,supplier_number), po_items(amount)').order('po_number',{ascending:false});
+  if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
+  POS=pos||[];
+  const {data:sups}=await db.from('suppliers').select('id,company_name,short_name,supplier_number').order('company_name');
+  SUPPLIERS=sups||[];
+  document.getElementById('n-open').textContent=POS.filter(p=>p.status==='open').length;
+  document.getElementById('n-sent').textContent=POS.filter(p=>p.status==='sent').length;
+  document.getElementById('n-all').textContent=POS.length;
+  document.getElementById('nav-po').textContent=POS.filter(p=>p.status==='open').length;
+  render();
+}
+
+function render(){
+  document.getElementById('list-title').textContent={open:'Open Purchase Orders',sent:'Sent Purchase Orders',all:'All Purchase Orders'}[FILTER];
+  let rows=POS.filter(p=>FILTER==='all'?true:p.status===FILTER);
+  document.getElementById('count').textContent=rows.length+(rows.length===1?' PO':' POs');
+  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No ${FILTER==='all'?'':FILTER+' '}purchase orders.${FILTER==='open'?' Click “New Open PO”, or save a sales order with a supplier that has an open PO.':''}</div>`;return;}
+  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:80px;">PO #</th><th>Supplier</th><th>Subject</th><th style="width:120px;">Date</th><th style="width:90px;">Items</th><th style="width:120px;">Status</th><th class="num" style="width:120px;">Total</th></tr></thead><tbody>${rows.map(p=>{
+    const sup=p.suppliers||{};const total=(p.po_items||[]).reduce((s,i)=>s+Number(i.amount||0),0);
+    return `<tr data-id="${p.id}"><td><span class="po-num">#${p.po_number}</span></td><td><div class="po-supplier">${esc(sup.company_name||sup.short_name||'—')}</div>${sup.supplier_number?`<div class="po-sub">Supplier #${sup.supplier_number}</div>`:''}</td><td><span class="po-sub" style="color:var(--text-2);">${esc(p.subject||'—')}</span></td><td><span class="po-sub">${fmtD(p.order_date)}</span></td><td><span class="po-items-count">${(p.po_items||[]).length} item${(p.po_items||[]).length===1?'':'s'}</span></td><td><span class="badge-st st-${p.status}">${ST_LABEL[p.status]||p.status}</span></td><td class="num"><span class="po-total">${money(total)}</span></td></tr>`;}).join('')}</tbody></table>`;
+  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='po.html?id='+encodeURIComponent(tr.dataset.id)));
+}
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  FILTER=t.dataset.f;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.f===FILTER));render();
+}));
+
+// New PO modal
+function openModal(){
+  const sel=document.getElementById('m-supplier');
+  sel.innerHTML='<option value="">— Select supplier —</option>'+SUPPLIERS.map(s=>`<option value="${s.id}">${esc(s.company_name||s.short_name||'')} (#${s.supplier_number||''})</option>`).join('');
+  document.getElementById('m-subject').value='';document.getElementById('m-msg').textContent='';
+  document.getElementById('ov').classList.add('open');
+}
+function closeModal(){document.getElementById('ov').classList.remove('open');}
+document.getElementById('new-po').addEventListener('click',openModal);
+document.getElementById('m-cancel').addEventListener('click',closeModal);
+document.getElementById('ov').addEventListener('click',e=>{if(e.target.id==='ov')closeModal();});
+
+document.getElementById('m-create').addEventListener('click',async()=>{
+  const supplier_id=document.getElementById('m-supplier').value;
+  if(!supplier_id){document.getElementById('m-msg').textContent='Please choose a supplier.';return;}
+  // prevent two open POs for the same supplier (keeps the sync unambiguous)
+  const existing=POS.find(p=>p.status==='open'&&p.supplier_id===supplier_id);
+  if(existing){document.getElementById('m-msg').textContent='This supplier already has an open PO (#'+existing.po_number+').';return;}
+  const subject=document.getElementById('m-subject').value.trim()||null;
+  const {data,error}=await db.from('purchase_orders').insert({supplier_id,subject,status:'open'}).select().single();
+  if(error){document.getElementById('m-msg').textContent=error.message;return;}
+  closeModal();location.href='po.html?id='+encodeURIComponent(data.id);
+});
+
+const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
+load();
+</script>
+</body>
+</html>

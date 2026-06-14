@@ -37,23 +37,32 @@
   .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
   .btn-brass:hover{background:#c3cad8;}
 
-  .wrap{max-width:1280px;margin:0 auto;padding:22px 24px 80px;}
-  .grid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start;}
+  .wrap{max-width:1340px;margin:0 auto;padding:16px 22px 80px;}
+  /* at-a-glance summary strip */
+  .summary{max-width:1340px;margin:0 auto;padding:0 22px;}
+  .summary-inner{display:flex;align-items:stretch;gap:0;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px;}
+  .sum-cell{padding:11px 18px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;min-width:0;}
+  .sum-cell:last-child{border-right:none;}
+  .sum-cell .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .sum-cell .v{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sum-cell.grow{flex:1;}
+  .sum-cell .v.accent{color:var(--brass-2);font-family:var(--fm);}
+  .grid{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start;}
   @media(max-width:1000px){.grid{grid-template-columns:1fr;}}
 
-  .card{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:18px;overflow:hidden;}
-  .card-h{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .card{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:13px;overflow:visible;}
+  .card-h{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
   .card-h h3{font-family:var(--font-display);font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#aab2c4;}
-  .card-b{padding:18px;}
+  .card-b{padding:14px 16px;}
 
   /* client header block */
-  .client-block{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;}
-  .field{margin-bottom:13px;}
+  .client-block{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .field{margin-bottom:10px;}
   .field label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:4px;}
   .field .val{font-size:14px;font-weight:500;}
   .field .val.big{font-size:17px;font-weight:700;font-family:var(--font-display);}
   .field .val.mono{font-family:var(--font-mono);}
-  .field-row{display:flex;gap:20px;}
+  .field-row{display:flex;gap:14px;}
   .field-row .field{flex:1;}
 
   /* line items */
@@ -71,6 +80,13 @@
   .cb-opt:hover{background:var(--bg-3);}
   .cb-opt .cb-main{font-weight:600;color:var(--text);font-size:13px;}
   .cb-opt .cb-side{font-family:var(--fm);font-size:11px;color:var(--text-3);white-space:nowrap;}
+  .disc-cell{white-space:nowrap;}
+  .li-disc{background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:5px 6px;font-size:12px;font-family:inherit;cursor:pointer;}
+  .li-disc:focus{outline:none;border-color:var(--brass);}
+  .disc-waived{font-family:var(--fm);font-size:10.5px;color:var(--danger);margin-top:3px;}
+  .sup-id-tag{font-family:var(--fm);font-size:10px;color:var(--brass-2);margin-top:2px;font-weight:700;}
+  .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
+  .sup-id-tag.in-po-tag{color:var(--danger);}
   .li-input:hover{border-color:var(--line-2);}
   .li-input:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li-input.num{text-align:right;font-family:var(--font-mono);}
@@ -85,7 +101,7 @@
   .status-pick{display:flex;flex-direction:column;gap:13px;}
   .seg{display:flex;flex-direction:column;gap:7px;}
   .seg label{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;}
-  select.input,input.input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--ink);}
+  select.input,input.input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:7px 10px;font-size:13px;font-family:inherit;color:var(--ink);}
   select.input:focus,input.input:focus{outline:none;border-color:var(--brass-2);}
 
   .badge-st{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;text-transform:uppercase;font-family:var(--font-display);}
@@ -171,6 +187,16 @@
   </div>
 </header>
 
+<div class="summary" id="summary-wrap" style="display:none;">
+  <div class="summary-inner">
+    <div class="sum-cell grow"><div class="k">Client</div><div class="v" id="sum-client">—</div></div>
+    <div class="sum-cell"><div class="k">Pick-up</div><div class="v" id="sum-pickup">—</div></div>
+    <div class="sum-cell"><div class="k">Event</div><div class="v" id="sum-event">—</div></div>
+    <div class="sum-cell"><div class="k">Stage</div><div class="v" id="sum-stage">—</div></div>
+    <div class="sum-cell"><div class="k">Grand Total</div><div class="v accent" id="sum-total">$0.00</div></div>
+  </div>
+</div>
+
 <div class="wrap" id="wrap">
   <div class="state">Loading order…</div>
 </div>
@@ -217,9 +243,11 @@
           <th style="width:150px;">Category</th>
           <th style="width:130px;">Style #</th>
           <th>Description</th>
+          <th style="width:130px;">Supplier</th>
           <th class="num" style="width:54px;">Qty</th>
           <th style="width:48px;">Unit</th>
           <th class="num" style="width:84px;">Unit Price</th>
+          <th style="width:96px;">Discount</th>
           <th class="num" style="width:92px;">Amount</th>
           <th style="width:30px;"></th>
         </tr></thead>
@@ -361,7 +389,7 @@ function choiceModal(title,msg,buttons){
 const params=new URLSearchParams(location.search);
 const ORDER_ID=params.get('id');
 
-let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[];
+let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[], SUPPLIERS=[];
 
 function markDirty(){DIRTY=true;const m=document.getElementById('save-msg');m.textContent='Unsaved changes';m.className='status-msg';}
 
@@ -372,11 +400,15 @@ async function load(){
     .eq('id',ORDER_ID).single();
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load this order.<br>${error?.message||''}</div>`;return;}
   ORDER=data;
-  const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
-  LINES=items||[];
-  // load product catalogue for line-item comboboxes
+  // load catalogues first (needed to resolve line-item displays)
   const {data:prods}=await db.from('products').select('category_code,category_name,style_number,name,unit,base_price').order('category_name').order('name');
   PRODUCTS=prods||[];
+  const {data:sups}=await db.from('suppliers').select('id,supplier_number,company_name,short_name').order('company_name');
+  SUPPLIERS=sups||[];
+  const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
+  LINES=items||[];
+  // resolve supplier display info for any line that has a supplier_id
+  LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.company_name||s.short_name||''; l._supplier_number=s.supplier_number; } } });
   render();
 }
 
@@ -401,6 +433,8 @@ function render(){
 
   document.getElementById('t-id').textContent='#'+ORDER.stage_id;
   document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;
+  document.getElementById('summary-wrap').style.display='block';
+  updateSummary();
   applyRecordType();
 
   // record type switcher
@@ -409,7 +443,7 @@ function render(){
     b.addEventListener('click',()=>{
       ORDER.record_type=b.dataset.r;
       document.querySelectorAll('.rt').forEach(x=>x.classList.toggle('on',x.dataset.r===ORDER.record_type));
-      applyRecordType();markDirty();
+      applyRecordType();updateSummary();markDirty();
     });
   });
 
@@ -491,13 +525,20 @@ function renderLines(){
   tb.innerHTML='';
   LINES.forEach((ln,i)=>{
     const tr=document.createElement('tr');
+    const discOpts=[0,5,7.5,10,12.5,15,20,25,50,75,100];
+    const waived=((parseFloat(ln.amount)||0)*((parseFloat(ln.discount_pct)||0)/100));
     tr.innerHTML=`
       <td class="cb-cell"><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Category" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
       <td class="cb-cell"><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Style #" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
       <td><input class="li-input" value="${esc(ln.description||'')}" data-i="${i}" data-k="description" placeholder="Description"></td>
+      <td class="cb-cell ${ln.in_po?'in-po':''}"><input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-id-tag ${ln.in_po?'in-po-tag':''}">#${esc(String(ln._supplier_number))}${ln.in_po?' • IN PO':''}</div>`:''}</td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
       <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
+      <td class="disc-cell">
+        <select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
+        ${waived>0?`<div class="disc-waived">−${money(waived)}</div>`:''}
+      </td>
       <td class="li-amt">${money(ln.net_amount)}</td>
       <td><button class="li-del" data-del="${i}">×</button></td>`;
     tb.appendChild(tr);
@@ -511,9 +552,20 @@ function renderLines(){
       recompute(i,inp.closest('tr'));markDirty();
     });
   });
+  // discount dropdown
+  tb.querySelectorAll('.li-disc').forEach(sel=>{
+    sel.addEventListener('change',()=>{
+      const i=+sel.dataset.i;
+      LINES[i].discount_pct=parseFloat(sel.value)||0;
+      LINES[i].amount=(parseFloat(LINES[i].quantity)||0)*(parseFloat(LINES[i].unit_price)||0);
+      LINES[i].net_amount=LINES[i].amount-(LINES[i].amount*(LINES[i].discount_pct/100));
+      renderLines();recalc();markDirty();
+    });
+  });
   // comboboxes
   tb.querySelectorAll('.cb-cat').forEach(inp=>wireCombo(inp,'cat'));
   tb.querySelectorAll('.cb-style').forEach(inp=>wireCombo(inp,'style'));
+  tb.querySelectorAll('.cb-sup').forEach(inp=>wireSupplierCombo(inp));
   tb.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>{LINES.splice(+b.dataset.del,1);renderLines();recalc();markDirty();}));
   recalc();
 }
@@ -586,6 +638,39 @@ function wireCombo(inp,kind){
   inp.addEventListener('blur',()=>setTimeout(close,120));
 }
 
+// Supplier combobox — type to search suppliers; pick one to set supplier_id + show its #ID.
+function wireSupplierCombo(inp){
+  const i=+inp.dataset.i;
+  const menu=inp.parentElement.querySelector('.cb-menu');
+  const close=()=>{menu.classList.remove('open');menu.innerHTML='';};
+  const open=()=>{
+    const q=inp.value.toLowerCase().trim();
+    const matches=SUPPLIERS.filter(s=>{
+      if(!q)return true;
+      return (s.company_name||s.short_name||'').toLowerCase().includes(q)||String(s.supplier_number||'').includes(q);
+    }).slice(0,8);
+    if(!matches.length){close();return;}
+    menu.innerHTML=matches.map((m,idx)=>`<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.company_name||m.short_name||'')}</span><span class="cb-side">#${esc(String(m.supplier_number||''))}</span></div>`).join('');
+    menu.classList.add('open');
+    menu.querySelectorAll('.cb-opt').forEach(opt=>opt.addEventListener('mousedown',e=>{
+      e.preventDefault();const m=matches[+opt.dataset.idx];
+      LINES[i].supplier_id=m.id;
+      LINES[i]._supplier_name=m.company_name||m.short_name||'';
+      LINES[i]._supplier_number=m.supplier_number;
+      inp.value=LINES[i]._supplier_name;
+      close();renderLines();markDirty();
+    }));
+  };
+  inp.addEventListener('focus',open);
+  inp.addEventListener('input',()=>{
+    LINES[i]._supplier_name=inp.value;
+    // typed a custom name — clear the linked id unless they pick from the list
+    LINES[i].supplier_id=null;LINES[i]._supplier_number=null;
+    open();markDirty();
+  });
+  inp.addEventListener('blur',()=>setTimeout(close,120));
+}
+
 function addLine(){LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
 
 function recalc(){
@@ -593,10 +678,22 @@ function recalc(){
   const disc=LINES.reduce((s,l)=>s+((parseFloat(l.amount)||0)*((parseFloat(l.discount_pct)||0)/100)),0);
   const net=sub-disc;const hst=net*HST_RATE;const grand=net+hst;
   document.getElementById('t-sub').textContent=money(sub);
-  document.getElementById('t-disc').textContent=money(disc);
+  document.getElementById('t-disc').textContent=disc>0?'−'+money(disc):money(0);
   document.getElementById('t-hst').textContent=money(hst);
   document.getElementById('t-grand').textContent=money(grand);
   ORDER._calc={subtotal:sub,discount_total:disc,hst,grand_total:grand};
+  updateSummary();
+}
+
+function updateSummary(){
+  const g=document.getElementById('sum-client');if(!g)return;
+  const c=ORDER.clients||{};
+  g.textContent=c.company_name||'—';
+  document.getElementById('sum-pickup').textContent=fmtD(ORDER.pickup_date);
+  document.getElementById('sum-event').textContent=fmtD(ORDER.event_date);
+  document.getElementById('sum-stage').innerHTML=ORDER.record_type==='order'?`<span class="badge-st st-${ORDER.art_status}" style="font-size:10px;padding:3px 8px;">${label(ORDER.art_status)}</span>`:({inquiry:'Inquiry',quote:'Quotation'}[ORDER.record_type]||'—');
+  const grand=(ORDER._calc&&ORDER._calc.grand_total)||0;
+  document.getElementById('sum-total').textContent=money(grand);
 }
 
 async function save(){
@@ -614,15 +711,76 @@ async function save(){
   if(e1){msg.textContent='Error: '+e1.message;msg.className='status-msg err';return;}
   // 2. replace line items (simple + reliable)
   await db.from('quote_items').delete().eq('quote_id',ORDER_ID);
+  let insertedItems=[];
   if(LINES.length){
     const rows=LINES.map((l,idx)=>({quote_id:ORDER_ID,line_order:idx+1,category_code:l.category_code||null,
       category_name:l.category_name||null,style_number:l.style_number||null,description:l.description||null,
       quantity:parseFloat(l.quantity)||0,unit:l.unit||'Pc',unit_price:parseFloat(l.unit_price)||0,
-      amount:parseFloat(l.amount)||0,discount_pct:parseFloat(l.discount_pct)||0,net_amount:parseFloat(l.net_amount)||0}));
-    const {error:e2}=await db.from('quote_items').insert(rows);
+      amount:parseFloat(l.amount)||0,discount_pct:parseFloat(l.discount_pct)||0,net_amount:parseFloat(l.net_amount)||0,
+      supplier_id:l.supplier_id||null,in_po:false,po_id:null}));
+    const {data:ins,error:e2}=await db.from('quote_items').insert(rows).select();
     if(e2){msg.textContent='Lines error: '+e2.message;msg.className='status-msg err';return;}
+    insertedItems=ins||[];
   }
-  DIRTY=false;msg.textContent='Saved ✓';msg.className='status-msg saved';
+  // 3. sync supplier lines into their open POs
+  const warnings=await syncToPOs(insertedItems);
+  DIRTY=false;
+  msg.textContent='Saved ✓';msg.className='status-msg saved';
+  if(warnings.length){
+    await alertModal('Saved — but check suppliers','Saved successfully. However:<br><br>'+warnings.map(w=>'• '+esc(w)).join('<br>'),'warn');
+  }
+  // reload to reflect the red "in PO" state
+  await reloadLines();
+}
+
+// Push each line that has a supplier with an OPEN PO into that PO. Returns warnings.
+async function syncToPOs(insertedItems){
+  const warnings=[];
+  // group lines by supplier_id (only those with a supplier and a quantity)
+  const bySup={};
+  insertedItems.forEach(it=>{ if(it.supplier_id&&Number(it.quantity)>0){ (bySup[it.supplier_id]=bySup[it.supplier_id]||[]).push(it); } });
+  const supIds=Object.keys(bySup);
+  if(!supIds.length)return warnings;
+
+  // find open POs for these suppliers
+  const {data:openPOs}=await db.from('purchase_orders').select('id,po_number,supplier_id').eq('status','open').in('supplier_id',supIds);
+  const poBySup={};(openPOs||[]).forEach(p=>{poBySup[p.supplier_id]=p;});
+
+  for(const sid of supIds){
+    const po=poBySup[sid];
+    const sup=SUPPLIERS.find(s=>s.id===sid);
+    const supName=sup?(sup.company_name||sup.short_name):'this supplier';
+    if(!po){
+      warnings.push(supName+' has no open PO — those items were not added to a PO. Create an open PO for them on the Purchase Orders page.');
+      continue;
+    }
+    // remove any existing po_items previously sourced from THIS order for this PO (avoid duplicates)
+    const srcIds=bySup[sid].map(x=>x.id);
+    await db.from('po_items').delete().eq('po_id',po.id).eq('ordered_for',ORDER.stage_id?String(ORDER.stage_id):'');
+    // insert fresh po_items from these lines
+    const poRows=bySup[sid].map((it,idx)=>({
+      po_id:po.id, line_order:idx+1, source_quote_item_id:it.id,
+      style_number:it.style_number||null, category_name:it.category_name||null,
+      part_no:it.style_number||null, product_name:it.description||null, description:it.description||null,
+      quantity:Number(it.quantity)||0, rate:Number(it.unit_price)||0, amount:(Number(it.quantity)||0)*(Number(it.unit_price)||0),
+      ordered_for:ORDER.stage_id?String(ORDER.stage_id):null
+    }));
+    if(poRows.length){
+      const {error}=await db.from('po_items').insert(poRows);
+      if(error){warnings.push('Could not add items to PO #'+po.po_number+': '+error.message);continue;}
+      // mark the quote_items as in_po (red)
+      const itemIds=bySup[sid].map(x=>x.id);
+      await db.from('quote_items').update({in_po:true,po_id:po.id}).in('id',itemIds);
+    }
+  }
+  return warnings;
+}
+
+async function reloadLines(){
+  const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
+  LINES=items||[];
+  LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.company_name||s.short_name||''; l._supplier_number=s.supplier_number; } } });
+  renderLines();recalc();
 }
 
 async function printQuotation(){
@@ -639,7 +797,7 @@ async function printQuotation(){
     number:String(ORDER.stage_id), date:ORDER.quote_date, servicedBy:ORDER.serviced_by||'',
     clientContact:((ct.first_name||'')+' '+(ct.last_name||'')).trim(), pageNo:1,
     client:{company:c.company_name||'', lines, tel:ct.tel1||'', email:ct.email1||''},
-    items:LINES.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.net_amount})),
+    items:LINES.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.amount,discountPct:l.discount_pct||0})),
     subtotal:calc.subtotal||0, hst:calc.hst||0, grandTotal:calc.grand_total||calc.grandTotal||0
   });
 }
