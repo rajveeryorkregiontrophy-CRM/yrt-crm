@@ -118,9 +118,40 @@
   .save-bar .status-msg{margin-right:auto;font-size:13px;color:var(--muted);}
   .save-bar .status-msg.saved{color:var(--st-approved);}
   .save-bar .status-msg.err{color:var(--danger);}
+  /* white calendar icon + full-field click */
+  input[type="date"]{cursor:pointer;}
+  input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.85;cursor:pointer;}
+  input[type="date"]:hover::-webkit-calendar-picker-indicator{opacity:1;}
+
+  /* ---- In-app modal system ---- */
+  .modal-overlay{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .16s;z-index:200;padding:20px;}
+  .modal-overlay.open{opacity:1;pointer-events:auto;}
+  .modal{background:var(--paper-2);border:1px solid var(--line-strong);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.6);width:100%;max-width:420px;transform:translateY(8px) scale(.98);transition:transform .16s;overflow:hidden;}
+  .modal-overlay.open .modal{transform:translateY(0) scale(1);}
+  .modal-ico{width:46px;height:46px;border-radius:11px;display:grid;place-items:center;margin:22px auto 0;}
+  .modal-ico svg{width:24px;height:24px;}
+  .modal-ico.warn{background:rgba(255,182,39,.14);color:var(--due);}
+  .modal-ico.danger{background:rgba(255,77,77,.14);color:var(--danger);}
+  .modal-ico.info{background:rgba(61,165,255,.14);color:var(--process);}
+  .modal-body{padding:16px 26px 4px;text-align:center;}
+  .modal-title{font-family:var(--fd);font-size:17px;font-weight:800;color:var(--text);margin-bottom:7px;letter-spacing:.01em;}
+  .modal-msg{font-size:13.5px;color:var(--text-2);line-height:1.55;}
+  .modal-foot{display:flex;gap:10px;padding:22px 26px;}
+  .modal-foot .btn{flex:1;justify-content:center;padding:11px;}
+  .modal-btn-primary{flex:1;justify-content:center;padding:11px;border-radius:var(--radius-sm);font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;border:none;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;}
+  .modal-btn-primary:hover{filter:brightness(1.04);}
+  .modal-btn-danger{background:var(--danger);color:#fff;}
+  .modal-foot.single{justify-content:center;}
 </style>
 </head>
 <body>
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-ico" id="modal-ico"></div>
+    <div class="modal-body"><div class="modal-title" id="modal-title"></div><div class="modal-msg" id="modal-msg"></div></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
 
 <header class="topbar">
   <a class="back" href="index.html">
@@ -264,7 +295,7 @@
 
 <div class="save-bar">
   <span class="status-msg" id="save-msg">No changes</span>
-  <button class="btn" onclick="location.href='index.html'">Cancel</button>
+  <button class="btn" id="btn-cancel">Cancel</button>
   <button class="btn-dark btn" id="btn-save">Save Order</button>
 </div>
 
@@ -277,6 +308,34 @@ const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Ap
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return DOW[x.getDay()]+', '+x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+
+// ---- In-app modal helpers (replace browser confirm/alert) ----
+const ICONS={
+  warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  danger:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+};
+function showModal({type='info',title='',msg='',confirmText='OK',cancelText=null,danger=false}){
+  return new Promise(resolve=>{
+    const ov=document.getElementById('modal-overlay');
+    document.getElementById('modal-ico').className='modal-ico '+type;
+    document.getElementById('modal-ico').innerHTML=ICONS[type]||ICONS.info;
+    document.getElementById('modal-title').textContent=title;
+    document.getElementById('modal-msg').innerHTML=msg;
+    const foot=document.getElementById('modal-foot');
+    foot.className='modal-foot'+(cancelText?'':' single');
+    foot.innerHTML=(cancelText?`<button class="btn" id="m-cancel">${esc(cancelText)}</button>`:'')+
+      `<button class="${danger?'modal-btn-primary modal-btn-danger':'modal-btn-primary'}" id="m-ok">${esc(confirmText)}</button>`;
+    const close=v=>{ov.classList.remove('open');setTimeout(()=>resolve(v),120);};
+    foot.querySelector('#m-ok').onclick=()=>close(true);
+    if(cancelText)foot.querySelector('#m-cancel').onclick=()=>close(false);
+    ov.onclick=e=>{if(e.target===ov&&cancelText)close(false);};
+    ov.classList.add('open');
+  });
+}
+const confirmModal=(title,msg,opts={})=>showModal({type:opts.danger?'danger':'warn',title,msg,confirmText:opts.confirmText||'Confirm',cancelText:opts.cancelText||'Cancel',danger:opts.danger});
+const alertModal=(title,msg,type='info')=>showModal({type,title,msg,confirmText:'Got it'});
+
 const params=new URLSearchParams(location.search);
 const ORDER_ID=params.get('id');
 
@@ -336,7 +395,7 @@ function render(){
   const subj=document.getElementById('i-subject');subj.value=ORDER.subject||'';subj.addEventListener('input',()=>{ORDER.subject=subj.value;markDirty();});
   const stf=document.getElementById('i-staff');stf.value=ORDER.serviced_by||'';stf.addEventListener('input',()=>{ORDER.serviced_by=stf.value;markDirty();});
   const po=document.getElementById('i-po');po.value=ORDER.po_number||'';po.addEventListener('input',()=>{ORDER.po_number=po.value;markDirty();});
-  const qd=document.getElementById('i-qdate');qd.value=ORDER.quote_date||'';qd.addEventListener('change',()=>{ORDER.quote_date=qd.value||null;markDirty();});
+  const qd=document.getElementById('i-qdate');qd.value=ORDER.quote_date||'';qd.addEventListener('click',()=>{try{qd.showPicker&&qd.showPicker();}catch(e){}});qd.addEventListener('change',()=>{ORDER.quote_date=qd.value||null;markDirty();});
   const sh=document.getElementById('i-ship');sh.value=ORDER.ship_mode||'pickup';sh.addEventListener('change',()=>{ORDER.ship_mode=sh.value;markDirty();});
   populateClients();
 
@@ -345,8 +404,26 @@ function render(){
     if(p.dataset.s===ORDER.art_status)p.classList.add('on');
     p.addEventListener('click',()=>{ORDER.art_status=p.dataset.s;document.querySelectorAll('.pip').forEach(x=>x.classList.toggle('on',x.dataset.s===ORDER.art_status));document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;markDirty();});
   });
-  const ip=document.getElementById('i-pickup');ip.value=ORDER.pickup_date||'';ip.addEventListener('change',()=>{ORDER.pickup_date=ip.value||null;markDirty();});
-  const ev=document.getElementById('i-event');ev.value=ORDER.event_date||'';ev.addEventListener('change',()=>{ORDER.event_date=ev.value||null;markDirty();});
+  const ip=document.getElementById('i-pickup');ip.value=ORDER.pickup_date||'';
+  const ev=document.getElementById('i-event');ev.value=ORDER.event_date||'';
+  // click anywhere on the field opens the native calendar
+  [ip,ev].forEach(el=>el.addEventListener('click',()=>{try{el.showPicker&&el.showPicker();}catch(e){}}));
+  ip.addEventListener('change',async()=>{
+    // pickup can't be AFTER the event date
+    if(ev.value&&ip.value&&ip.value>ev.value){
+      await alertModal('Invalid dates','The pick-up date can’t be after the event date. Please choose a pick-up date on or before '+fmtD(ev.value)+'.','warn');
+      ip.value=ORDER.pickup_date||'';return;
+    }
+    ORDER.pickup_date=ip.value||null;markDirty();
+  });
+  ev.addEventListener('change',async()=>{
+    // event can't be BEFORE the pickup date
+    if(ip.value&&ev.value&&ev.value<ip.value){
+      await alertModal('Invalid dates','The event date can’t be earlier than the pick-up date ('+fmtD(ip.value)+'). Please choose a later event date.','warn');
+      ev.value=ORDER.event_date||'';return;
+    }
+    ORDER.event_date=ev.value||null;markDirty();
+  });
   const is=document.getElementById('i-sent');is.value=ORDER.sent_status||'not_sent';is.addEventListener('change',()=>{ORDER.sent_status=is.value;markDirty();});
   const ia=document.getElementById('i-active');ia.value=ORDER.active_status||'active';ia.addEventListener('change',()=>{ORDER.active_status=ia.value;markDirty();});
 
@@ -527,9 +604,12 @@ async function save(){
 }
 
 async function printQuotation(){
+  if(!LINES.length){await alertModal('Nothing to print','Add at least one line item before printing a quotation.','warn');return;}
+  const ok=await confirmModal('Print quotation?','This opens a print-ready quotation for #'+ORDER.stage_id+'. You can save it as a PDF or send it to your printer.',{confirmText:'Proceed',cancelText:'Cancel'});
+  if(!ok)return;
   let generateDocument;
   try{ ({generateDocument}=await import('./pdf.js')); }
-  catch(err){ alert('Could not load the PDF generator (pdf.js). Make sure pdf.js is deployed alongside order.html.'); return; }
+  catch(err){ await alertModal('Couldn’t open PDF','The PDF generator (pdf.js) didn’t load. Make sure pdf.js is deployed alongside order.html.','danger'); return; }
   const c=ORDER.clients||{}; const ct=ORDER.contacts||{};
   const lines=[c.bill_address,c.bill_city,c.bill_postal,c.bill_province].filter(Boolean);
   const calc=ORDER._calc||{subtotal:ORDER.subtotal,hst:ORDER.hst,grandTotal:ORDER.grand_total};
@@ -544,23 +624,22 @@ async function printQuotation(){
 
 async function deleteOrder(){
   const T={inquiry:'inquiry',quote:'quotation',order:'order'}[ORDER.record_type]||'record';
-  if(!confirm('Delete this '+T+' (#'+ORDER.stage_id+')? This cannot be undone.'))return;
-  // remove line items first, then the record
+  const ok=await confirmModal('Delete this '+T+'?','#'+ORDER.stage_id+' and its line items will be permanently removed. This cannot be undone.',{confirmText:'Delete',cancelText:'Keep it',danger:true});
+  if(!ok)return;
   await db.from('quote_items').delete().eq('quote_id',ORDER_ID);
   const {error}=await db.from('quotes').delete().eq('id',ORDER_ID);
-  if(error){alert('Could not delete: '+error.message);return;}
+  if(error){await alertModal('Couldn’t delete',error.message,'danger');return;}
   DIRTY=false;
   location.href='index.html';
 }
 
 async function convertToInvoice(){
-  if(DIRTY){ if(!confirm('You have unsaved changes. Save first, then convert?')) return; await save(); }
-  if(!confirm('Create an invoice from this order?')) return;
+  if(DIRTY){ const s=await confirmModal('Save first?','You have unsaved changes. They’ll be saved before creating the invoice.',{confirmText:'Save & continue',cancelText:'Cancel'}); if(!s)return; await save(); }
+  const ok=await confirmModal('Create invoice?','This generates a new invoice from order #'+ORDER.stage_id+' and moves it to the invoice stage.',{confirmText:'Create invoice',cancelText:'Cancel'});
+  if(!ok)return;
   const c=ORDER._calc||{subtotal:ORDER.subtotal,discount_total:ORDER.discount_total,hst:ORDER.hst,grand_total:ORDER.grand_total};
-  // get next invoice number
   const {data:seq,error:se}=await db.rpc('nextval_invoice');
   let invNum=null;
-  // fallback: compute max+1 if rpc not present
   if(se||seq==null){ const {data:mx}=await db.from('invoices').select('invoice_number').order('invoice_number',{ascending:false}).limit(1); invNum=(mx&&mx[0]&&mx[0].invoice_number?mx[0].invoice_number:20000)+1; }
   else invNum=seq;
   const {data:inv,error}=await db.from('invoices').insert({
@@ -569,13 +648,28 @@ async function convertToInvoice(){
     subtotal:c.subtotal||0, discount_total:c.discount_total||0, hst:c.hst||0, grand_total:c.grand_total||0,
     balance_due:c.grand_total||0, paid_status:'unpaid'
   }).select().single();
-  if(error){alert('Could not create invoice: '+error.message);return;}
-  // mark the order as invoiced stage
+  if(error){await alertModal('Couldn’t create invoice',error.message,'danger');return;}
   await db.from('quotes').update({art_status:'invoice'}).eq('id',ORDER_ID);
   location.href='invoice.html?id='+encodeURIComponent(inv.id);
 }
 
 function label(s){return {send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice',no_data:'No Data'}[s]||s;}
+
+// Intercept "Inbox" back link and Cancel button to use an in-app unsaved-changes prompt
+async function guardedLeave(dest){
+  if(DIRTY){
+    const ok=await confirmModal('Leave without saving?','You have unsaved changes on this record. If you leave now, they’ll be lost.',{confirmText:'Leave',cancelText:'Stay',danger:true});
+    if(!ok)return;
+    DIRTY=false;
+  }
+  location.href=dest;
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const back=document.querySelector('.topbar .back');
+  if(back)back.addEventListener('click',e=>{e.preventDefault();guardedLeave('index.html');});
+  const cancel=document.getElementById('btn-cancel');
+  if(cancel)cancel.addEventListener('click',e=>{e.preventDefault();guardedLeave('index.html');});
+});
 
 window.addEventListener('beforeunload',e=>{if(DIRTY){e.preventDefault();e.returnValue='';}});
 load();
