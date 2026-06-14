@@ -31,6 +31,14 @@
   .msg.err{color:var(--danger);}.msg.ok{color:var(--ok);}
   .link{color:var(--text-3);font-size:12px;text-align:center;display:block;margin-top:18px;cursor:pointer;text-decoration:none;transition:color .12s;}
   .link:hover{color:var(--text-2);}
+  /* loading overlay */
+  .loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:100;}
+  .loader.show{opacity:1;pointer-events:auto;}
+  .loader .llogo{width:52px;height:52px;border-radius:13px;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text);display:grid;place-items:center;font-family:var(--fd);font-weight:800;font-size:16px;letter-spacing:.04em;animation:pulse 1.4s ease-in-out infinite;}
+  .loader .ltext{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);font-weight:600;}
+  .spinner{width:30px;height:30px;border:2.5px solid var(--line-2);border-top-color:var(--accent-2);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes pulse{0%,100%{opacity:.55;transform:scale(.97);}50%{opacity:1;transform:scale(1);}}
 </style>
 </head>
 <body>
@@ -50,6 +58,12 @@
     </div>
   </div>
 
+  <div class="loader" id="loader">
+    <div class="llogo">YRT</div>
+    <div class="spinner"></div>
+    <div class="ltext">Signing in</div>
+  </div>
+
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const db = createClient('https://hhnoldgvtjsmjxlowgaq.supabase.co','sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f');
@@ -67,7 +81,9 @@ document.getElementById('login-form').addEventListener('submit',async e=>{
   btn.disabled=true;setMsg('Checking…');
   const {error}=await db.auth.signInWithPassword({email,password});
   if(error){btn.disabled=false;setMsg(error.message.includes('Invalid')?'Incorrect email or password.':error.message,'err');return;}
-  location.replace('index.html');
+  // brief branded loading animation, then enter
+  document.getElementById('loader').classList.add('show');
+  setTimeout(()=>location.replace('index.html'),900);
 });
 
 document.getElementById('forgot').addEventListener('click',async()=>{
