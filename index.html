@@ -103,6 +103,7 @@
   .fsp-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
   .fsp-row:last-child{border-bottom:none;}
   .fsp-desc{flex:1;font-size:13px;color:var(--text);}
+  .fsp-detail{display:block;font-size:11px;color:#e0883a;font-weight:600;margin-top:2px;}
   .fsp-empty{padding:20px;text-align:center;color:var(--text-3);}
   .badge-st::before{content:'';width:7px;height:7px;border-radius:50%;background:rgba(0,0,0,.45);}
   .st-send_art{background:var(--art);color:var(--art-ink);}
@@ -237,24 +238,34 @@ async function loadFulfillment(){
   FULFILL_BY_ORDER={};
   const orderIds=DATA.order.map(o=>o.id);
   if(!orderIds.length)return;
-  const {data:items}=await db.from('quote_items').select('quote_id,fulfillment_status,supplier_id,supplier_quantity,in_po,description,style_number').in('quote_id',orderIds);
+  const {data:items}=await db.from('quote_items').select('id,quote_id,fulfillment_status,supplier_id,supplier_quantity,in_po,description,style_number').in('quote_id',orderIds);
+  const itemIds=(items||[]).map(it=>it.id);
+  // pull allocations to detect split lines that aren't fully assigned to a PO
+  let allocByItem={};
+  if(itemIds.length){
+    const {data:allocs}=await db.from('quote_item_allocations').select('quote_item_id,quantity').in('quote_item_id',itemIds);
+    (allocs||[]).forEach(a=>{ (allocByItem[a.quote_item_id]=allocByItem[a.quote_item_id]||[]).push(a); });
+  }
   (items||[]).forEach(it=>{
+    const al=allocByItem[it.id];
+    if(al&&al.length){
+      const assigned=al.reduce((s,a)=>s+(Number(a.quantity)||0),0);
+      const need=it.supplier_quantity!=null?Number(it.supplier_quantity):0;
+      it._assigned=assigned; it._need=need;
+      it._partial = need>0 && assigned<need;   // some qty not yet placed in a PO
+    }
     (FULFILL_BY_ORDER[it.quote_id]=FULFILL_BY_ORDER[it.quote_id]||[]).push(it);
   });
 }
 
 // Derive a single status for one line item.
-// none      = no supplier
-// instock   = supplier set but supplier_quantity 0 (already in-house, no PO needed)
-// placed    = supplier + qty, but not yet on a PO (open PO required)
-// in_po     = linked to an open PO (red)
-// issued/received/backordered = explicit fulfillment status
 function itemState(it){
   const fs=it.fulfillment_status;
   if(fs&&fs!=='none'&&fs!=='in_po') return fs;      // issued/received/backordered
   if(!it.supplier_id) return 'none';
   const sq=it.supplier_quantity;
   if(sq!=null && Number(sq)===0) return 'instock';
+  if(it._partial) return 'partial';                  // split, not fully assigned to a PO
   if(it.in_po || fs==='in_po') return 'in_po';
   return 'placed';                                   // supplier+qty, no PO yet
 }
@@ -262,6 +273,7 @@ function itemState(it){
 const FS_META={
   none:{label:'No Suppliers',color:'#5a6273',bg:'rgba(90,98,115,.16)'},
   placed:{label:'Open PO Required',color:'#e0883a',bg:'rgba(224,136,58,.16)'},
+  partial:{label:'Partially in PO',color:'#e0883a',bg:'rgba(224,136,58,.16)'},
   in_po:{label:'In PO',color:'#ff4d4d',bg:'rgba(255,77,77,.14)'},
   issued:{label:'Items Issued',color:'#8a92a2',bg:'rgba(138,146,162,.16)'},
   received:{label:'All Items Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
@@ -290,7 +302,8 @@ function openFulfillPopup(orderId){
   const rows=items.map(it=>{
     const s=itemState(it);
     const m=FS_META[s]||FS_META.none;
-    return `<div class="fsp-row"><div class="fsp-desc">${esc(it.description||it.style_number||'Item')}</div><span class="fs-pill" style="color:${m.color};background:${m.bg};">${m.label}</span></div>`;
+    const detail=it._partial?`<span class="fsp-detail">${it._assigned} of ${it._need} in PO</span>`:'';
+    return `<div class="fsp-row"><div class="fsp-desc">${esc(it.description||it.style_number||'Item')}${detail}</div><span class="fs-pill" style="color:${m.color};background:${m.bg};">${m.label}</span></div>`;
   }).join('');
   document.getElementById('fsp-body').innerHTML=rows||'<div class="fsp-empty">No line items.</div>';
   ov.classList.add('open');

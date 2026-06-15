@@ -1062,15 +1062,32 @@ async function save(silent){
     }
   }
 
-  //    c) allocations: only rebuild for lines that aren't already linked into a PO
+  //    c) allocations: rebuild for split lines not yet committed (issued) to a PO.
   for(let idx=0; idx<LINES.length; idx++){
     const l=LINES[idx];
     if(!l.id)continue;
     if(l._allocations&&l._allocations.length){
-      // don't disturb allocations that are already in a PO
-      const {data:exAlloc}=await db.from('quote_item_allocations').select('id,in_po').eq('quote_item_id',l.id);
-      const anyInPo=(exAlloc||[]).some(a=>a.in_po);
-      if(anyInPo) continue;   // leave PO-linked splits untouched
+      // If existing allocations are already ISSUED in a PO, leave them untouched.
+      const {data:exAlloc}=await db.from('quote_item_allocations').select('id,in_po,status').eq('quote_item_id',l.id);
+      const anyIssued=(exAlloc||[]).some(a=>a.status&&a.status!=='pending'&&a.status!=='in_po');
+      if(anyIssued) continue;   // committed splits are locked
+
+      // This line is being (re)split. If the PARENT line was previously auto-added to an
+      // OPEN PO as a single po_item, remove that — only the split portions should remain.
+      // (Find po_items sourced directly from this quote_item on OPEN POs and delete them.)
+      const {data:parentPoItems}=await db.from('po_items').select('id,po_id').eq('source_quote_item_id',l.id);
+      if(parentPoItems&&parentPoItems.length){
+        const poIds=[...new Set(parentPoItems.map(p=>p.po_id))];
+        const {data:openPOs}=await db.from('purchase_orders').select('id').eq('status','open').in('id',poIds);
+        const openSet=new Set((openPOs||[]).map(p=>p.id));
+        const delIds=parentPoItems.filter(p=>openSet.has(p.po_id)).map(p=>p.id);
+        if(delIds.length) await db.from('po_items').delete().in('id',delIds);
+      }
+      // reset the parent line so it's no longer treated as wholly in a PO
+      await db.from('quote_items').update({in_po:false,po_id:null,fulfillment_status:'none'}).eq('id',l.id);
+      l.in_po=false;l.po_id=null;l.fulfillment_status='none';
+
+      // rebuild allocations from the split modal
       await db.from('quote_item_allocations').delete().eq('quote_item_id',l.id);
       const allocRows=l._allocations.map(a=>({quote_item_id:l.id, supplier_id:a.supplier_id||null, quantity:parseFloat(a.quantity)||0, in_po:false, po_id:a.po_id||null, status:'pending'}));
       if(allocRows.length) await db.from('quote_item_allocations').insert(allocRows);
