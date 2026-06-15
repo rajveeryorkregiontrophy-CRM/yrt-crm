@@ -147,7 +147,7 @@ export async function makePDF(docType, data){
       doc.rect(M, y-10, RIGHT-M, 15, 'F');
       doc.setFont('helvetica','italic'); doc.setTextColor(40,40,40);
       doc.text('Discount', cols.item, y);
-      doc.text('Special Discount '+discPct.toFixed(2)+'%', cols.desc, y);
+      doc.text(discPct===100?'Charges Waived':('Special Discount '+discPct.toFixed(2)+'%'), cols.desc, y);
       doc.setTextColor(180,30,30); doc.setFont('helvetica','normal');
       doc.text('-'+money(waived), cols.amount, y, {align:'right'});
       doc.setTextColor(0,0,0);

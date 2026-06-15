@@ -85,6 +85,7 @@
   .li-disc{background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:5px 6px;font-size:12px;font-family:inherit;cursor:pointer;}
   .li-disc:focus{outline:none;border-color:var(--brass);}
   .disc-waived{font-family:var(--fm);font-size:10.5px;color:var(--danger);margin-top:3px;}
+  .disc-waived.waived-full{color:var(--brass-2);font-weight:700;font-family:var(--fd);text-transform:uppercase;letter-spacing:.03em;}
   .sup-id-tag{font-family:var(--fm);font-size:10px;color:var(--brass-2);margin-top:2px;font-weight:700;}
   .lines-scroll{max-height:340px;overflow-y:auto;}
   .lines-scroll::-webkit-scrollbar{width:9px;}.lines-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2);}
@@ -147,17 +148,22 @@
   .split-add{width:100%;padding:9px;border:1px dashed var(--line-strong);background:transparent;border-radius:7px;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px;}
   .split-add:hover{border-color:var(--brass);color:var(--brass-2);}
   .split-tally{margin-top:14px;font-size:13px;font-weight:600;text-align:right;}
-  .split-tally.ok{color:var(--approved);}.split-tally.bad{color:var(--danger);}
+  .split-tally.ok{color:var(--approved);}.split-tally.bad{color:var(--danger);}.split-tally.partial{color:var(--brass-2);}
+  .split-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .split-row .sr-qty{width:90px;background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;}
+  .split-row .sr-arrow{color:var(--text-3);font-size:14px;}
+  .split-row .sr-po{flex:1;background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-size:12.5px;font-family:inherit;cursor:pointer;}
+  .split-row .sr-nopo{flex:1;font-size:11.5px;color:var(--text-3);font-style:italic;}
+  .split-row .sr-del{background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:0 4px;}
   .split-foot{display:flex;align-items:center;gap:10px;padding:16px 22px;border-top:1px solid var(--line);justify-content:flex-end;}
   .split-msg{margin-right:auto;font-size:12.5px;color:var(--danger);}
   .popick-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
-  .popick-opt{border:1px solid var(--line-2);border-radius:10px;padding:13px 15px;cursor:pointer;transition:border-color .15s,background .15s;}
-  .popick-opt:hover{border-color:var(--brass);background:var(--bg-3);}
-  .popick-opt .po-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
-  .popick-opt .po-no{font-family:var(--fm);font-weight:800;font-size:14px;color:var(--brass-2);}
-  .popick-opt .po-date{font-size:12px;color:var(--text-3);}
-  .popick-opt .po-meta{font-size:12px;color:var(--text-2);}
-  .popick-opt .po-id{font-family:var(--fm);font-size:10.5px;color:var(--text-3);margin-top:3px;}
+  .popick-line{display:flex;align-items:center;gap:12px;border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;}
+  .popick-line .pl-info{flex:1;min-width:0;}
+  .popick-line .pl-name{font-size:13px;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .popick-line .pl-sub{font-size:11.5px;color:var(--text-3);margin-top:2px;}
+  .popick-line .pl-po{width:200px;background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-size:12.5px;font-family:inherit;cursor:pointer;}
+  .partial-tag{font-size:9.5px;font-weight:800;color:#e0883a;margin-top:2px;text-transform:uppercase;letter-spacing:.03em;}
   .li-input:hover{border-color:var(--line-2);}
   .li-input:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li-input.num{text-align:right;font-family:var(--font-mono);}
@@ -251,7 +257,7 @@
       <div class="split-meta" id="popick-meta"></div>
       <div id="popick-list" class="popick-list"></div>
     </div>
-    <div class="split-foot"><span class="split-msg" id="popick-msg"></span><button class="btn" id="popick-skip">Skip for now</button></div>
+    <div class="split-foot"><span class="split-msg" id="popick-msg"></span><button class="btn" id="popick-skip">Skip for now</button><button class="modal-btn-primary" id="popick-confirm">Confirm</button></div>
   </div>
 </div>
 
@@ -533,7 +539,7 @@ async function loadAllocations(){
       _supplier_name:s?(s.company_name||s.short_name||''):'', _supplier_number:s?s.supplier_number:null
     });
   });
-  LINES.forEach(l=>{ if(byItem[l.id]&&byItem[l.id].length>1){ l._allocations=byItem[l.id]; } });
+  LINES.forEach(l=>{ if(byItem[l.id]&&byItem[l.id].length>=1){ l._allocations=byItem[l.id]; } });
 }
 
 function applyRecordType(){
@@ -664,7 +670,7 @@ function renderLines(){
       <td><textarea class="li-input li-desc" rows="1" data-i="${i}" data-k="description" placeholder="Description">${esc(ln.description||'')}</textarea></td>
       <td class="cb-cell sup-col ${fulfillClass(ln)}">
         ${(ln._allocations&&ln._allocations.length)
-          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">${ln._allocations.length} POs · edit</span></div>`
+          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">${ln._allocations.length} PO${ln._allocations.length>1?'s':''} · edit</span></div>${(()=>{const assigned=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.supplier_quantity)||0;return assigned<need?`<div class="partial-tag">${assigned} of ${need} in PO</div>`:'';})()}`
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-id-tag">#${esc(String(ln._supplier_number))}${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn ${(fulfillState(ln)==='issued'||fulfillState(ln)==='received'||fulfillState(ln)==='backordered')?'locked':''}" data-alloc="${i}" title="Split supplier quantity across multiple POs">⊟ Split PO</button>
       </td>
@@ -674,7 +680,7 @@ function renderLines(){
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
       <td class="disc-cell">
         <select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
-        ${waived>0?`<div class="disc-waived">−${money(waived)}</div>`:''}
+        ${parseFloat(ln.discount_pct)===100?`<div class="disc-waived waived-full">Charges Waived</div>`:(waived>0?`<div class="disc-waived">−${money(waived)}</div>`:'')}
       </td>
       <td class="li-amt">${money(ln.net_amount)}</td>
       <td><button class="li-del" data-del="${i}">×</button></td>`;
@@ -873,12 +879,10 @@ function fulfillClass(ln){const s=fulfillState(ln);return s?FULFILL[s]||'':'';}
 function fulfillTag(ln){const s=fulfillState(ln);return s?' • '+(FULFILL_LABEL[s]||''):'';}
 
 // ---------- Split / allocations (one fixed supplier, supplier-qty across multiple POs) ----------
-let SPLIT_I=null, SPLIT_ROWS=[], SPLIT_SUP=null;
-function openSplit(i){
+let SPLIT_I=null, SPLIT_ROWS=[], SPLIT_SUP=null, SPLIT_POS=[];
+async function openSplit(i){
   if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Splitting items across POs is available on Sales Orders only.','info'); return; }
   const ln=LINES[i]; if(!ln){return;}
-  // #1 — splitting is only allowed before the line is committed to the supplier.
-  // Once any part is Issued / Received / Back Ordered, the split is locked.
   const st=fulfillState(ln);
   if(st==='issued'||st==='received'||st==='backordered'){
     alertModal('Split locked','This line has already been issued to the supplier, so its purchase-order split can no longer be changed.<br><br>If the supplier cannot fulfill it, use <b>Back Order</b> in the Receiving area instead.','info');
@@ -889,31 +893,40 @@ function openSplit(i){
     return;
   }
   SPLIT_I=i;
-  // the supplier is FIXED — taken from the line (or existing allocations)
   if(ln._allocations&&ln._allocations.length){
     SPLIT_SUP={id:ln._allocations[0].supplier_id,name:ln._allocations[0]._supplier_name||ln._supplier_name||'',num:ln._allocations[0]._supplier_number};
-    SPLIT_ROWS=ln._allocations.map(a=>({quantity:a.quantity}));
+    SPLIT_ROWS=ln._allocations.map(a=>({quantity:a.quantity, po_id:a.po_id||''}));
   }else{
     SPLIT_SUP={id:ln.supplier_id,name:ln._supplier_name||'',num:ln._supplier_number};
-    SPLIT_ROWS=[{quantity:parseFloat(ln.supplier_quantity)||0}];
+    SPLIT_ROWS=[{quantity:parseFloat(ln.supplier_quantity)||0, po_id:''}];
   }
+  // load this supplier's OPEN POs so each row can be assigned to a specific one
+  const {data:pos}=await db.from('purchase_orders').select('id,po_number,order_date').eq('status','open').eq('supplier_id',SPLIT_SUP.id).order('po_number');
+  SPLIT_POS=pos||[];
   const supQty=parseFloat(ln.supplier_quantity)||0;
-  document.getElementById('split-meta').innerHTML=`<b>${esc(ln.description||ln.style_number||'Line item')}</b><br>Supplier: <b>${esc(SPLIT_SUP.name||'—')}</b>${SPLIT_SUP.num?` (#${esc(String(SPLIT_SUP.num))})`:''}<br>Supplier quantity to allocate across POs: <b>${supQty}</b>`;
+  document.getElementById('split-meta').innerHTML=`<b>${esc(ln.description||ln.style_number||'Line item')}</b><br>Supplier: <b>${esc(SPLIT_SUP.name||'—')}</b>${SPLIT_SUP.num?` (#${esc(String(SPLIT_SUP.num))})`:''}<br>Supplier quantity: <b>${supQty}</b> — assign how much goes to each PO. Any remainder stays unassigned until you add it to a PO later.`;
   renderSplitRows();
   document.getElementById('split-msg').textContent='';
   document.getElementById('split-overlay').classList.add('open');
 }
 function closeSplit(){document.getElementById('split-overlay').classList.remove('open');SPLIT_I=null;}
+function poOptions(sel){
+  const fmt=d=>{ if(!d)return ''; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-CA',{month:'short',day:'numeric'}); };
+  return '<option value="">— choose PO —</option>'+SPLIT_POS.map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>PO #${p.po_number}${p.order_date?' · '+fmt(p.order_date):''}</option>`).join('');
+}
 function renderSplitRows(){
   const box=document.getElementById('split-rows');
+  const multiPO=SPLIT_POS.length>1;
   box.innerHTML=SPLIT_ROWS.map((r,idx)=>`
     <div class="split-row">
-      <div class="sr-label">PO ${idx+1}</div>
-      <input class="sr-qty" type="number" min="0" data-idx="${idx}" value="${r.quantity??''}" placeholder="Qty for this PO">
+      <input class="sr-qty" type="number" min="0" data-idx="${idx}" value="${r.quantity??''}" placeholder="Qty">
+      <span class="sr-arrow">→</span>
+      ${SPLIT_POS.length?`<select class="sr-po" data-idx="${idx}">${poOptions(r.po_id)}</select>`:`<span class="sr-nopo">No open PO — will be added when one is created</span>`}
       <button class="sr-del" data-idx="${idx}">×</button>
     </div>`).join('');
   box.querySelectorAll('.sr-qty').forEach(q=>q.addEventListener('input',()=>{SPLIT_ROWS[+q.dataset.idx].quantity=parseFloat(q.value)||0;updateTally();}));
-  box.querySelectorAll('.sr-del').forEach(b=>b.addEventListener('click',()=>{SPLIT_ROWS.splice(+b.dataset.idx,1);if(!SPLIT_ROWS.length)SPLIT_ROWS.push({quantity:0});renderSplitRows();}));
+  box.querySelectorAll('.sr-po').forEach(s=>s.addEventListener('change',()=>{SPLIT_ROWS[+s.dataset.idx].po_id=s.value||'';}));
+  box.querySelectorAll('.sr-del').forEach(b=>b.addEventListener('click',()=>{SPLIT_ROWS.splice(+b.dataset.idx,1);if(!SPLIT_ROWS.length)SPLIT_ROWS.push({quantity:0,po_id:''});renderSplitRows();}));
   updateTally();
 }
 function updateTally(){
@@ -921,28 +934,33 @@ function updateTally(){
   const need=parseFloat(ln.supplier_quantity)||0;
   const sum=SPLIT_ROWS.reduce((s,r)=>s+(parseFloat(r.quantity)||0),0);
   const el=document.getElementById('split-tally');
-  el.textContent=`Allocated ${sum} of ${need}`+(sum===need?' ✓':sum>need?' — over by '+(sum-need):' — '+(need-sum)+' unallocated');
-  el.className='split-tally '+(sum===need?'ok':'bad');
+  const remain=need-sum;
+  if(sum>need){ el.textContent=`Assigned ${sum} of ${need} — over by ${sum-need}`; el.className='split-tally bad'; }
+  else if(remain>0){ el.textContent=`Assigned ${sum} of ${need} — ${remain} will stay unassigned`; el.className='split-tally partial'; }
+  else { el.textContent=`Assigned ${sum} of ${need} ✓`; el.className='split-tally ok'; }
 }
-document.getElementById('split-add').addEventListener('click',()=>{SPLIT_ROWS.push({quantity:0});renderSplitRows();});
+document.getElementById('split-add').addEventListener('click',()=>{SPLIT_ROWS.push({quantity:0,po_id:''});renderSplitRows();});
 document.getElementById('split-x').addEventListener('click',closeSplit);
 document.getElementById('split-cancel').addEventListener('click',closeSplit);
 document.getElementById('split-overlay').addEventListener('click',e=>{if(e.target.id==='split-overlay')closeSplit();});
 document.getElementById('split-save').addEventListener('click',()=>{
   const ln=LINES[SPLIT_I]; if(!ln)return;
   for(const r of SPLIT_ROWS){
-    if(!(parseFloat(r.quantity)>0)){document.getElementById('split-msg').textContent='Each PO needs a quantity greater than 0.';return;}
+    if(!(parseFloat(r.quantity)>0)){document.getElementById('split-msg').textContent='Each row needs a quantity greater than 0.';return;}
   }
   const need=parseFloat(ln.supplier_quantity)||0;
   const sum=SPLIT_ROWS.reduce((s,r)=>s+(parseFloat(r.quantity)||0),0);
-  if(sum!==need){document.getElementById('split-msg').textContent='Allocated quantity ('+sum+') must equal the supplier quantity ('+need+').';return;}
-  // single PO -> normal single-supplier line; multiple -> allocations (all same supplier)
-  if(SPLIT_ROWS.length===1){
-    ln.supplier_id=SPLIT_SUP.id;ln._supplier_name=SPLIT_SUP.name;ln._supplier_number=SPLIT_SUP.num;
-    ln._allocations=null;
+  if(sum>need){document.getElementById('split-msg').textContent='Assigned quantity ('+sum+') cannot exceed the supplier quantity ('+need+').';return;}
+  // if more than one open PO exists, each row must choose a PO
+  if(SPLIT_POS.length>1){
+    for(const r of SPLIT_ROWS){ if(!r.po_id){document.getElementById('split-msg').textContent='Choose which PO each quantity goes to.';return;} }
+  }
+  // build allocations (each row = a portion, optionally tied to a specific PO)
+  ln.supplier_id=SPLIT_SUP.id;ln._supplier_name=SPLIT_SUP.name;ln._supplier_number=SPLIT_SUP.num;
+  if(SPLIT_ROWS.length===1 && !SPLIT_ROWS[0].po_id && sum===need){
+    ln._allocations=null;   // single full portion, no specific PO -> treat as plain line
   }else{
-    ln.supplier_id=SPLIT_SUP.id;ln._supplier_name=SPLIT_SUP.name;ln._supplier_number=SPLIT_SUP.num;
-    ln._allocations=SPLIT_ROWS.map(r=>({supplier_id:SPLIT_SUP.id,_supplier_name:SPLIT_SUP.name,_supplier_number:SPLIT_SUP.num,quantity:parseFloat(r.quantity)||0}));
+    ln._allocations=SPLIT_ROWS.map(r=>({supplier_id:SPLIT_SUP.id,_supplier_name:SPLIT_SUP.name,_supplier_number:SPLIT_SUP.num,quantity:parseFloat(r.quantity)||0, po_id:r.po_id||null}));
   }
   closeSplit();renderLines();markDirty();
 }); 
@@ -998,7 +1016,30 @@ async function save(silent){
   const existingIds=new Set((existing||[]).map(r=>r.id));
   const keptIds=new Set(LINES.filter(l=>l.id).map(l=>l.id));
   const toDelete=[...existingIds].filter(id=>!keptIds.has(id));
-  if(toDelete.length){ await db.from('quote_items').delete().in('id',toDelete); }
+  if(toDelete.length){
+    // also remove any PO items sourced from these deleted lines (from OPEN POs only —
+    // sent POs are locked records). Their allocations go too.
+    const {data:delAllocs}=await db.from('quote_item_allocations').select('id').in('quote_item_id',toDelete);
+    const delAllocIds=(delAllocs||[]).map(a=>a.id);
+    // find po_items linked to these quote_items or their allocations
+    let linked=[];
+    const {data:byItem}=await db.from('po_items').select('id,po_id').in('source_quote_item_id',toDelete);
+    linked=linked.concat(byItem||[]);
+    if(delAllocIds.length){
+      const {data:byAlloc}=await db.from('po_items').select('id,po_id').in('source_allocation_id',delAllocIds);
+      linked=linked.concat(byAlloc||[]);
+    }
+    if(linked.length){
+      // keep only those on OPEN purchase orders
+      const poIds=[...new Set(linked.map(p=>p.po_id))];
+      const {data:openPOs}=await db.from('purchase_orders').select('id').eq('status','open').in('id',poIds);
+      const openSet=new Set((openPOs||[]).map(p=>p.id));
+      const poItemIds=linked.filter(p=>openSet.has(p.po_id)).map(p=>p.id);
+      if(poItemIds.length) await db.from('po_items').delete().in('id',poItemIds);
+    }
+    if(delAllocIds.length) await db.from('quote_item_allocations').delete().in('id',delAllocIds);
+    await db.from('quote_items').delete().in('id',toDelete);
+  }
 
   //    b) update existing rows, insert new ones. Fulfillment fields are intentionally omitted.
   let insertedItems=[];
@@ -1025,14 +1066,13 @@ async function save(silent){
   for(let idx=0; idx<LINES.length; idx++){
     const l=LINES[idx];
     if(!l.id)continue;
-    if(l._allocations&&l._allocations.length>1){
+    if(l._allocations&&l._allocations.length){
       // don't disturb allocations that are already in a PO
       const {data:exAlloc}=await db.from('quote_item_allocations').select('id,in_po').eq('quote_item_id',l.id);
       const anyInPo=(exAlloc||[]).some(a=>a.in_po);
       if(anyInPo) continue;   // leave PO-linked splits untouched
-      // safe to rebuild (none are in a PO yet)
       await db.from('quote_item_allocations').delete().eq('quote_item_id',l.id);
-      const allocRows=l._allocations.map(a=>({quote_item_id:l.id, supplier_id:a.supplier_id||null, quantity:parseFloat(a.quantity)||0, in_po:false, po_id:null, status:'pending'}));
+      const allocRows=l._allocations.map(a=>({quote_item_id:l.id, supplier_id:a.supplier_id||null, quantity:parseFloat(a.quantity)||0, in_po:false, po_id:a.po_id||null, status:'pending'}));
       if(allocRows.length) await db.from('quote_item_allocations').insert(allocRows);
     }
   }
@@ -1140,12 +1180,21 @@ async function syncToPOs(insertedItems){
       warnings.push(supName);
       continue;
     }
-    if(pos.length>1){
-      // #9 — more than one open PO for this supplier: the user must choose. Defer.
-      needsChoice.push({supplier_id:sid, supplier_name:supName, pos, entries:bySup[sid]});
-      continue;
+    const entries=bySup[sid];
+    // entries that already specify a PO (from the split modal) go straight there
+    const preAssigned=entries.filter(e=>e.ref&&e.ref.po_id);
+    for(const e of preAssigned){
+      const po=pos.find(p=>p.id===e.ref.po_id);
+      if(po) await addEntriesToPO(po,[e]);
     }
-    await addEntriesToPO(pos[0], bySup[sid]);
+    const rest=entries.filter(e=>!(e.ref&&e.ref.po_id));
+    if(!rest.length) continue;
+    if(pos.length===1){
+      await addEntriesToPO(pos[0], rest);
+    }else{
+      // >1 open PO and these entries haven't chosen one -> ask the user (per line)
+      needsChoice.push({supplier_id:sid, supplier_name:supName, pos, entries:rest});
+    }
   }
   // hand any "choose a PO" cases back to the caller
   syncToPOs._needsChoice=needsChoice;
@@ -1172,33 +1221,42 @@ async function addEntriesToPO(po, entries){
   if(allocIds.length) await db.from('quote_item_allocations').update({in_po:true,po_id:po.id,status:'in_po'}).in('id',allocIds);
 }
 
-// #9 — when a supplier has multiple open POs, ask the user which one to use.
-// Processes the deferred choices one supplier at a time.
+// #9/#2 — single combined popup: lists every entry that needs a PO choice, each
+// with its own PO dropdown. The user assigns all of them, then confirms once.
 function resolvePOChoices(choices){
   return new Promise(resolve=>{
-    let idx=0;
     const ov=document.getElementById('popick-overlay');
-    async function showNext(){
-      if(idx>=choices.length){ ov.classList.remove('open'); resolve(); return; }
-      const c=choices[idx];
-      document.getElementById('popick-meta').innerHTML=`<b>${esc(c.supplier_name)}</b> has multiple open purchase orders.<br>Choose which one these items should be added to:`;
-      const fmt=d=>{ if(!d)return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}); };
-      document.getElementById('popick-list').innerHTML=c.pos.map(p=>`
-        <div class="popick-opt" data-po="${p.id}">
-          <div class="po-top"><span class="po-no">PO #${esc(String(p.po_number))}</span><span class="po-date">Created ${fmt(p.order_date)}</span></div>
-          <div class="po-meta">${esc(c.supplier_name)}</div>
-          <div class="po-id">ID: ${esc(p.id)}</div>
-        </div>`).join('');
-      document.getElementById('popick-list').querySelectorAll('.popick-opt').forEach(el=>el.addEventListener('click',async()=>{
-        const po=c.pos.find(p=>p.id===el.dataset.po);
-        await addEntriesToPO(po, c.entries);
-        idx++; showNext();
-      }));
-      document.getElementById('popick-msg').textContent='';
-      ov.classList.add('open');
-    }
-    document.getElementById('popick-skip').onclick=()=>{ idx++; showNext(); };
-    showNext();
+    const fmt=d=>{ if(!d)return ''; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-CA',{month:'short',day:'numeric'}); };
+    // flatten: one assignable row per entry, carrying its supplier's PO options
+    const rows=[];
+    choices.forEach(c=>{ c.entries.forEach(e=>{ rows.push({entry:e, pos:c.pos, supplier_name:c.supplier_name, po_id:''}); }); });
+    document.getElementById('popick-meta').innerHTML=`These line items can go to more than one open purchase order. Choose where each one goes:`;
+    document.getElementById('popick-list').innerHTML=rows.map((r,idx)=>{
+      const label=(r.entry.description||r.entry.style_number||'Line item');
+      const qty=r.entry.quantity!=null?` · qty ${r.entry.quantity}`:'';
+      return `<div class="popick-line">
+        <div class="pl-info"><div class="pl-name">${esc(label)}</div><div class="pl-sub">${esc(r.supplier_name)}${qty}</div></div>
+        <select class="pl-po" data-idx="${idx}"><option value="">— choose PO —</option>${r.pos.map(p=>`<option value="${p.id}">PO #${p.po_number}${p.order_date?' · '+fmt(p.order_date):''}</option>`).join('')}</select>
+      </div>`;
+    }).join('');
+    document.getElementById('popick-list').querySelectorAll('.pl-po').forEach(sel=>sel.addEventListener('change',()=>{rows[+sel.dataset.idx].po_id=sel.value||'';}));
+    const msg=document.getElementById('popick-msg');msg.textContent='';
+    const confirmBtn=document.getElementById('popick-confirm');
+    const skipBtn=document.getElementById('popick-skip');
+    const finish=async(assignAll)=>{
+      if(assignAll){
+        if(rows.some(r=>!r.po_id)){ msg.textContent='Choose a PO for every line, or use “Skip for now”.'; return; }
+        // group entries by chosen PO and insert
+        for(const r of rows){
+          const po=r.pos.find(p=>p.id===r.po_id);
+          if(po) await addEntriesToPO(po,[r.entry]);
+        }
+      }
+      ov.classList.remove('open'); resolve();
+    };
+    confirmBtn.onclick=()=>finish(true);
+    skipBtn.onclick=()=>finish(false);
+    ov.classList.add('open');
   });
 }
 
