@@ -89,16 +89,16 @@
   .lines-scroll::-webkit-scrollbar{width:9px;}.lines-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2);}
   .lines-scroll thead th{position:sticky;top:0;background:var(--paper-2);z-index:2;}
   /* inline totals under product listing (modern CRM style) */
-  .listing-foot{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;border-top:1px solid var(--line);margin-top:4px;padding:16px 16px 18px;}
-  .listing-foot .meta-foot{border:none;background:transparent;padding:0;flex:1;align-self:center;}
-  .order-totals{display:flex;justify-content:flex-end;padding:0;}
-  .ot-inner{width:300px;}
-  .ot-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13.5px;}
+  .listing-foot{display:flex;align-items:stretch;justify-content:space-between;gap:24px;border-top:1px solid var(--line);margin-top:4px;padding:18px;}
+  .listing-foot .meta-foot{border:none;background:transparent;padding:0;align-self:flex-end;flex:0 0 auto;}
+  .order-totals{display:flex;justify-content:flex-end;padding:0;flex:1;}
+  .ot-inner{width:320px;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:16px 18px;}
+  .ot-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;}
   .ot-row .ot-lbl{color:var(--muted);font-weight:500;}
   .ot-row .ot-amt{font-family:var(--fm);font-weight:600;color:var(--ink);}
-  .ot-grand{border-top:2px solid var(--line-2);margin-top:6px;padding-top:12px;}
-  .ot-grand .ot-lbl{font-family:var(--fd);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:13px;color:var(--ink);}
-  .ot-grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:20px;color:var(--brass-2);}
+  .ot-grand{border-top:1px solid var(--line-2);margin-top:8px;padding-top:12px;}
+  .ot-grand .ot-lbl{font-family:var(--fd);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:12.5px;color:var(--ink);}
+  .ot-grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:19px;color:var(--brass-2);}
   .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
   .cb-sup{text-overflow:ellipsis;}
   .sup-id-tag.in-po-tag{color:var(--danger);}
@@ -116,6 +116,8 @@
   .legend .lg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
   .alloc-btn{margin-top:5px;font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-3);cursor:pointer;font-family:inherit;}
   .alloc-btn:hover{border-color:var(--brass);color:var(--brass-2);}
+  .alloc-btn.locked{opacity:.4;cursor:not-allowed;}
+  .alloc-btn.locked:hover{border-color:var(--line-2);color:var(--text-3);}
   .alloc-summary{display:flex;flex-direction:column;gap:2px;cursor:pointer;}
   .alloc-summary .alloc-count{font-size:12px;font-weight:700;color:var(--brass-2);}
   .alloc-summary .alloc-edit{font-size:10px;color:var(--text-3);}
@@ -663,7 +665,7 @@ function renderLines(){
         ${(ln._allocations&&ln._allocations.length)
           ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">${ln._allocations.length} POs · edit</span></div>`
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-id-tag">#${esc(String(ln._supplier_number))}${fulfillTag(ln)}</div>`:''}`}
-        <button class="alloc-btn" data-alloc="${i}" title="Split supplier quantity across multiple POs">⊟ Split PO</button>
+        <button class="alloc-btn ${(fulfillState(ln)==='issued'||fulfillState(ln)==='received'||fulfillState(ln)==='backordered')?'locked':''}" data-alloc="${i}" title="Split supplier quantity across multiple POs">⊟ Split PO</button>
       </td>
       <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'disabled title="Set by split"':''}>${(ln.supplier_id&&ln.supplier_quantity!=null&&ln.supplier_quantity!==''&&Number(ln.supplier_quantity)===0)?'<div class="instock-tag">In Stock</div>':''}</td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
@@ -794,6 +796,19 @@ function wireCombo(inp,kind){
   inp.addEventListener('input',()=>{
     LINES[i][inp.dataset.k==='category'?'category_name':'style_number']=inp.value;
     if(inp.dataset.k==='category')LINES[i].category_code=null; // typed custom; clear code unless a pick sets it
+    // #6 — if they typed an exact style code, auto-fill supplier from that product's default
+    if(inp.dataset.k==='style' && ORDER.record_type==='order'){
+      const typed=inp.value.trim().toLowerCase();
+      const prod=PRODUCTS.find(p=>(p.style_number||'').toLowerCase()===typed);
+      if(prod && prod.default_supplier_id && !LINES[i].supplier_id && !(LINES[i]._allocations&&LINES[i]._allocations.length)){
+        const sup=SUPPLIERS.find(s=>s.id===prod.default_supplier_id);
+        if(sup){
+          LINES[i].supplier_id=sup.id;LINES[i]._supplier_name=sup.company_name||sup.short_name||'';LINES[i]._supplier_number=sup.supplier_number;
+          if(LINES[i].supplier_quantity==null||LINES[i].supplier_quantity==='') LINES[i].supplier_quantity=parseFloat(LINES[i].quantity)||0;
+          renderLines();
+        }
+      }
+    }
     open();markDirty();
   });
   inp.addEventListener('blur',()=>setTimeout(close,120));
@@ -857,6 +872,13 @@ let SPLIT_I=null, SPLIT_ROWS=[], SPLIT_SUP=null;
 function openSplit(i){
   if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Splitting items across POs is available on Sales Orders only.','info'); return; }
   const ln=LINES[i]; if(!ln){return;}
+  // #1 — splitting is only allowed before the line is committed to the supplier.
+  // Once any part is Issued / Received / Back Ordered, the split is locked.
+  const st=fulfillState(ln);
+  if(st==='issued'||st==='received'||st==='backordered'){
+    alertModal('Split locked','This line has already been issued to the supplier, so its purchase-order split can no longer be changed.<br><br>If the supplier cannot fulfill it, use <b>Back Order</b> in the Receiving area instead.','info');
+    return;
+  }
   if(!ln.supplier_id && !(ln._allocations&&ln._allocations.length)){
     alertModal('Pick a supplier first','Choose the supplier for this line, then split its supplier quantity across multiple purchase orders.','info');
     return;
