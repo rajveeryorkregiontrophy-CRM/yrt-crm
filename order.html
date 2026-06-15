@@ -72,6 +72,7 @@
   tbody td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
   tbody tr:last-child td{border-bottom:none;}
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:6px 7px;border-radius:5px;font-size:13px;font-family:inherit;color:var(--ink);}
+  .li-desc{resize:none;overflow:hidden;line-height:1.4;min-height:30px;white-space:pre-wrap;word-break:break-word;}
   .cb-cell{position:relative;}
   .cb-menu{display:none;position:fixed;min-width:240px;max-width:340px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:9000;overflow:hidden;max-height:260px;overflow-y:auto;}
   .cb-menu.open{display:block;}
@@ -269,7 +270,7 @@
 </div>
 
 <header class="topbar">
-  <a class="back" href="index.html">
+  <a class="back" href="index.html" id="back-link">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     Inbox
   </a>
@@ -345,17 +346,17 @@
       <div class="lines-scroll">
       <table>
         <thead><tr>
-          <th style="width:140px;">Category</th>
-          <th style="width:120px;">Style #</th>
-          <th>Description</th>
-          <th class="sup-col" style="width:140px;">Supplier</th>
-          <th class="sup-col num" style="width:64px;">Supp. Qty</th>
-          <th class="num" style="width:58px;">Order Qty</th>
-          <th style="width:42px;">Unit</th>
-          <th class="num" style="width:80px;">Unit Price</th>
-          <th style="width:90px;">Discount</th>
-          <th class="num" style="width:88px;">Amount</th>
-          <th style="width:28px;"></th>
+          <th style="width:110px;">Category</th>
+          <th style="width:90px;">Style #</th>
+          <th style="min-width:200px;">Description</th>
+          <th class="sup-col" style="width:130px;">Supplier</th>
+          <th class="sup-col num" style="width:60px;">Supp. Qty</th>
+          <th class="num" style="width:56px;">Order Qty</th>
+          <th style="width:40px;">Unit</th>
+          <th class="num" style="width:74px;">Unit Price</th>
+          <th style="width:84px;">Discount</th>
+          <th class="num" style="width:84px;">Amount</th>
+          <th style="width:26px;"></th>
         </tr></thead>
         <tbody id="lines"></tbody>
       </table>
@@ -660,7 +661,7 @@ function renderLines(){
     tr.innerHTML=`
       <td class="cb-cell"><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Category" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
       <td class="cb-cell"><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Style #" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
-      <td><input class="li-input" value="${esc(ln.description||'')}" data-i="${i}" data-k="description" placeholder="Description"></td>
+      <td><textarea class="li-input li-desc" rows="1" data-i="${i}" data-k="description" placeholder="Description">${esc(ln.description||'')}</textarea></td>
       <td class="cb-cell sup-col ${fulfillClass(ln)}">
         ${(ln._allocations&&ln._allocations.length)
           ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">${ln._allocations.length} POs · edit</span></div>`
@@ -685,9 +686,12 @@ function renderLines(){
       const i=+inp.dataset.i,k=inp.dataset.k;let v=inp.value;
       if(k==='quantity'||k==='unit_price'||k==='supplier_quantity')v=parseFloat(v)||0;
       LINES[i][k]=v;
+      if(inp.classList.contains('li-desc')) autoGrow(inp);
       recompute(i,inp.closest('tr'));markDirty();
     });
   });
+  // size description textareas to fit their content
+  tb.querySelectorAll('.li-desc').forEach(autoGrow);
   // discount dropdown
   tb.querySelectorAll('.li-disc').forEach(sel=>{
     sel.addEventListener('change',()=>{
@@ -850,6 +854,7 @@ function wireSupplierCombo(inp){
   inp.addEventListener('blur',()=>setTimeout(close,120));
 }
 
+function autoGrow(el){ if(!el)return; el.style.height='auto'; el.style.height=(el.scrollHeight)+'px'; }
 function addLine(){LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
 
 // fulfillment colour system: placed(amber) -> in_po(red) -> issued(grey) -> received(green); backordered(violet); instock(blue)
@@ -1262,7 +1267,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(cancel)cancel.addEventListener('click',e=>{e.preventDefault();guardedLeave('index.html');});
 });
 
-window.addEventListener('beforeunload',e=>{if(DIRTY){e.preventDefault();e.returnValue='';}});
+// (native "Leave site?" beforeunload prompt intentionally removed — we guard the
+//  in-app Back/Inbox navigation with a styled confirm instead.)
+const _backLink=document.getElementById('back-link');
+if(_backLink) _backLink.addEventListener('click',async e=>{
+  if(!DIRTY) return;                 // no unsaved changes -> navigate normally
+  e.preventDefault();
+  const go=await confirmModal('Leave without saving?','You have unsaved changes on this order. If you leave now, they will be lost.',{confirmText:'Leave',cancelText:'Stay',danger:true});
+  if(go){ DIRTY=false; location.href='index.html'; }
+});
 load();
 // live sync: if another screen changes this order's fulfillment, refresh the line
 // colours — but never while the user has unsaved edits (would clobber their work).

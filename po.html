@@ -80,7 +80,7 @@
 </head>
 <body>
 <header class="topbar">
-  <a class="back" href="index.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Inbox</a>
+  <a class="back" href="index.html" id="back-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Inbox</a>
   <div class="title">Purchase Order <span class="id" id="t-id">#----</span></div>
   <span class="pobadge pob-open" id="t-badge">Open</span>
   <div class="actions">
@@ -342,7 +342,15 @@ async function savePDF(){
   }
 }
 
-window.addEventListener('beforeunload',e=>{if(DIRTY){e.preventDefault();e.returnValue='';}});
+// (native "Leave site?" beforeunload prompt intentionally removed — we guard the
+//  in-app Back navigation with a styled confirm instead.)
+const _backLink=document.getElementById('back-link');
+if(_backLink) _backLink.addEventListener('click',async e=>{
+  if(!DIRTY) return;
+  e.preventDefault();
+  const go=await pConfirm('Leave without saving?','You have unsaved changes on this purchase order. If you leave now, they will be lost.',{confirmText:'Leave',cancelText:'Stay',type:'warn'});
+  if(go){ DIRTY=false; location.href='index.html'; }
+});
 load();
 // live sync: refresh this PO if it changes elsewhere, unless mid-edit
 subscribeFulfillment(async()=>{ if(!DIRTY) await load(); });

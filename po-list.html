@@ -330,9 +330,8 @@ document.getElementById('ov').addEventListener('click',e=>{if(e.target.id==='ov'
 document.getElementById('m-create').addEventListener('click',async()=>{
   const supplier_id=document.getElementById('m-supplier').value;
   if(!supplier_id){document.getElementById('m-msg').textContent='Please choose a supplier.';return;}
-  // prevent two open POs for the same supplier (keeps the sync unambiguous)
-  const existing=POS.find(p=>p.status==='open'&&p.supplier_id===supplier_id);
-  if(existing){document.getElementById('m-msg').textContent='This supplier already has an open PO (#'+existing.po_number+').';return;}
+  // Multiple open POs for the same supplier ARE allowed — when items are synced,
+  // the user is asked which open PO to use (handled on the order side).
   const subject=document.getElementById('m-subject').value.trim()||null;
   document.getElementById('m-msg').textContent='Creating…';document.getElementById('m-msg').style.color='var(--text-3)';
   const {data:newPO,error}=await db.from('purchase_orders').insert({supplier_id,subject,status:'open'}).select().single();
@@ -350,19 +349,27 @@ document.getElementById('m-create').addEventListener('click',async()=>{
       .eq('supplier_id',supplier_id)
       .eq('in_po',false)
       .in('quote_id',orderIds);
-    if(pending && pending.length){
-      const poRows=pending.map((it,idx)=>({
-        po_id:newPO.id, line_order:idx+1, source_quote_item_id:it.id,
-        style_number:it.style_number||null, category_name:it.category_name||null,
-        part_no:it.style_number||null, product_name:it.description||null, description:it.description||null,
-        quantity:Number(it.quantity)||0, rate:Number(it.unit_price)||0,
-        amount:(Number(it.quantity)||0)*(Number(it.unit_price)||0),
-        ordered_for:orderMap[it.quote_id]?String(orderMap[it.quote_id]):null
-      }));
+    // only items with a supplier quantity > 0 (qty 0 = in stock, no PO needed)
+    const toPull=(pending||[]).filter(it=>{
+      const sq=it.supplier_quantity!=null?Number(it.supplier_quantity):Number(it.quantity);
+      return sq>0;
+    });
+    if(toPull.length){
+      const poRows=toPull.map((it,idx)=>{
+        const sq=it.supplier_quantity!=null?Number(it.supplier_quantity):Number(it.quantity);
+        return {
+          po_id:newPO.id, line_order:idx+1, source_quote_item_id:it.id,
+          style_number:it.style_number||null, category_name:it.category_name||null,
+          part_no:it.style_number||null, product_name:it.description||null, description:it.description||null,
+          quantity:sq, rate:Number(it.unit_price)||0,
+          amount:sq*(Number(it.unit_price)||0),
+          ordered_for:orderMap[it.quote_id]?String(orderMap[it.quote_id]):null, status:'issued'
+        };
+      });
       const {error:pe}=await db.from('po_items').insert(poRows);
       if(!pe){
-        const ids=pending.map(it=>it.id);
-        await db.from('quote_items').update({in_po:true,po_id:newPO.id}).in('id',ids);
+        const ids=toPull.map(it=>it.id);
+        await db.from('quote_items').update({in_po:true,po_id:newPO.id,fulfillment_status:'in_po'}).in('id',ids);
       }
     }
   }
