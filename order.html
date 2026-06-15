@@ -1144,20 +1144,30 @@ async function syncToPOs(insertedItems){
     (cur||[]).forEach(r=>stateById[r.id]=r);
   }
 
+  // find which items are split (have allocations) — those go via allocations ONLY,
+  // so the parent line item must NOT also be pushed (that caused duplicates).
+  let allocItemIds=new Set();
+  let allAllocs=[];
+  if(ids.length){
+    const {data:al}=await db.from('quote_item_allocations').select('*').in('quote_item_id',ids);
+    allAllocs=al||[];
+    allAllocs.forEach(a=>allocItemIds.add(a.quote_item_id));
+  }
+
   const bySup={};
   insertedItems.forEach(it=>{
     const st=stateById[it.id]||it;
     if(st.in_po) return;                                  // already linked -> never re-touch
+    if(allocItemIds.has(it.id)) return;                   // split line -> handled by its allocations only
     const supQty=st.supplier_quantity!=null?Number(st.supplier_quantity):Number(st.quantity);
     if(!st.supplier_id || !(supQty>0)) return;            // no supplier, or In-Stock(0) -> skip
     (bySup[st.supplier_id]=bySup[st.supplier_id]||[]).push({type:'item',style_number:st.style_number,description:st.description,quantity:supQty,unit_price:Number(st.unit_price),id:it.id});
   });
 
   // allocations (split) not yet in a PO
-  if(ids.length){
-    const {data:al}=await db.from('quote_item_allocations').select('*').in('quote_item_id',ids);
+  {
     const itemById={};insertedItems.forEach(it=>itemById[it.id]=stateById[it.id]||it);
-    (al||[]).forEach(a=>{
+    allAllocs.forEach(a=>{
       if(a.in_po) return;
       if(!a.supplier_id||!(Number(a.quantity)>0))return;
       const it=itemById[a.quote_item_id]||{};
