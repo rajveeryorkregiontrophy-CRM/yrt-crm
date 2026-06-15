@@ -1037,6 +1037,26 @@ async function save(silent){
     }
   }
 
+  //    d) for lines already in an OPEN (not yet sent) PO, push supplier-qty edits
+  //       through to the matching po_item so the PO stays in sync immediately.
+  for(let idx=0; idx<LINES.length; idx++){
+    const l=LINES[idx];
+    if(!l.id || !l.in_po || !l.po_id) continue;
+    // only if that PO is still open (sent POs are locked records)
+    const {data:po}=await db.from('purchase_orders').select('status').eq('id',l.po_id).single();
+    if(!po || po.status!=='open') continue;
+    const supQty=l.supplier_quantity!=null&&l.supplier_quantity!==''?parseFloat(l.supplier_quantity)||0:0;
+    if(supQty<=0){
+      // supplier qty cleared / set to in-stock -> remove from the PO and release the line
+      await db.from('po_items').delete().eq('po_id',l.po_id).eq('source_quote_item_id',l.id);
+      await db.from('quote_items').update({in_po:false,po_id:null,fulfillment_status:'none'}).eq('id',l.id);
+      l.in_po=false;l.po_id=null;l.fulfillment_status='none';
+    }else{
+      const rate=parseFloat(l.unit_price)||0;
+      await db.from('po_items').update({quantity:supQty, amount:supQty*rate, product_name:l.description||null, part_no:l.style_number||null}).eq('po_id',l.po_id).eq('source_quote_item_id',l.id);
+    }
+  }
+
   // 3. sync supplier lines into their open POs (only items not yet in a PO move)
   const warnings=await syncToPOs(insertedItems);
   // #9 — if any supplier had multiple open POs, let the user pick which PO
@@ -1059,9 +1079,13 @@ async function save(silent){
 async function maybeAutoSyncPO(supplierId){
   if(ORDER.record_type!=='order')return;
   if(!supplierId)return;
-  const {data:openPOs}=await db.from('purchase_orders').select('id').eq('status','open').eq('supplier_id',supplierId).limit(1);
+  const {data:openPOs}=await db.from('purchase_orders').select('id').eq('status','open').eq('supplier_id',supplierId);
   if(!openPOs||!openPOs.length)return;   // no open PO -> on-save warning handles it
-  await save(true);                       // silent save + sync
+  // If the line that just got this supplier has no supplier qty yet, default it to the
+  // order qty so the item is eligible to flow into the PO (qty 0 stays In Stock).
+  LINES.forEach(l=>{ if(l.supplier_id===supplierId && (l.supplier_quantity==null||l.supplier_quantity==='')){ l.supplier_quantity=parseFloat(l.quantity)||0; } });
+  // Save silently — this runs syncToPOs, which (for >1 open PO) opens the picker immediately.
+  await save(true);
 }
 
 // Push each line that has a supplier with an OPEN PO into that PO. Returns {warnings, needsPOChoice}.

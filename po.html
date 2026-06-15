@@ -80,7 +80,7 @@
 </head>
 <body>
 <header class="topbar">
-  <a class="back" href="index.html" id="back-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Inbox</a>
+  <a class="back" href="po-list.html" id="back-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Purchase Orders</a>
   <div class="title">Purchase Order <span class="id" id="t-id">#----</span></div>
   <span class="pobadge pob-open" id="t-badge">Open</span>
   <div class="actions">
@@ -281,7 +281,21 @@ async function save(silent){
   const existingIds=new Set((existing||[]).map(r=>r.id));
   const keptIds=new Set(LINES.filter(l=>l.id).map(l=>l.id));
   const toDelete=[...existingIds].filter(id=>!keptIds.has(id));
-  if(toDelete.length) await db.from('po_items').delete().in('id',toDelete);
+  if(toDelete.length){
+    // Before deleting, release the source sales-order lines: clear supplier + supplier qty
+    // so the Sales Order reflects that these items are no longer being purchased.
+    const {data:delItems}=await db.from('po_items').select('id,source_quote_item_id,source_allocation_id').in('id',toDelete);
+    const qiIds=[...new Set((delItems||[]).map(d=>d.source_quote_item_id).filter(Boolean))];
+    const allocIds=[...new Set((delItems||[]).map(d=>d.source_allocation_id).filter(Boolean))];
+    if(qiIds.length){
+      await db.from('quote_items').update({supplier_id:null,supplier_quantity:null,in_po:false,po_id:null,fulfillment_status:'none'}).in('id',qiIds);
+    }
+    if(allocIds.length){
+      // remove the allocations entirely (the split portion is gone)
+      await db.from('quote_item_allocations').delete().in('id',allocIds);
+    }
+    await db.from('po_items').delete().in('id',toDelete);
+  }
   for(let idx=0; idx<LINES.length; idx++){
     const l=LINES[idx];
     const base={po_id:PO_ID,line_order:idx+1,part_no:l.part_no||null,product_name:l.product_name||null,quantity:parseFloat(l.quantity)||0,rate:parseFloat(l.rate)||0,amount:parseFloat(l.amount)||0,ordered_for:l.ordered_for||null};
@@ -349,7 +363,7 @@ if(_backLink) _backLink.addEventListener('click',async e=>{
   if(!DIRTY) return;
   e.preventDefault();
   const go=await pConfirm('Leave without saving?','You have unsaved changes on this purchase order. If you leave now, they will be lost.',{confirmText:'Leave',cancelText:'Stay',type:'warn'});
-  if(go){ DIRTY=false; location.href='index.html'; }
+  if(go){ DIRTY=false; location.href='po-list.html'; }
 });
 load();
 // live sync: refresh this PO if it changes elsewhere, unless mid-edit
