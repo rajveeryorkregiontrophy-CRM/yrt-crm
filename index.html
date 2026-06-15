@@ -244,13 +244,12 @@ async function loadFulfillment(){
 }
 
 // Roll the per-line statuses up into a single order-level summary
-const FS_RANK={backordered:0,in_po:1,none:1,issued:2,arrived:3,verified:4};
+const FS_RANK={backordered:0,in_po:1,none:1,issued:2,received:3};
 const FS_META={
   none:{label:'No Suppliers',color:'#5a6273',bg:'rgba(90,98,115,.16)'},
   in_po:{label:'In PO',color:'#ff4d4d',bg:'rgba(255,77,77,.14)'},
   issued:{label:'Items Issued',color:'#8a92a2',bg:'rgba(138,146,162,.16)'},
-  arrived:{label:'Items Arrived',color:'#ffb627',bg:'rgba(255,182,39,.16)'},
-  verified:{label:'All Items Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
+  received:{label:'All Items Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
   backordered:{label:'Back Ordered',color:'#b06bff',bg:'rgba(176,107,255,.16)'},
   mixed:{label:'Mixed Status',color:'#3da5ff',bg:'rgba(61,165,255,.16)'}
 };

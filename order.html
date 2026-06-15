@@ -132,6 +132,8 @@
   .split-row input:focus{outline:none;border-color:var(--brass);}
   .split-row .sr-qty{width:90px;}
   .split-row .sr-del{background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:0 4px;}
+  .split-row .sr-label{width:60px;font-size:12.5px;font-weight:700;color:var(--text-2);flex-shrink:0;}
+  .split-row .sr-qty{flex:1;}
   .sr-menu{display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--paper-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:30;max-height:200px;overflow-y:auto;}
   .sr-menu.open{display:block;}
   .sr-opt{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;font-size:13px;}
@@ -230,11 +232,12 @@
 
 <div class="split-overlay" id="split-overlay">
   <div class="split-modal">
-    <div class="split-head"><h3>Split across suppliers / POs</h3><button class="split-x" id="split-x">×</button></div>
+    <div class="split-head"><h3>Split supplier quantity across POs</h3><button class="split-x" id="split-x">×</button></div>
     <div class="split-body">
       <div class="split-meta" id="split-meta"></div>
+      <label class="split-lbl">Allocate the supplier quantity across POs</label>
       <div class="split-rows" id="split-rows"></div>
-      <button class="split-add" id="split-add">+ Add allocation</button>
+      <button class="split-add" id="split-add">+ Add another PO</button>
       <div class="split-tally" id="split-tally"></div>
     </div>
     <div class="split-foot"><span class="split-msg" id="split-msg"></span><button class="btn" id="split-cancel">Cancel</button><button class="modal-btn-primary" id="split-save">Save split</button></div>
@@ -309,24 +312,24 @@
         <div class="legend sup-col" id="po-legend">
           <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>In PO</span>
           <span class="lg"><span class="lg-dot" style="background:#8a92a2"></span>Issued</span>
-          <span class="lg"><span class="lg-dot" style="background:#ffb627"></span>Arrived</span>
-          <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Verified</span>
+          <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Received</span>
           <span class="lg"><span class="lg-dot" style="background:#b06bff"></span>Back Order</span>
         </div>
       </div>
       <div class="lines-scroll">
       <table>
         <thead><tr>
-          <th style="width:150px;">Category</th>
-          <th style="width:130px;">Style #</th>
+          <th style="width:140px;">Category</th>
+          <th style="width:120px;">Style #</th>
           <th>Description</th>
-          <th class="sup-col" style="width:150px;">Supplier</th>
-          <th class="num" style="width:48px;">Qty</th>
-          <th style="width:48px;">Unit</th>
-          <th class="num" style="width:84px;">Unit Price</th>
-          <th style="width:96px;">Discount</th>
-          <th class="num" style="width:92px;">Amount</th>
-          <th style="width:30px;"></th>
+          <th class="sup-col" style="width:140px;">Supplier</th>
+          <th class="sup-col num" style="width:64px;">Supp. Qty</th>
+          <th class="num" style="width:58px;">Order Qty</th>
+          <th style="width:42px;">Unit</th>
+          <th class="num" style="width:80px;">Unit Price</th>
+          <th style="width:90px;">Discount</th>
+          <th class="num" style="width:88px;">Amount</th>
+          <th style="width:28px;"></th>
         </tr></thead>
         <tbody id="lines"></tbody>
       </table>
@@ -634,10 +637,11 @@ function renderLines(){
       <td><input class="li-input" value="${esc(ln.description||'')}" data-i="${i}" data-k="description" placeholder="Description"></td>
       <td class="cb-cell sup-col ${fulfillClass(ln)}">
         ${(ln._allocations&&ln._allocations.length)
-          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${ln._allocations.length} suppliers</span><span class="alloc-edit">Edit split</span></div>`
+          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">${ln._allocations.length} POs · edit</span></div>`
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-id-tag">#${esc(String(ln._supplier_number))}${fulfillTag(ln)}</div>`:''}`}
-        <button class="alloc-btn" data-alloc="${i}" title="Split across multiple POs / suppliers">⊟ Split</button>
+        <button class="alloc-btn" data-alloc="${i}" title="Split supplier quantity across multiple POs">⊟ Split PO</button>
       </td>
+      <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'disabled title="Set by split"':''}></td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
       <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
@@ -653,7 +657,7 @@ function renderLines(){
   tb.querySelectorAll('.li-input:not(.cb-cat):not(.cb-style)').forEach(inp=>{
     inp.addEventListener('input',()=>{
       const i=+inp.dataset.i,k=inp.dataset.k;let v=inp.value;
-      if(k==='quantity'||k==='unit_price')v=parseFloat(v)||0;
+      if(k==='quantity'||k==='unit_price'||k==='supplier_quantity')v=parseFloat(v)||0;
       LINES[i][k]=v;
       recompute(i,inp.closest('tr'));markDirty();
     });
@@ -798,9 +802,9 @@ function wireSupplierCombo(inp){
 
 function addLine(){LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
 
-// fulfillment colour system: in_po(red) -> issued(grey) -> arrived(amber) -> verified(green) -> backordered(violet)
-const FULFILL={in_po:'fs-inpo',issued:'fs-issued',arrived:'fs-arrived',verified:'fs-verified',backordered:'fs-backordered'};
-const FULFILL_LABEL={in_po:'IN PO',issued:'ISSUED',arrived:'ARRIVED',verified:'VERIFIED',backordered:'BACK ORDER'};
+// fulfillment colour system: in_po(red) -> issued(grey) -> received(green); backordered(violet)
+const FULFILL={in_po:'fs-inpo',issued:'fs-issued',received:'fs-verified',backordered:'fs-backordered'};
+const FULFILL_LABEL={in_po:'IN PO',issued:'ISSUED',received:'RECEIVED',backordered:'BACK ORDER'};
 function fulfillState(ln){
   // explicit fulfillment_status wins; else fall back to in_po
   const s=ln.fulfillment_status&&ln.fulfillment_status!=='none'?ln.fulfillment_status:(ln.in_po?'in_po':null);
@@ -809,21 +813,26 @@ function fulfillState(ln){
 function fulfillClass(ln){const s=fulfillState(ln);return s?FULFILL[s]||'':'';}
 function fulfillTag(ln){const s=fulfillState(ln);return s?' • '+(FULFILL_LABEL[s]||''):'';}
 
-// ---------- Split / allocations ----------
-let SPLIT_I=null, SPLIT_ROWS=[];
+// ---------- Split / allocations (one fixed supplier, supplier-qty across multiple POs) ----------
+let SPLIT_I=null, SPLIT_ROWS=[], SPLIT_SUP=null;
 function openSplit(i){
   if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Splitting items across POs is available on Sales Orders only.','info'); return; }
   const ln=LINES[i]; if(!ln){return;}
-  SPLIT_I=i;
-  // seed rows from existing allocations, or from the single supplier, or one empty row
-  if(ln._allocations&&ln._allocations.length){
-    SPLIT_ROWS=ln._allocations.map(a=>({supplier_id:a.supplier_id,_name:a._supplier_name||'',_num:a._supplier_number,quantity:a.quantity}));
-  }else if(ln.supplier_id){
-    SPLIT_ROWS=[{supplier_id:ln.supplier_id,_name:ln._supplier_name||'',_num:ln._supplier_number,quantity:parseFloat(ln.quantity)||0}];
-  }else{
-    SPLIT_ROWS=[{supplier_id:null,_name:'',_num:null,quantity:parseFloat(ln.quantity)||0}];
+  if(!ln.supplier_id && !(ln._allocations&&ln._allocations.length)){
+    alertModal('Pick a supplier first','Choose the supplier for this line, then split its supplier quantity across multiple purchase orders.','info');
+    return;
   }
-  document.getElementById('split-meta').innerHTML=`<b>${esc(ln.description||ln.style_number||'Line item')}</b> — total quantity required: <b>${parseFloat(ln.quantity)||0}</b>`;
+  SPLIT_I=i;
+  // the supplier is FIXED — taken from the line (or existing allocations)
+  if(ln._allocations&&ln._allocations.length){
+    SPLIT_SUP={id:ln._allocations[0].supplier_id,name:ln._allocations[0]._supplier_name||ln._supplier_name||'',num:ln._allocations[0]._supplier_number};
+    SPLIT_ROWS=ln._allocations.map(a=>({quantity:a.quantity}));
+  }else{
+    SPLIT_SUP={id:ln.supplier_id,name:ln._supplier_name||'',num:ln._supplier_number};
+    SPLIT_ROWS=[{quantity:parseFloat(ln.supplier_quantity)||0}];
+  }
+  const supQty=parseFloat(ln.supplier_quantity)||0;
+  document.getElementById('split-meta').innerHTML=`<b>${esc(ln.description||ln.style_number||'Line item')}</b><br>Supplier: <b>${esc(SPLIT_SUP.name||'—')}</b>${SPLIT_SUP.num?` (#${esc(String(SPLIT_SUP.num))})`:''}<br>Supplier quantity to allocate across POs: <b>${supQty}</b>`;
   renderSplitRows();
   document.getElementById('split-msg').textContent='';
   document.getElementById('split-overlay').classList.add('open');
@@ -833,67 +842,41 @@ function renderSplitRows(){
   const box=document.getElementById('split-rows');
   box.innerHTML=SPLIT_ROWS.map((r,idx)=>`
     <div class="split-row">
-      <div class="sr-sup">
-        <input class="sr-supinput" data-idx="${idx}" value="${esc(r._name||'')}" placeholder="Supplier" autocomplete="off">
-        <div class="sr-menu" data-menu="${idx}"></div>
-      </div>
-      <input class="sr-qty" type="number" min="0" data-idx="${idx}" value="${r.quantity??''}" placeholder="Qty">
+      <div class="sr-label">PO ${idx+1}</div>
+      <input class="sr-qty" type="number" min="0" data-idx="${idx}" value="${r.quantity??''}" placeholder="Qty for this PO">
       <button class="sr-del" data-idx="${idx}">×</button>
     </div>`).join('');
-  box.querySelectorAll('.sr-supinput').forEach(inp=>wireSplitSupplier(inp));
   box.querySelectorAll('.sr-qty').forEach(q=>q.addEventListener('input',()=>{SPLIT_ROWS[+q.dataset.idx].quantity=parseFloat(q.value)||0;updateTally();}));
-  box.querySelectorAll('.sr-del').forEach(b=>b.addEventListener('click',()=>{SPLIT_ROWS.splice(+b.dataset.idx,1);if(!SPLIT_ROWS.length)SPLIT_ROWS.push({supplier_id:null,_name:'',_num:null,quantity:0});renderSplitRows();}));
+  box.querySelectorAll('.sr-del').forEach(b=>b.addEventListener('click',()=>{SPLIT_ROWS.splice(+b.dataset.idx,1);if(!SPLIT_ROWS.length)SPLIT_ROWS.push({quantity:0});renderSplitRows();}));
   updateTally();
-}
-function wireSplitSupplier(inp){
-  const idx=+inp.dataset.idx;
-  const menu=inp.parentElement.querySelector('.sr-menu');
-  const close=()=>{menu.classList.remove('open');menu.innerHTML='';};
-  const open=()=>{
-    const q=inp.value.toLowerCase().trim();
-    const matches=SUPPLIERS.filter(s=>!q||(s.company_name||s.short_name||'').toLowerCase().includes(q)||String(s.supplier_number||'').includes(q)).slice(0,8);
-    if(!matches.length){close();return;}
-    menu.innerHTML=matches.map((m,k)=>`<div class="sr-opt" data-k="${k}"><span>${esc(m.company_name||m.short_name||'')}</span><span class="sr-side">#${esc(String(m.supplier_number||''))}</span></div>`).join('');
-    menu.classList.add('open');
-    menu.querySelectorAll('.sr-opt').forEach(opt=>opt.addEventListener('mousedown',e=>{
-      e.preventDefault();const m=matches[+opt.dataset.k];
-      SPLIT_ROWS[idx].supplier_id=m.id;SPLIT_ROWS[idx]._name=m.company_name||m.short_name||'';SPLIT_ROWS[idx]._num=m.supplier_number;
-      inp.value=SPLIT_ROWS[idx]._name;close();
-    }));
-  };
-  inp.addEventListener('focus',open);
-  inp.addEventListener('input',()=>{SPLIT_ROWS[idx].supplier_id=null;SPLIT_ROWS[idx]._name=inp.value;open();});
-  inp.addEventListener('blur',()=>setTimeout(close,150));
 }
 function updateTally(){
   const ln=LINES[SPLIT_I]; if(!ln)return;
-  const need=parseFloat(ln.quantity)||0;
+  const need=parseFloat(ln.supplier_quantity)||0;
   const sum=SPLIT_ROWS.reduce((s,r)=>s+(parseFloat(r.quantity)||0),0);
   const el=document.getElementById('split-tally');
   el.textContent=`Allocated ${sum} of ${need}`+(sum===need?' ✓':sum>need?' — over by '+(sum-need):' — '+(need-sum)+' unallocated');
   el.className='split-tally '+(sum===need?'ok':'bad');
 }
-document.getElementById('split-add').addEventListener('click',()=>{SPLIT_ROWS.push({supplier_id:null,_name:'',_num:null,quantity:0});renderSplitRows();});
+document.getElementById('split-add').addEventListener('click',()=>{SPLIT_ROWS.push({quantity:0});renderSplitRows();});
 document.getElementById('split-x').addEventListener('click',closeSplit);
 document.getElementById('split-cancel').addEventListener('click',closeSplit);
 document.getElementById('split-overlay').addEventListener('click',e=>{if(e.target.id==='split-overlay')closeSplit();});
 document.getElementById('split-save').addEventListener('click',()=>{
   const ln=LINES[SPLIT_I]; if(!ln)return;
-  // validate: every row needs a supplier + qty>0
   for(const r of SPLIT_ROWS){
-    if(!r.supplier_id){document.getElementById('split-msg').textContent='Each allocation needs a supplier.';return;}
-    if(!(parseFloat(r.quantity)>0)){document.getElementById('split-msg').textContent='Each allocation needs a quantity greater than 0.';return;}
+    if(!(parseFloat(r.quantity)>0)){document.getElementById('split-msg').textContent='Each PO needs a quantity greater than 0.';return;}
   }
-  const need=parseFloat(ln.quantity)||0;
+  const need=parseFloat(ln.supplier_quantity)||0;
   const sum=SPLIT_ROWS.reduce((s,r)=>s+(parseFloat(r.quantity)||0),0);
-  if(sum!==need){document.getElementById('split-msg').textContent='Allocated quantity ('+sum+') must equal the line quantity ('+need+').';return;}
-  // if only one row, treat as a single-supplier line (clear allocations)
+  if(sum!==need){document.getElementById('split-msg').textContent='Allocated quantity ('+sum+') must equal the supplier quantity ('+need+').';return;}
+  // single PO -> normal single-supplier line; multiple -> allocations (all same supplier)
   if(SPLIT_ROWS.length===1){
-    ln.supplier_id=SPLIT_ROWS[0].supplier_id;ln._supplier_name=SPLIT_ROWS[0]._name;ln._supplier_number=SPLIT_ROWS[0]._num;
+    ln.supplier_id=SPLIT_SUP.id;ln._supplier_name=SPLIT_SUP.name;ln._supplier_number=SPLIT_SUP.num;
     ln._allocations=null;
   }else{
-    ln.supplier_id=null;ln._supplier_name='';ln._supplier_number=null;
-    ln._allocations=SPLIT_ROWS.map(r=>({supplier_id:r.supplier_id,_supplier_name:r._name,_supplier_number:r._num,quantity:parseFloat(r.quantity)||0}));
+    ln.supplier_id=SPLIT_SUP.id;ln._supplier_name=SPLIT_SUP.name;ln._supplier_number=SPLIT_SUP.num;
+    ln._allocations=SPLIT_ROWS.map(r=>({supplier_id:SPLIT_SUP.id,_supplier_name:SPLIT_SUP.name,_supplier_number:SPLIT_SUP.num,quantity:parseFloat(r.quantity)||0}));
   }
   closeSplit();renderLines();markDirty();
 }); 
@@ -942,7 +925,7 @@ async function save(silent){
       category_name:l.category_name||null,style_number:l.style_number||null,description:l.description||null,
       quantity:parseFloat(l.quantity)||0,unit:l.unit||'Pc',unit_price:parseFloat(l.unit_price)||0,
       amount:parseFloat(l.amount)||0,discount_pct:parseFloat(l.discount_pct)||0,net_amount:parseFloat(l.net_amount)||0,
-      supplier_id:l.supplier_id||null,in_po:false,po_id:null}));
+      supplier_id:l.supplier_id||null,supplier_quantity:l.supplier_quantity!=null?parseFloat(l.supplier_quantity)||0:null,in_po:false,po_id:null}));
     const {data:ins,error:e2}=await db.from('quote_items').insert(rows).select();
     if(e2){if(msg){msg.textContent='Lines error: '+e2.message;msg.className='status-msg err';}return;}
     insertedItems=ins||[];
@@ -986,7 +969,7 @@ async function syncToPOs(insertedItems){
   if(ORDER.record_type!=='order') return warnings;
   // group single-supplier lines by supplier_id (skip lines that are split — those go via allocations)
   const bySup={};
-  insertedItems.forEach(it=>{ if(it.supplier_id&&Number(it.quantity)>0){ (bySup[it.supplier_id]=bySup[it.supplier_id]||[]).push({type:'item',ref:it,style_number:it.style_number,description:it.description,quantity:Number(it.quantity),unit_price:Number(it.unit_price),id:it.id}); } });
+  insertedItems.forEach(it=>{ const supQty=it.supplier_quantity!=null?Number(it.supplier_quantity):Number(it.quantity); if(it.supplier_id&&supQty>0){ (bySup[it.supplier_id]=bySup[it.supplier_id]||[]).push({type:'item',ref:it,style_number:it.style_number,description:it.description,quantity:supQty,unit_price:Number(it.unit_price),id:it.id}); } });
 
   // pull fresh allocations for these items and add them to the grouping
   const itemIds=insertedItems.map(it=>it.id);

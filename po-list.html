@@ -45,6 +45,22 @@
   .tab.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
   .tab .n{font-family:var(--fm);font-size:10.5px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.07);}
   .tab.active .n{background:rgba(0,0,0,.15);}
+  .rc-card{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+  .rc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);}
+  .rc-sup{font-weight:700;color:var(--text);margin-left:8px;}
+  .rc-table{width:100%;border-collapse:collapse;}
+  .rc-table th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);text-align:left;padding:10px 18px;border-bottom:1px solid var(--line);}
+  .rc-table td{padding:11px 18px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .rc-table tr:last-child td{border-bottom:none;}
+  .rc-table .num{text-align:right;}
+  .ro{font-size:13px;color:var(--text-2);}
+  .rc-badge{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
+  .rc-status{vertical-align:middle;}
+  .rc-actions{display:inline-flex;gap:6px;margin-left:10px;}
+  .rc-act{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:5px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-3);cursor:pointer;font-family:inherit;}
+  .rc-act:hover{border-color:var(--text-3);color:var(--text);}
+  .rc-act.ok:hover{border-color:#3ddc84;color:#3ddc84;}
+  .rc-act.bad:hover{border-color:#b06bff;color:#b06bff;}
   .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
   .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
   .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
@@ -108,6 +124,7 @@
       <div class="tabs" id="tabs">
         <button class="tab active" data-f="open">Open <span class="n" id="n-open">0</span></button>
         <button class="tab" data-f="sent">Sent <span class="n" id="n-sent">0</span></button>
+        <button class="tab" data-f="receiving">Receiving <span class="n" id="n-receiving">0</span></button>
         <button class="tab" data-f="all">All <span class="n" id="n-all">0</span></button>
       </div>
       <section class="panel">
@@ -134,6 +151,21 @@
 import { supabase as db, requireAuth, signOut } from './auth.js';
 await requireAuth();
 
+// ---- shared styled modal (replaces native alert/confirm) ----
+function __ensureModal(){
+  if(document.getElementById('__sm_ov'))return;
+  const css=document.createElement('style');
+  css.textContent='#__sm_ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px;}#__sm_ov.open{display:flex;}#__sm{background:#16181d;border:1px solid #414a5c;border-radius:14px;width:100%;max-width:410px;overflow:hidden;font-family:Inter,system-ui,sans-serif;}#__sm .h{display:flex;gap:13px;align-items:flex-start;padding:22px 24px 0;}#__sm .ic{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;}#__sm .ic.warn{background:rgba(255,182,39,.15);color:#ffb627;}#__sm .ic.info{background:rgba(61,165,255,.15);color:#3da5ff;}#__sm .ic.danger{background:rgba(255,77,77,.15);color:#ff4d4d;}#__sm .ic svg{width:22px;height:22px;}#__sm .t{font-family:Archivo,sans-serif;font-weight:800;font-size:16px;color:#eef0f4;margin-bottom:5px;}#__sm .m{font-size:13.5px;color:#c4cad6;line-height:1.5;}#__sm .f{display:flex;gap:10px;padding:20px 24px 22px;justify-content:flex-end;}#__sm .b{padding:10px 17px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}#__sm .b:hover{border-color:#9098a8;}#__sm .b.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}#__sm .b.danger{background:#ff4d4d;color:#fff;border-color:#ff4d4d;}#__sm .b.plain{background:transparent;border-color:transparent;color:#9098a8;}';
+  document.head.appendChild(css);
+  const ov=document.createElement('div');ov.id='__sm_ov';
+  ov.innerHTML='<div id="__sm"><div class="h"><div class="ic warn" id="__sm_ic"></div><div><div class="t" id="__sm_t"></div><div class="m" id="__sm_m"></div></div></div><div class="f" id="__sm_f"></div></div>';
+  document.body.appendChild(ov);
+}
+const __SM_IC={warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',danger:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'};
+function smAlert(msg,title,type){return new Promise(res=>{__ensureModal();type=type||'info';document.getElementById('__sm_ic').className='ic '+type;document.getElementById('__sm_ic').innerHTML=__SM_IC[type]||__SM_IC.info;document.getElementById('__sm_t').textContent=title||'Notice';document.getElementById('__sm_m').textContent=msg||'';const f=document.getElementById('__sm_f');f.innerHTML='<button class="b primary" id="__sm_ok">Got it</button>';const ov=document.getElementById('__sm_ov');const close=()=>{ov.classList.remove('open');res(true);};f.querySelector('#__sm_ok').onclick=close;ov.onclick=e=>{if(e.target===ov)close();};ov.classList.add('open');});}
+function smConfirm(msg,title,opts){opts=opts||{};return new Promise(res=>{__ensureModal();const type=opts.type||'warn';document.getElementById('__sm_ic').className='ic '+type;document.getElementById('__sm_ic').innerHTML=__SM_IC[type]||__SM_IC.warn;document.getElementById('__sm_t').textContent=title||'Confirm';document.getElementById('__sm_m').textContent=msg||'';const f=document.getElementById('__sm_f');f.innerHTML='<button class="b plain" id="__sm_no">'+(opts.cancelText||'Cancel')+'</button><button class="b '+(opts.danger?'danger':'primary')+'" id="__sm_yes">'+(opts.confirmText||'Confirm')+'</button>';const ov=document.getElementById('__sm_ov');const close=v=>{ov.classList.remove('open');res(v);};f.querySelector('#__sm_yes').onclick=()=>close(true);f.querySelector('#__sm_no').onclick=()=>close(false);ov.onclick=e=>{if(e.target===ov)close(false);};ov.classList.add('open');});}
+
+
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -143,19 +175,21 @@ const ST_LABEL={open:'Open',sent:'Sent',received:'Received',verified:'Verified',
 let POS=[],SUPPLIERS=[],FILTER='open';
 
 async function load(){
-  const {data:pos,error}=await db.from('purchase_orders').select('*, suppliers(company_name,short_name,supplier_number), po_items(amount)').order('po_number',{ascending:false});
+  const {data:pos,error}=await db.from('purchase_orders').select('*, suppliers(company_name,short_name,supplier_number), po_items(id,part_no,style_number,product_name,description,quantity,amount,ordered_for,status,source_quote_item_id,source_allocation_id)').order('po_number',{ascending:false});
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   POS=pos||[];
   const {data:sups}=await db.from('suppliers').select('id,company_name,short_name,supplier_number').order('company_name');
   SUPPLIERS=sups||[];
   document.getElementById('n-open').textContent=POS.filter(p=>p.status==='open').length;
   document.getElementById('n-sent').textContent=POS.filter(p=>p.status==='sent').length;
+  const recEl=document.getElementById('n-receiving');if(recEl)recEl.textContent=POS.filter(p=>p.status==='sent').length;
   document.getElementById('n-all').textContent=POS.length;
   document.getElementById('nav-po').textContent=POS.filter(p=>p.status==='open').length;
   render();
 }
 
 function render(){
+  if(FILTER==='receiving'){ renderReceiving(); return; }
   document.getElementById('list-title').textContent={open:'Open Purchase Orders',sent:'Sent Purchase Orders',all:'All Purchase Orders'}[FILTER];
   let rows=POS.filter(p=>FILTER==='all'?true:p.status===FILTER);
   document.getElementById('count').textContent=rows.length+(rows.length===1?' PO':' POs');
@@ -164,6 +198,53 @@ function render(){
     const sup=p.suppliers||{};const total=(p.po_items||[]).reduce((s,i)=>s+Number(i.amount||0),0);
     return `<tr data-id="${p.id}"><td><span class="po-num">#${p.po_number}</span></td><td><div class="po-supplier">${esc(sup.company_name||sup.short_name||'—')}</div>${sup.supplier_number?`<div class="po-sub">Supplier #${sup.supplier_number}</div>`:''}</td><td><span class="po-sub" style="color:var(--text-2);">${esc(p.subject||'—')}</span></td><td><span class="po-sub">${fmtD(p.order_date)}</span></td><td><span class="po-items-count">${(p.po_items||[]).length} item${(p.po_items||[]).length===1?'':'s'}</span></td><td><span class="badge-st st-${p.status}">${ST_LABEL[p.status]||p.status}</span></td><td class="num"><span class="po-total">${money(total)}</span></td></tr>`;}).join('')}</tbody></table>`;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='po.html?id='+encodeURIComponent(tr.dataset.id)));
+}
+
+// ---- Receiving: mark items Received / Back Ordered (separate from the view-only Sent records) ----
+const RC_INFO={issued:{label:'Issued',color:'#8a92a2',bg:'rgba(138,146,162,.16)'},received:{label:'Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},backordered:{label:'Back Ordered',color:'#b06bff',bg:'rgba(176,107,255,.16)'}};
+function rcBadge(s){const i=RC_INFO[s]||RC_INFO.issued;return `<span class="rc-badge" style="color:${i.color};background:${i.bg};">${i.label}</span>`;}
+function renderReceiving(){
+  document.getElementById('list-title').textContent='Receiving';
+  const sentPOs=POS.filter(p=>p.status==='sent');
+  document.getElementById('count').textContent=sentPOs.length+(sentPOs.length===1?' PO':' POs');
+  if(!sentPOs.length){document.getElementById('wrap').innerHTML='<div class="state">No purchase orders awaiting receiving. POs appear here once they’ve been sent.</div>';return;}
+  document.getElementById('wrap').innerHTML=sentPOs.map(p=>{
+    const sup=p.suppliers||{};
+    const items=(p.po_items||[]);
+    return `<div class="rc-card">
+      <div class="rc-head"><div><span class="po-num">#${p.po_number}</span> <span class="rc-sup">${esc(sup.company_name||sup.short_name||'—')}</span></div><span class="po-sub">${fmtD(p.order_date)}</span></div>
+      <table class="rc-table"><thead><tr><th style="width:90px;">Part No.</th><th>Product</th><th class="num" style="width:60px;">Qty</th><th style="width:130px;">From Order</th><th style="width:240px;">Status</th></tr></thead><tbody>
+      ${items.map(it=>`<tr><td><span class="ro">${esc(it.part_no||it.style_number||'')}</span></td><td><span class="ro">${esc(it.product_name||it.description||'')}</span></td><td class="num"><span class="ro">${it.quantity??''}</span></td><td><span class="ro">${it.ordered_for?'#'+esc(String(it.ordered_for)):'—'}</span></td>
+        <td class="rc-status">${rcBadge(it.status||'issued')}
+          <div class="rc-actions">
+            ${(it.status||'issued')!=='received'?`<button class="rc-act ok" data-po="${p.id}" data-item="${it.id}" data-act="received">Mark Received</button>`:''}
+            ${(it.status||'issued')!=='backordered'?`<button class="rc-act bad" data-po="${p.id}" data-item="${it.id}" data-act="backordered">Back Order</button>`:''}
+            ${(it.status||'issued')!=='issued'?`<button class="rc-act" data-po="${p.id}" data-item="${it.id}" data-act="issued">Reset</button>`:''}
+          </div>
+        </td></tr>`).join('')}
+      </tbody></table>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.rc-act').forEach(b=>b.addEventListener('click',()=>markReceiving(b.dataset.item,b.dataset.act,b.dataset.po)));
+}
+
+async function markReceiving(itemId,status,poId){
+  // update the po_item
+  const patch={status};
+  if(status==='received'){patch.verified_at=new Date().toISOString();}
+  const {error}=await db.from('po_items').update(patch).eq('id',itemId);
+  if(error){await smAlert('Could not update: '+error.message,'Error','danger');return;}
+  // find the item to propagate to its source line / allocation
+  const po=POS.find(p=>p.id===poId);
+  const it=po&&(po.po_items||[]).find(x=>x.id===itemId);
+  if(it){
+    it.status=status;
+    // received -> the sales order line goes green; backordered -> violet; issued -> grey
+    const fs=status; // 'received' | 'backordered' | 'issued'
+    if(it.source_allocation_id){ await db.from('quote_item_allocations').update({status}).eq('id',it.source_allocation_id); }
+    if(it.source_quote_item_id){ await db.from('quote_items').update({fulfillment_status:fs}).eq('id',it.source_quote_item_id); }
+  }
+  renderReceiving();
 }
 
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{

@@ -192,15 +192,14 @@ function applyViewOnly(){
   if(!document.getElementById('vo-banner')){
     const b=document.createElement('div');b.id='vo-banner';
     b.style.cssText='background:rgba(61,165,255,.12);border:1px solid rgba(61,165,255,.35);color:#9ccbff;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;margin-bottom:14px;';
-    b.innerHTML='🔒 This Purchase Order has been sent and is view-only. No further changes can be made.';
+    b.innerHTML='This Purchase Order has been sent and is view-only. No further changes can be made.';
     const wrap=document.getElementById('wrap'); if(wrap&&wrap.firstChild) wrap.insertBefore(b,wrap.firstChild);
   }
 }
 
 const ST_INFO={
   issued:{label:'Issued',color:'#8a92a2',bg:'rgba(138,146,162,.16)'},
-  arrived:{label:'Arrived',color:'#ffb627',bg:'rgba(255,182,39,.16)'},
-  verified:{label:'Verified',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
+  received:{label:'Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
   backordered:{label:'Back Ordered',color:'#b06bff',bg:'rgba(176,107,255,.16)'}
 };
 function stBadge(s){const i=ST_INFO[s]||ST_INFO.issued;return `<span class="st-badge" style="color:${i.color};background:${i.bg};">${i.label}</span>`;}
@@ -213,8 +212,7 @@ function renderLines(){
   LINES.forEach((l,i)=>{
     const tr=document.createElement('tr');
     if(sent){
-      // verification mode: read-only + status + verify/backorder controls
-      const st=l.status||'issued';
+      // sent PO = records only, view-only. No status controls here (those live in the Receiving tab).
       tr.innerHTML=`
         <td><span class="ro">${esc(l.part_no||'')}</span></td>
         <td><span class="ro">${esc(l.product_name||'')}</span></td>
@@ -222,13 +220,7 @@ function renderLines(){
         <td><span class="ro">${money(l.rate)}</span></td>
         <td class="li-amt">${money(l.amount)}</td>
         <td><div class="from-order">${l.ordered_for?`<span class="fo-num">#${esc(String(l.ordered_for))}</span>${orderName(l.ordered_for)?`<span class="fo-name">${esc(orderName(l.ordered_for))}</span>`:''}`:'<span class="fo-name">—</span>'}</div></td>
-        <td class="st-cell">${stBadge(st)}
-          <div class="st-actions">
-            ${st!=='arrived'?`<button class="st-act" data-act="arrived" data-i="${i}">Mark Arrived</button>`:''}
-            ${st!=='verified'?`<button class="st-act ok" data-act="verified" data-i="${i}">Verify</button>`:''}
-            ${st!=='backordered'?`<button class="st-act bad" data-act="backordered" data-i="${i}">Back Order</button>`:''}
-          </div>
-        </td>`;
+        <td><span class="ro">${stBadge(l.status||'issued')}</span></td>`;
     }else{
       tr.innerHTML=`
         <td><input class="li" data-i="${i}" data-k="part_no" value="${esc(l.part_no||'')}" placeholder="Part #"></td>
@@ -250,8 +242,6 @@ function renderLines(){
       recalc();dirty();
     }));
     tb.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>{LINES.splice(+b.dataset.del,1);renderLines();recalc();dirty();}));
-  }else{
-    tb.querySelectorAll('.st-act').forEach(b=>b.addEventListener('click',()=>markItemStatus(+b.dataset.i,b.dataset.act)));
   }
   recalc();
 }
