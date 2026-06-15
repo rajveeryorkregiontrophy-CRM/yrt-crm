@@ -130,7 +130,7 @@
 </div>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment } from './auth.js';
 await requireAuth();
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
@@ -266,14 +266,31 @@ function addLine(){LINES.push({part_no:'',product_name:'',quantity:1,rate:0,amou
 function recalc(){document.getElementById('t-total').textContent=money(LINES.reduce((s,l)=>s+(parseFloat(l.amount)||0),0));}
 
 async function save(silent){
-  const msg=document.getElementById('msg');msg.textContent='Saving…';msg.className='msg';
+  const msg=document.getElementById('msg');
+  // In-Hand Date is mandatory
+  if(!PO.in_hand_date){
+    if(!silent){ await pConfirm('In-Hand Date required','Please set an <b>In-Hand Date</b> before saving this Purchase Order.',{confirmText:'OK',cancelText:'Close',type:'warn'}); }
+    const ih=document.getElementById('i-inhand'); if(ih){ih.focus();try{ih.showPicker&&ih.showPicker();}catch(e){}}
+    return false;
+  }
+  msg.textContent='Saving…';msg.className='msg';
   const {error:e1}=await db.from('purchase_orders').update({supplier_id:PO.supplier_id,subject:PO.subject,order_date:PO.order_date,in_hand_date:PO.in_hand_date,dispatch_mode:PO.dispatch_mode,status:PO.status}).eq('id',PO_ID);
   if(e1){msg.textContent='Error: '+e1.message;msg.className='msg err';return false;}
-  await db.from('po_items').delete().eq('po_id',PO_ID);
-  if(LINES.length){
-    const rows=LINES.map((l,idx)=>({po_id:PO_ID,line_order:idx+1,part_no:l.part_no||null,product_name:l.product_name||null,quantity:parseFloat(l.quantity)||0,rate:parseFloat(l.rate)||0,amount:parseFloat(l.amount)||0,ordered_for:l.ordered_for||null}));
-    const {error:e2}=await db.from('po_items').insert(rows);
-    if(e2){msg.textContent='Lines error: '+e2.message;msg.className='msg err';return false;}
+  // UPDATE-IN-PLACE po_items so their status/source links are never wiped
+  const {data:existing}=await db.from('po_items').select('id').eq('po_id',PO_ID);
+  const existingIds=new Set((existing||[]).map(r=>r.id));
+  const keptIds=new Set(LINES.filter(l=>l.id).map(l=>l.id));
+  const toDelete=[...existingIds].filter(id=>!keptIds.has(id));
+  if(toDelete.length) await db.from('po_items').delete().in('id',toDelete);
+  for(let idx=0; idx<LINES.length; idx++){
+    const l=LINES[idx];
+    const base={po_id:PO_ID,line_order:idx+1,part_no:l.part_no||null,product_name:l.product_name||null,quantity:parseFloat(l.quantity)||0,rate:parseFloat(l.rate)||0,amount:parseFloat(l.amount)||0,ordered_for:l.ordered_for||null};
+    if(l.id&&existingIds.has(l.id)){
+      await db.from('po_items').update(base).eq('id',l.id);   // keeps status/source_*
+    }else{
+      const {data:ins}=await db.from('po_items').insert({...base,status:'issued'}).select().single();
+      if(ins)l.id=ins.id;
+    }
   }
   DIRTY=false;if(!silent){msg.textContent='Saved ✓';msg.className='msg ok';}
   return true;
@@ -281,6 +298,11 @@ async function save(silent){
 
 async function savePDF(){
   if(!LINES.length){ await pConfirm('No items','Add at least one product before sending this PO.',{confirmText:'OK',cancelText:'Close',type:'warn'}); return; }
+  if(!PO.in_hand_date){
+    await pConfirm('In-Hand Date required','Please set an <b>In-Hand Date</b> before generating or sending this Purchase Order.',{confirmText:'OK',cancelText:'Close',type:'warn'});
+    const ih=document.getElementById('i-inhand'); if(ih){ih.focus();try{ih.showPicker&&ih.showPicker();}catch(e){}}
+    return;
+  }
   const alreadySent = PO.status!=='open';
   if(!alreadySent){
     const ok=await pConfirm('Proceed with this PO?','Are you sure you want to proceed? This Purchase Order uses <b>wholesale prices only</b>.',{confirmText:'Yes, proceed',cancelText:'Cancel',type:'warn'});
@@ -322,6 +344,8 @@ async function savePDF(){
 
 window.addEventListener('beforeunload',e=>{if(DIRTY){e.preventDefault();e.returnValue='';}});
 load();
+// live sync: refresh this PO if it changes elsewhere, unless mid-edit
+subscribeFulfillment(async()=>{ if(!DIRTY) await load(); });
 
 // ---- lightweight modal system ----
 function ensureModal(){

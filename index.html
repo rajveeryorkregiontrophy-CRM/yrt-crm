@@ -181,7 +181,7 @@
   </div>
 </div>
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment } from './auth.js';
 await requireAuth();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
@@ -237,32 +237,47 @@ async function loadFulfillment(){
   FULFILL_BY_ORDER={};
   const orderIds=DATA.order.map(o=>o.id);
   if(!orderIds.length)return;
-  const {data:items}=await db.from('quote_items').select('quote_id,fulfillment_status,supplier_id,description,style_number').in('quote_id',orderIds);
+  const {data:items}=await db.from('quote_items').select('quote_id,fulfillment_status,supplier_id,supplier_quantity,in_po,description,style_number').in('quote_id',orderIds);
   (items||[]).forEach(it=>{
     (FULFILL_BY_ORDER[it.quote_id]=FULFILL_BY_ORDER[it.quote_id]||[]).push(it);
   });
 }
 
-// Roll the per-line statuses up into a single order-level summary
-const FS_RANK={backordered:0,in_po:1,none:1,issued:2,received:3};
+// Derive a single status for one line item.
+// none      = no supplier
+// instock   = supplier set but supplier_quantity 0 (already in-house, no PO needed)
+// placed    = supplier + qty, but not yet on a PO (open PO required)
+// in_po     = linked to an open PO (red)
+// issued/received/backordered = explicit fulfillment status
+function itemState(it){
+  const fs=it.fulfillment_status;
+  if(fs&&fs!=='none'&&fs!=='in_po') return fs;      // issued/received/backordered
+  if(!it.supplier_id) return 'none';
+  const sq=it.supplier_quantity;
+  if(sq!=null && Number(sq)===0) return 'instock';
+  if(it.in_po || fs==='in_po') return 'in_po';
+  return 'placed';                                   // supplier+qty, no PO yet
+}
+
 const FS_META={
   none:{label:'No Suppliers',color:'#5a6273',bg:'rgba(90,98,115,.16)'},
+  placed:{label:'Open PO Required',color:'#e0883a',bg:'rgba(224,136,58,.16)'},
   in_po:{label:'In PO',color:'#ff4d4d',bg:'rgba(255,77,77,.14)'},
   issued:{label:'Items Issued',color:'#8a92a2',bg:'rgba(138,146,162,.16)'},
   received:{label:'All Items Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
   backordered:{label:'Back Ordered',color:'#b06bff',bg:'rgba(176,107,255,.16)'},
+  instock:{label:'In Stock',color:'#3da5ff',bg:'rgba(61,165,255,.16)'},
   mixed:{label:'Mixed Status',color:'#3da5ff',bg:'rgba(61,165,255,.16)'}
 };
 function rollup(orderId){
   const items=FULFILL_BY_ORDER[orderId]||[];
-  if(!items.length)return null;   // no line items -> no badge
-  const states=items.map(it=>{
-    const s=it.fulfillment_status&&it.fulfillment_status!=='none'?it.fulfillment_status:(it.supplier_id?'in_po':'none');
-    return s;
-  });
-  const uniq=[...new Set(states)];
+  if(!items.length)return null;
+  const states=items.map(itemState);
+  // treat 'instock' as satisfied for rollup purposes (doesn't need purchasing)
+  const meaningful=states.filter(s=>s!=='instock');
+  const base=meaningful.length?meaningful:states;
+  const uniq=[...new Set(base)];
   if(uniq.length===1)return uniq[0];
-  // any backorder shows as mixed (with backorder noted in the popup)
   return 'mixed';
 }
 
@@ -273,7 +288,7 @@ function openFulfillPopup(orderId){
   const ov=document.getElementById('fs-popup');
   document.getElementById('fsp-title').textContent='Order #'+(order?order.stage_id:'')+' — line status';
   const rows=items.map(it=>{
-    const s=it.fulfillment_status&&it.fulfillment_status!=='none'?it.fulfillment_status:(it.supplier_id?'in_po':'none');
+    const s=itemState(it);
     const m=FS_META[s]||FS_META.none;
     return `<div class="fsp-row"><div class="fsp-desc">${esc(it.description||it.style_number||'Item')}</div><span class="fs-pill" style="color:${m.color};background:${m.bg};">${m.label}</span></div>`;
   }).join('');
@@ -343,6 +358,8 @@ document.getElementById('new-record').addEventListener('click',async()=>{
 });
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
 load();
+// live sync: refresh the fulfillment column whenever anything changes anywhere
+subscribeFulfillment(async()=>{ await loadFulfillment(); render(); });
 </script>
 </body>
 </html>

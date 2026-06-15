@@ -47,3 +47,23 @@ export async function signOut(){
   await supabase.auth.signOut();
   location.replace('login.html');
 }
+
+// ============================================================
+// Realtime: live fulfillment sync across all open pages.
+// Call subscribeFulfillment(cb) — cb runs (debounced) whenever any
+// fulfillment-related row changes anywhere. Pages re-fetch + re-render.
+//   const unsub = subscribeFulfillment(() => reloadMyView());
+// Returns an unsubscribe function.
+// ============================================================
+export function subscribeFulfillment(cb, opts){
+  opts = opts || {};
+  const tables = opts.tables || ['quote_items','po_items','quote_item_allocations','purchase_orders'];
+  let timer=null;
+  const fire=()=>{ clearTimeout(timer); timer=setTimeout(()=>{ try{cb();}catch(e){console.warn('realtime cb error',e);} }, 180); };
+  const channel = supabase.channel('yrt-fulfillment-'+Math.random().toString(36).slice(2));
+  tables.forEach(t=>{
+    channel.on('postgres_changes', { event:'*', schema:'public', table:t }, fire);
+  });
+  channel.subscribe();
+  return ()=>{ try{ supabase.removeChannel(channel); }catch(e){} };
+}

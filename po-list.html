@@ -45,22 +45,43 @@
   .tab.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
   .tab .n{font-family:var(--fm);font-size:10.5px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.07);}
   .tab.active .n{background:rgba(0,0,0,.15);}
-  .rc-card{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden;}
-  .rc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);}
-  .rc-sup{font-weight:700;color:var(--text);margin-left:8px;}
+  .rc-intro{font-size:13px;color:var(--text-2);margin-bottom:18px;padding:12px 16px;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;}
+  .rc-card{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden;}
+  .rc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:16px 20px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent);}
+  .rc-head-l{display:flex;flex-direction:column;gap:3px;}
+  .rc-po{font-family:var(--fm);font-weight:800;font-size:15px;color:var(--brass-2);}
+  .rc-sup{font-size:13.5px;font-weight:600;color:var(--text);}
+  .rc-head-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:240px;}
+  .rc-dates{font-size:11.5px;color:var(--text-3);}
+  .rc-dlabel{text-transform:uppercase;letter-spacing:.04em;font-weight:700;color:var(--text-3);font-size:10px;}
+  .rc-progress-wrap{display:flex;align-items:center;gap:10px;width:100%;justify-content:flex-end;}
+  .rc-progress{width:120px;height:6px;border-radius:4px;background:var(--bg-4);overflow:hidden;}
+  .rc-progress-bar{height:100%;background:#8a92a2;transition:width .3s;}
+  .rc-progress-bar.done{background:#3ddc84;}
+  .rc-progress-txt{font-size:11px;color:var(--text-3);white-space:nowrap;}
+  .rc-progress-txt.done{color:#3ddc84;font-weight:700;}
   .rc-table{width:100%;border-collapse:collapse;}
-  .rc-table th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);text-align:left;padding:10px 18px;border-bottom:1px solid var(--line);}
-  .rc-table td{padding:11px 18px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .rc-table th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);text-align:left;padding:11px 20px;border-bottom:1px solid var(--line);font-weight:700;}
+  .rc-table td{padding:13px 20px;border-bottom:1px solid var(--line);vertical-align:middle;}
   .rc-table tr:last-child td{border-bottom:none;}
   .rc-table .num{text-align:right;}
+  .rc-row-received{background:rgba(61,220,132,.04);}
+  .rc-row-backordered{background:rgba(176,107,255,.04);}
   .ro{font-size:13px;color:var(--text-2);}
-  .rc-badge{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
-  .rc-status{vertical-align:middle;}
-  .rc-actions{display:inline-flex;gap:6px;margin-left:10px;}
-  .rc-act{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:5px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-3);cursor:pointer;font-family:inherit;}
+  .ro.mono{font-family:var(--fm);font-size:12.5px;}
+  .rc-badge{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
+  .rc-actcell{text-align:right;}
+  .rc-actions{display:inline-flex;gap:7px;justify-content:flex-end;}
+  .rc-act{font-size:11px;font-weight:700;padding:6px 12px;border-radius:6px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-family:inherit;transition:all .14s;}
   .rc-act:hover{border-color:var(--text-3);color:var(--text);}
-  .rc-act.ok:hover{border-color:#3ddc84;color:#3ddc84;}
-  .rc-act.bad:hover{border-color:#b06bff;color:#b06bff;}
+  .rc-act.ok{border-color:rgba(61,220,132,.4);color:#3ddc84;}
+  .rc-act.ok:hover{background:#3ddc84;color:#0f1115;border-color:#3ddc84;}
+  .rc-act.bad{border-color:rgba(176,107,255,.4);color:#b06bff;}
+  .rc-act.bad:hover{background:#b06bff;color:#fff;border-color:#b06bff;}
+  .rc-act.reset{color:var(--text-3);}
+  .rc-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;}
+  .rc-receive-all{font-size:12px;font-weight:700;padding:8px 16px;border-radius:7px;border:1px solid rgba(61,220,132,.4);background:rgba(61,220,132,.08);color:#3ddc84;cursor:pointer;font-family:inherit;}
+  .rc-receive-all:hover{background:#3ddc84;color:#0f1115;}
   .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
   .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
   .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
@@ -148,7 +169,7 @@
 </div>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut } from './auth.js';
+import { supabase as db, requireAuth, signOut, subscribeFulfillment } from './auth.js';
 await requireAuth();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
@@ -207,44 +228,87 @@ function renderReceiving(){
   document.getElementById('list-title').textContent='Receiving';
   const sentPOs=POS.filter(p=>p.status==='sent');
   document.getElementById('count').textContent=sentPOs.length+(sentPOs.length===1?' PO':' POs');
-  if(!sentPOs.length){document.getElementById('wrap').innerHTML='<div class="state">No purchase orders awaiting receiving. POs appear here once they’ve been sent.</div>';return;}
-  document.getElementById('wrap').innerHTML=sentPOs.map(p=>{
+  if(!sentPOs.length){document.getElementById('wrap').innerHTML='<div class="state">No purchase orders awaiting receiving. Purchase orders appear here once they have been sent to a supplier.</div>';return;}
+  document.getElementById('wrap').innerHTML=`<div class="rc-intro">Mark items as received or back ordered as goods arrive. Updates sync instantly to the related sales orders.</div>`+sentPOs.map(p=>{
     const sup=p.suppliers||{};
     const items=(p.po_items||[]);
+    const total=items.length;
+    const received=items.filter(i=>(i.status||'issued')==='received').length;
+    const backordered=items.filter(i=>(i.status||'issued')==='backordered').length;
+    const pct=total?Math.round((received/total)*100):0;
+    const allDone=total>0&&received===total;
     return `<div class="rc-card">
-      <div class="rc-head"><div><span class="po-num">#${p.po_number}</span> <span class="rc-sup">${esc(sup.company_name||sup.short_name||'—')}</span></div><span class="po-sub">${fmtD(p.order_date)}</span></div>
-      <table class="rc-table"><thead><tr><th style="width:90px;">Part No.</th><th>Product</th><th class="num" style="width:60px;">Qty</th><th style="width:130px;">From Order</th><th style="width:240px;">Status</th></tr></thead><tbody>
-      ${items.map(it=>`<tr><td><span class="ro">${esc(it.part_no||it.style_number||'')}</span></td><td><span class="ro">${esc(it.product_name||it.description||'')}</span></td><td class="num"><span class="ro">${it.quantity??''}</span></td><td><span class="ro">${it.ordered_for?'#'+esc(String(it.ordered_for)):'—'}</span></td>
-        <td class="rc-status">${rcBadge(it.status||'issued')}
+      <div class="rc-head">
+        <div class="rc-head-l">
+          <div class="rc-po">PO #${esc(String(p.po_number))}</div>
+          <div class="rc-sup">${esc(sup.company_name||sup.short_name||'—')}${sup.supplier_number?` · #${sup.supplier_number}`:''}</div>
+        </div>
+        <div class="rc-head-r">
+          <div class="rc-dates"><span class="rc-dlabel">Ordered</span> ${fmtD(p.order_date)}${p.in_hand_date?` &nbsp;·&nbsp; <span class="rc-dlabel">In&#8209;hand</span> ${fmtD(p.in_hand_date)}`:''}</div>
+          <div class="rc-progress-wrap"><div class="rc-progress"><div class="rc-progress-bar ${allDone?'done':''}" style="width:${pct}%"></div></div><span class="rc-progress-txt ${allDone?'done':''}">${received}/${total} received${backordered?` · ${backordered} back ordered`:''}</span></div>
+        </div>
+      </div>
+      <table class="rc-table"><thead><tr><th style="width:100px;">Part No.</th><th>Product</th><th class="num" style="width:60px;">Qty</th><th style="width:130px;">From Order</th><th style="width:130px;">Status</th><th style="width:200px;text-align:right;">Action</th></tr></thead><tbody>
+      ${items.map(it=>{const st=it.status||'issued';return `<tr class="rc-row rc-row-${st}"><td><span class="ro mono">${esc(it.part_no||it.style_number||'')}</span></td><td><span class="ro">${esc(it.product_name||it.description||'')}</span></td><td class="num"><span class="ro mono">${it.quantity??''}</span></td><td><span class="ro">${it.ordered_for?'#'+esc(String(it.ordered_for)):'—'}</span></td>
+        <td>${rcBadge(st)}</td>
+        <td class="rc-actcell">
           <div class="rc-actions">
-            ${(it.status||'issued')!=='received'?`<button class="rc-act ok" data-po="${p.id}" data-item="${it.id}" data-act="received">Mark Received</button>`:''}
-            ${(it.status||'issued')!=='backordered'?`<button class="rc-act bad" data-po="${p.id}" data-item="${it.id}" data-act="backordered">Back Order</button>`:''}
-            ${(it.status||'issued')!=='issued'?`<button class="rc-act" data-po="${p.id}" data-item="${it.id}" data-act="issued">Reset</button>`:''}
+            ${st!=='received'?`<button class="rc-act ok" data-po="${p.id}" data-item="${it.id}" data-act="received">Receive</button>`:''}
+            ${st!=='backordered'?`<button class="rc-act bad" data-po="${p.id}" data-item="${it.id}" data-act="backordered">Back Order</button>`:''}
+            ${st!=='issued'?`<button class="rc-act reset" data-po="${p.id}" data-item="${it.id}" data-act="issued">Reset</button>`:''}
           </div>
-        </td></tr>`).join('')}
+        </td></tr>`;}).join('')}
       </tbody></table>
+      ${received<total?`<div class="rc-foot"><button class="rc-receive-all" data-po="${p.id}">Receive all remaining</button></div>`:''}
     </div>`;
   }).join('');
   document.querySelectorAll('.rc-act').forEach(b=>b.addEventListener('click',()=>markReceiving(b.dataset.item,b.dataset.act,b.dataset.po)));
+  document.querySelectorAll('.rc-receive-all').forEach(b=>b.addEventListener('click',()=>receiveAll(b.dataset.po)));
 }
 
-async function markReceiving(itemId,status,poId){
-  // update the po_item
+async function receiveAll(poId){
+  const po=POS.find(p=>p.id===poId); if(!po)return;
+  const pending=(po.po_items||[]).filter(i=>(i.status||'issued')!=='received'&&(i.status||'issued')!=='backordered');
+  for(const it of pending){ await markReceiving(it.id,'received',poId,true); }
+  await load();   // refresh once at the end
+}
+
+async function markReceiving(itemId,status,poId,skipRender){
   const patch={status};
   if(status==='received'){patch.verified_at=new Date().toISOString();}
   const {error}=await db.from('po_items').update(patch).eq('id',itemId);
   if(error){await smAlert('Could not update: '+error.message,'Error','danger');return;}
-  // find the item to propagate to its source line / allocation
   const po=POS.find(p=>p.id===poId);
   const it=po&&(po.po_items||[]).find(x=>x.id===itemId);
   if(it){
     it.status=status;
-    // received -> the sales order line goes green; backordered -> violet; issued -> grey
-    const fs=status; // 'received' | 'backordered' | 'issued'
-    if(it.source_allocation_id){ await db.from('quote_item_allocations').update({status}).eq('id',it.source_allocation_id); }
-    if(it.source_quote_item_id){ await db.from('quote_items').update({fulfillment_status:fs}).eq('id',it.source_quote_item_id); }
+    if(it.source_allocation_id){
+      // update this allocation, then recompute the PARENT line from all its allocations
+      await db.from('quote_item_allocations').update({status}).eq('id',it.source_allocation_id);
+      const {data:al}=await db.from('quote_item_allocations').select('quote_item_id,status').eq('id',it.source_allocation_id).single();
+      if(al&&al.quote_item_id){
+        const {data:sibs}=await db.from('quote_item_allocations').select('status').eq('quote_item_id',al.quote_item_id);
+        const parentFs=aggregateStatus((sibs||[]).map(s=>s.status));
+        await db.from('quote_items').update({fulfillment_status:parentFs}).eq('id',al.quote_item_id);
+      }
+    }else if(it.source_quote_item_id){
+      await db.from('quote_items').update({fulfillment_status:status}).eq('id',it.source_quote_item_id);
+    }
   }
-  renderReceiving();
+  if(!skipRender) renderReceiving();
+}
+
+// Combine allocation statuses into one parent line status
+function aggregateStatus(statuses){
+  const s=statuses.filter(Boolean);
+  if(!s.length)return 'none';
+  const uniq=[...new Set(s.map(x=>x==='pending'?'in_po':x))];
+  if(uniq.length===1)return uniq[0];
+  if(uniq.includes('backordered'))return 'backordered';   // surface backorder
+  // otherwise report the least-advanced stage so it doesn't look "done" prematurely
+  const order=['in_po','issued','received'];
+  for(const st of order){ if(uniq.includes(st))return st; }
+  return uniq[0];
 }
 
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
@@ -308,6 +372,8 @@ document.getElementById('m-create').addEventListener('click',async()=>{
 
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
 load();
+// live sync: refresh the PO list / Receiving tab whenever anything changes
+subscribeFulfillment(async()=>{ await load(); });
 </script>
 </body>
 </html>

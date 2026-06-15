@@ -103,8 +103,11 @@
   .cb-sup{text-overflow:ellipsis;}
   .sup-id-tag.in-po-tag{color:var(--danger);}
   /* fulfillment colour system */
+  .fs-placed .cb-sup,.fs-placed .sup-id-tag,.fs-placed .alloc-count{color:#e0883a !important;font-weight:700;}
   .fs-inpo .cb-sup,.fs-inpo .sup-id-tag,.fs-inpo .alloc-count{color:#ff4d4d !important;font-weight:700;}
   .fs-issued .cb-sup,.fs-issued .sup-id-tag,.fs-issued .alloc-count{color:#8a92a2 !important;font-weight:700;}
+  .fs-instock .cb-sup,.fs-instock .sup-id-tag,.fs-instock .alloc-count{color:#3da5ff !important;font-weight:700;}
+  .instock-tag{font-size:9.5px;font-weight:800;color:#3da5ff;margin-top:2px;text-transform:uppercase;letter-spacing:.03em;}
   .fs-arrived .cb-sup,.fs-arrived .sup-id-tag,.fs-arrived .alloc-count{color:#ffb627 !important;font-weight:700;}
   .fs-verified .cb-sup,.fs-verified .sup-id-tag,.fs-verified .alloc-count{color:#3ddc84 !important;font-weight:700;}
   .fs-backordered .cb-sup,.fs-backordered .sup-id-tag,.fs-backordered .alloc-count{color:#b06bff !important;font-weight:700;}
@@ -144,6 +147,14 @@
   .split-tally.ok{color:var(--approved);}.split-tally.bad{color:var(--danger);}
   .split-foot{display:flex;align-items:center;gap:10px;padding:16px 22px;border-top:1px solid var(--line);justify-content:flex-end;}
   .split-msg{margin-right:auto;font-size:12.5px;color:var(--danger);}
+  .popick-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+  .popick-opt{border:1px solid var(--line-2);border-radius:10px;padding:13px 15px;cursor:pointer;transition:border-color .15s,background .15s;}
+  .popick-opt:hover{border-color:var(--brass);background:var(--bg-3);}
+  .popick-opt .po-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .popick-opt .po-no{font-family:var(--fm);font-weight:800;font-size:14px;color:var(--brass-2);}
+  .popick-opt .po-date{font-size:12px;color:var(--text-3);}
+  .popick-opt .po-meta{font-size:12px;color:var(--text-2);}
+  .popick-opt .po-id{font-family:var(--fm);font-size:10.5px;color:var(--text-3);margin-top:3px;}
   .li-input:hover{border-color:var(--line-2);}
   .li-input:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li-input.num{text-align:right;font-family:var(--font-mono);}
@@ -230,6 +241,17 @@
   </div>
 </div>
 
+<div class="split-overlay" id="popick-overlay">
+  <div class="split-modal" style="max-width:520px;">
+    <div class="split-head"><h3>Choose a Purchase Order</h3></div>
+    <div class="split-body">
+      <div class="split-meta" id="popick-meta"></div>
+      <div id="popick-list" class="popick-list"></div>
+    </div>
+    <div class="split-foot"><span class="split-msg" id="popick-msg"></span><button class="btn" id="popick-skip">Skip for now</button></div>
+  </div>
+</div>
+
 <div class="split-overlay" id="split-overlay">
   <div class="split-modal">
     <div class="split-head"><h3>Split supplier quantity across POs</h3><button class="split-x" id="split-x">×</button></div>
@@ -310,10 +332,12 @@
     <div class="card">
       <div class="card-h"><h3>Product Listing</h3>
         <div class="legend sup-col" id="po-legend">
+          <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Open PO Req</span>
           <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>In PO</span>
           <span class="lg"><span class="lg-dot" style="background:#8a92a2"></span>Issued</span>
           <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Received</span>
           <span class="lg"><span class="lg-dot" style="background:#b06bff"></span>Back Order</span>
+          <span class="lg"><span class="lg-dot" style="background:#3da5ff"></span>In Stock</span>
         </div>
       </div>
       <div class="lines-scroll">
@@ -411,7 +435,7 @@
 </div>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment } from './auth.js';
 await requireAuth();
 
 const HST_RATE = 0.13;
@@ -480,7 +504,7 @@ async function load(){
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load this order.<br>${error?.message||''}</div>`;return;}
   ORDER=data;
   // load catalogues first (needed to resolve line-item displays)
-  const {data:prods}=await db.from('products').select('category_code,category_name,style_number,name,unit,base_price').order('category_name').order('name');
+  const {data:prods}=await db.from('products').select('category_code,category_name,style_number,name,unit,base_price,default_supplier_id').order('category_name').order('name');
   PRODUCTS=prods||[];
   const {data:sups}=await db.from('suppliers').select('id,supplier_number,company_name,short_name').order('company_name');
   SUPPLIERS=sups||[];
@@ -641,7 +665,7 @@ function renderLines(){
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-id-tag">#${esc(String(ln._supplier_number))}${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn" data-alloc="${i}" title="Split supplier quantity across multiple POs">⊟ Split PO</button>
       </td>
-      <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'disabled title="Set by split"':''}></td>
+      <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'disabled title="Set by split"':''}>${(ln.supplier_id&&ln.supplier_quantity!=null&&ln.supplier_quantity!==''&&Number(ln.supplier_quantity)===0)?'<div class="instock-tag">In Stock</div>':''}</td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
       <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
@@ -750,6 +774,17 @@ function wireCombo(inp,kind){
         LINES[i].unit_price=m.base_price!=null?m.base_price:LINES[i].unit_price;
         LINES[i].amount=(parseFloat(LINES[i].quantity)||0)*(parseFloat(LINES[i].unit_price)||0);
         LINES[i].net_amount=LINES[i].amount-(LINES[i].amount*((parseFloat(LINES[i].discount_pct)||0)/100));
+        // #6 — auto-fill the supplier from the product's default (only if user hasn't already set one)
+        if(ORDER.record_type==='order' && m.default_supplier_id && !LINES[i].supplier_id && !(LINES[i]._allocations&&LINES[i]._allocations.length)){
+          const sup=SUPPLIERS.find(s=>s.id===m.default_supplier_id);
+          if(sup){
+            LINES[i].supplier_id=sup.id;
+            LINES[i]._supplier_name=sup.company_name||sup.short_name||'';
+            LINES[i]._supplier_number=sup.supplier_number;
+            // default supplier qty to the order qty if not yet set
+            if(LINES[i].supplier_quantity==null||LINES[i].supplier_quantity==='') LINES[i].supplier_quantity=parseFloat(LINES[i].quantity)||0;
+          }
+        }
         inp.value=m.style_number||'';
       }
       close();renderLines();recalc();markDirty();
@@ -802,13 +837,17 @@ function wireSupplierCombo(inp){
 
 function addLine(){LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
 
-// fulfillment colour system: in_po(red) -> issued(grey) -> received(green); backordered(violet)
-const FULFILL={in_po:'fs-inpo',issued:'fs-issued',received:'fs-verified',backordered:'fs-backordered'};
-const FULFILL_LABEL={in_po:'IN PO',issued:'ISSUED',received:'RECEIVED',backordered:'BACK ORDER'};
+// fulfillment colour system: placed(amber) -> in_po(red) -> issued(grey) -> received(green); backordered(violet); instock(blue)
+const FULFILL={placed:'fs-placed',in_po:'fs-inpo',issued:'fs-issued',received:'fs-verified',backordered:'fs-backordered',instock:'fs-instock'};
+const FULFILL_LABEL={placed:'OPEN PO REQ',in_po:'IN PO',issued:'ISSUED',received:'RECEIVED',backordered:'BACK ORDER',instock:'IN STOCK'};
 function fulfillState(ln){
-  // explicit fulfillment_status wins; else fall back to in_po
-  const s=ln.fulfillment_status&&ln.fulfillment_status!=='none'?ln.fulfillment_status:(ln.in_po?'in_po':null);
-  return s;
+  const fs=ln.fulfillment_status;
+  if(fs&&fs!=='none'&&fs!=='in_po') return fs;        // issued/received/backordered
+  if(!ln.supplier_id) return null;
+  const sq=ln.supplier_quantity;
+  if(sq!=null&&sq!==''&&Number(sq)===0) return 'instock';
+  if(ln.in_po||fs==='in_po') return 'in_po';
+  return 'placed';
 }
 function fulfillClass(ln){const s=fulfillState(ln);return s?FULFILL[s]||'':'';}
 function fulfillTag(ln){const s=fulfillState(ln);return s?' • '+(FULFILL_LABEL[s]||''):'';}
@@ -905,6 +944,14 @@ function updateSummary(){
 }
 
 async function save(silent){
+  // #8 — when a supplier is assigned, supplier quantity is mandatory (0 = In Stock is allowed)
+  if(ORDER.record_type==='order'){
+    const missing=LINES.filter(l=>l.supplier_id && !(l._allocations&&l._allocations.length) && (l.supplier_quantity==null||l.supplier_quantity===''));
+    if(missing.length && !silent){
+      await alertModal('Supplier quantity required','One or more lines have a supplier but no Supplier Qty.<br><br>Enter the quantity going to the supplier, or set it to <b>0</b> if the item is already in stock.','warn');
+      return;
+    }
+  }
   const msg=document.getElementById('save-msg');
   if(msg){msg.textContent=silent?'Adding to open PO…':'Saving…';msg.className='status-msg';}
   const c=ORDER._calc||{};
@@ -917,38 +964,66 @@ async function save(silent){
     hst:c.hst||0,grand_total:c.grand_total||0
   }).eq('id',ORDER_ID);
   if(e1){if(msg){msg.textContent='Error: '+e1.message;msg.className='status-msg err';}return;}
-  // 2. replace line items (simple + reliable)
-  await db.from('quote_items').delete().eq('quote_id',ORDER_ID);
+
+  // 2. UPDATE-IN-PLACE line items — never destroy fulfillment fields (in_po, po_id, fulfillment_status)
+  //    a) figure out which existing rows were removed in the UI, and delete only those
+  const {data:existing}=await db.from('quote_items').select('id').eq('quote_id',ORDER_ID);
+  const existingIds=new Set((existing||[]).map(r=>r.id));
+  const keptIds=new Set(LINES.filter(l=>l.id).map(l=>l.id));
+  const toDelete=[...existingIds].filter(id=>!keptIds.has(id));
+  if(toDelete.length){ await db.from('quote_items').delete().in('id',toDelete); }
+
+  //    b) update existing rows, insert new ones. Fulfillment fields are intentionally omitted.
   let insertedItems=[];
-  if(LINES.length){
-    const rows=LINES.map((l,idx)=>({quote_id:ORDER_ID,line_order:idx+1,category_code:l.category_code||null,
+  for(let idx=0; idx<LINES.length; idx++){
+    const l=LINES[idx];
+    const base={quote_id:ORDER_ID,line_order:idx+1,category_code:l.category_code||null,
       category_name:l.category_name||null,style_number:l.style_number||null,description:l.description||null,
       quantity:parseFloat(l.quantity)||0,unit:l.unit||'Pc',unit_price:parseFloat(l.unit_price)||0,
       amount:parseFloat(l.amount)||0,discount_pct:parseFloat(l.discount_pct)||0,net_amount:parseFloat(l.net_amount)||0,
-      supplier_id:l.supplier_id||null,supplier_quantity:l.supplier_quantity!=null?parseFloat(l.supplier_quantity)||0:null,in_po:false,po_id:null}));
-    const {data:ins,error:e2}=await db.from('quote_items').insert(rows).select();
-    if(e2){if(msg){msg.textContent='Lines error: '+e2.message;msg.className='status-msg err';}return;}
-    insertedItems=ins||[];
-    // re-save split allocations, mapped to the freshly inserted item IDs (by index)
-    const allocRows=[];
-    LINES.forEach((l,idx)=>{
-      if(l._allocations&&l._allocations.length>1&&insertedItems[idx]){
-        l._allocations.forEach(a=>{
-          allocRows.push({quote_item_id:insertedItems[idx].id, supplier_id:a.supplier_id||null, quantity:parseFloat(a.quantity)||0, in_po:false, po_id:null, status:'pending'});
-        });
-      }
-    });
-    if(allocRows.length){ await db.from('quote_item_allocations').insert(allocRows); }
+      supplier_id:l.supplier_id||null,
+      supplier_quantity:l.supplier_quantity!=null&&l.supplier_quantity!==''?parseFloat(l.supplier_quantity)||0:null};
+    if(l.id && existingIds.has(l.id)){
+      // existing row -> UPDATE (do NOT touch in_po, po_id, fulfillment_status)
+      await db.from('quote_items').update(base).eq('id',l.id);
+      insertedItems.push({...l, ...base, id:l.id});
+    }else{
+      // brand-new row -> insert (starts with no fulfillment)
+      const {data:ins}=await db.from('quote_items').insert({...base,in_po:false,po_id:null,fulfillment_status:'none'}).select().single();
+      if(ins){ l.id=ins.id; insertedItems.push(ins); }
+    }
   }
-  // 3. sync supplier lines into their open POs
+
+  //    c) allocations: only rebuild for lines that aren't already linked into a PO
+  for(let idx=0; idx<LINES.length; idx++){
+    const l=LINES[idx];
+    if(!l.id)continue;
+    if(l._allocations&&l._allocations.length>1){
+      // don't disturb allocations that are already in a PO
+      const {data:exAlloc}=await db.from('quote_item_allocations').select('id,in_po').eq('quote_item_id',l.id);
+      const anyInPo=(exAlloc||[]).some(a=>a.in_po);
+      if(anyInPo) continue;   // leave PO-linked splits untouched
+      // safe to rebuild (none are in a PO yet)
+      await db.from('quote_item_allocations').delete().eq('quote_item_id',l.id);
+      const allocRows=l._allocations.map(a=>({quote_item_id:l.id, supplier_id:a.supplier_id||null, quantity:parseFloat(a.quantity)||0, in_po:false, po_id:null, status:'pending'}));
+      if(allocRows.length) await db.from('quote_item_allocations').insert(allocRows);
+    }
+  }
+
+  // 3. sync supplier lines into their open POs (only items not yet in a PO move)
   const warnings=await syncToPOs(insertedItems);
+  // #9 — if any supplier had multiple open POs, let the user pick which PO
+  const choices=syncToPOs._needsChoice||[];
+  if(choices.length){ await resolvePOChoices(choices); syncToPOs._needsChoice=[]; }
   DIRTY=false;
   if(msg){msg.textContent='Saved ✓';msg.className='status-msg saved';}
-  // only surface the "no open PO" warnings on an explicit (non-silent) save
   if(warnings.length && !silent){
-    await alertModal('Saved — but check suppliers','Saved successfully. However:<br><br>'+warnings.map(w=>'• '+esc(w)).join('<br>'),'warn');
+    const sups=[...new Set(warnings)];
+    await alertModal('Purchase order required',
+      'Some items have supplier quantities assigned but are not linked to an open Purchase Order. Please create the required Purchase Order(s). Once created, these items will automatically be added.'+
+      '<br><br><b>Suppliers needing a PO:</b><br>'+sups.map(s=>'• '+esc(s)).join('<br>'),'warn');
   }
-  // reload to reflect the red "in PO" state
+  // reload to reflect current fulfillment state
   await reloadLines();
 }
 
@@ -962,66 +1037,118 @@ async function maybeAutoSyncPO(supplierId){
   await save(true);                       // silent save + sync
 }
 
-// Push each line that has a supplier with an OPEN PO into that PO. Returns warnings.
+// Push each line that has a supplier with an OPEN PO into that PO. Returns {warnings, needsPOChoice}.
+// Only items NOT already linked to a PO (in_po=false) and with supplier_quantity>0 are moved.
+// Items with supplier_quantity===0 are "In Stock" and never go to a PO.
 async function syncToPOs(insertedItems){
   const warnings=[];
-  // PO linking only applies to Sales Orders — not inquiries or quotations
+  const needsChoice=[];   // suppliers with >1 open PO -> user must pick (handled by caller)
   if(ORDER.record_type!=='order') return warnings;
-  // group single-supplier lines by supplier_id (skip lines that are split — those go via allocations)
-  const bySup={};
-  insertedItems.forEach(it=>{ const supQty=it.supplier_quantity!=null?Number(it.supplier_quantity):Number(it.quantity); if(it.supplier_id&&supQty>0){ (bySup[it.supplier_id]=bySup[it.supplier_id]||[]).push({type:'item',ref:it,style_number:it.style_number,description:it.description,quantity:supQty,unit_price:Number(it.unit_price),id:it.id}); } });
 
-  // pull fresh allocations for these items and add them to the grouping
-  const itemIds=insertedItems.map(it=>it.id);
-  let allocs=[];
-  if(itemIds.length){
-    const {data:al}=await db.from('quote_item_allocations').select('*').in('quote_item_id',itemIds);
-    allocs=al||[];
+  // reload current fulfillment state of these items so we never touch ones already in a PO
+  const ids=insertedItems.map(it=>it.id).filter(Boolean);
+  let stateById={};
+  if(ids.length){
+    const {data:cur}=await db.from('quote_items').select('id,in_po,supplier_id,supplier_quantity,quantity,unit_price,style_number,description,fulfillment_status').in('id',ids);
+    (cur||[]).forEach(r=>stateById[r.id]=r);
   }
-  const itemById={};insertedItems.forEach(it=>itemById[it.id]=it);
-  allocs.forEach(a=>{
-    if(!a.supplier_id||!(Number(a.quantity)>0))return;
-    const it=itemById[a.quote_item_id]||{};
-    (bySup[a.supplier_id]=bySup[a.supplier_id]||[]).push({type:'alloc',ref:a,style_number:it.style_number,description:it.description,quantity:Number(a.quantity),unit_price:Number(it.unit_price),id:a.id});
+
+  const bySup={};
+  insertedItems.forEach(it=>{
+    const st=stateById[it.id]||it;
+    if(st.in_po) return;                                  // already linked -> never re-touch
+    const supQty=st.supplier_quantity!=null?Number(st.supplier_quantity):Number(st.quantity);
+    if(!st.supplier_id || !(supQty>0)) return;            // no supplier, or In-Stock(0) -> skip
+    (bySup[st.supplier_id]=bySup[st.supplier_id]||[]).push({type:'item',style_number:st.style_number,description:st.description,quantity:supQty,unit_price:Number(st.unit_price),id:it.id});
   });
+
+  // allocations (split) not yet in a PO
+  if(ids.length){
+    const {data:al}=await db.from('quote_item_allocations').select('*').in('quote_item_id',ids);
+    const itemById={};insertedItems.forEach(it=>itemById[it.id]=stateById[it.id]||it);
+    (al||[]).forEach(a=>{
+      if(a.in_po) return;
+      if(!a.supplier_id||!(Number(a.quantity)>0))return;
+      const it=itemById[a.quote_item_id]||{};
+      (bySup[a.supplier_id]=bySup[a.supplier_id]||[]).push({type:'alloc',ref:a,style_number:it.style_number,description:it.description,quantity:Number(a.quantity),unit_price:Number(it.unit_price),id:a.id});
+    });
+  }
 
   const supIds=Object.keys(bySup);
   if(!supIds.length)return warnings;
 
-  const {data:openPOs}=await db.from('purchase_orders').select('id,po_number,supplier_id').eq('status','open').in('supplier_id',supIds);
-  const poBySup={};(openPOs||[]).forEach(p=>{poBySup[p.supplier_id]=p;});
+  // find OPEN POs per supplier — there may be more than one
+  const {data:openPOs}=await db.from('purchase_orders').select('id,po_number,supplier_id,order_date').eq('status','open').in('supplier_id',supIds).order('po_number');
+  const posBySup={};(openPOs||[]).forEach(p=>{(posBySup[p.supplier_id]=posBySup[p.supplier_id]||[]).push(p);});
 
   for(const sid of supIds){
-    const po=poBySup[sid];
+    const pos=posBySup[sid]||[];
     const sup=SUPPLIERS.find(s=>s.id===sid);
     const supName=sup?(sup.company_name||sup.short_name):'this supplier';
-    if(!po){
-      warnings.push(supName+' has no open PO yet. These items are saved and will be added automatically the moment you create an open PO for this supplier.');
+    if(pos.length===0){
+      warnings.push(supName);
       continue;
     }
-    // remove existing po_items previously sourced from THIS order for this PO (avoid duplicates)
-    await db.from('po_items').delete().eq('po_id',po.id).eq('ordered_for',ORDER.stage_id?String(ORDER.stage_id):'');
-    const poRows=bySup[sid].map((entry,idx)=>({
-      po_id:po.id, line_order:idx+1,
-      source_quote_item_id:entry.type==='item'?entry.id:(entry.ref.quote_item_id||null),
-      source_allocation_id:entry.type==='alloc'?entry.id:null,
-      style_number:entry.style_number||null, category_name:null,
-      part_no:entry.style_number||null, product_name:entry.description||null, description:entry.description||null,
-      quantity:entry.quantity, rate:entry.unit_price||0, amount:entry.quantity*(entry.unit_price||0),
-      ordered_for:ORDER.stage_id?String(ORDER.stage_id):null
-    }));
-    if(poRows.length){
-      const {error}=await db.from('po_items').insert(poRows);
-      if(error){warnings.push('Could not add items to PO #'+po.po_number+': '+error.message);continue;}
-      // mark single-supplier quote_items red
-      const itemIdsToMark=bySup[sid].filter(e=>e.type==='item').map(e=>e.id);
-      if(itemIdsToMark.length) await db.from('quote_items').update({in_po:true,po_id:po.id}).in('id',itemIdsToMark);
-      // mark allocations in_po
-      const allocIdsToMark=bySup[sid].filter(e=>e.type==='alloc').map(e=>e.id);
-      if(allocIdsToMark.length) await db.from('quote_item_allocations').update({in_po:true,po_id:po.id,status:'issued'}).in('id',allocIdsToMark);
+    if(pos.length>1){
+      // #9 — more than one open PO for this supplier: the user must choose. Defer.
+      needsChoice.push({supplier_id:sid, supplier_name:supName, pos, entries:bySup[sid]});
+      continue;
     }
+    await addEntriesToPO(pos[0], bySup[sid]);
   }
+  // hand any "choose a PO" cases back to the caller
+  syncToPOs._needsChoice=needsChoice;
   return warnings;
+}
+
+// Insert the given entries into a specific PO and mark sources in_po (red).
+async function addEntriesToPO(po, entries){
+  const poRows=entries.map((entry,idx)=>({
+    po_id:po.id, line_order:idx+1,
+    source_quote_item_id:entry.type==='item'?entry.id:(entry.ref.quote_item_id||null),
+    source_allocation_id:entry.type==='alloc'?entry.id:null,
+    style_number:entry.style_number||null, category_name:null,
+    part_no:entry.style_number||null, product_name:entry.description||null, description:entry.description||null,
+    quantity:entry.quantity, rate:entry.unit_price||0, amount:entry.quantity*(entry.unit_price||0),
+    ordered_for:ORDER.stage_id?String(ORDER.stage_id):null, status:'issued'
+  }));
+  if(!poRows.length)return;
+  const {error}=await db.from('po_items').insert(poRows);
+  if(error)return;
+  const itemIds=entries.filter(e=>e.type==='item').map(e=>e.id);
+  if(itemIds.length) await db.from('quote_items').update({in_po:true,po_id:po.id,fulfillment_status:'in_po'}).in('id',itemIds);
+  const allocIds=entries.filter(e=>e.type==='alloc').map(e=>e.id);
+  if(allocIds.length) await db.from('quote_item_allocations').update({in_po:true,po_id:po.id,status:'in_po'}).in('id',allocIds);
+}
+
+// #9 — when a supplier has multiple open POs, ask the user which one to use.
+// Processes the deferred choices one supplier at a time.
+function resolvePOChoices(choices){
+  return new Promise(resolve=>{
+    let idx=0;
+    const ov=document.getElementById('popick-overlay');
+    async function showNext(){
+      if(idx>=choices.length){ ov.classList.remove('open'); resolve(); return; }
+      const c=choices[idx];
+      document.getElementById('popick-meta').innerHTML=`<b>${esc(c.supplier_name)}</b> has multiple open purchase orders.<br>Choose which one these items should be added to:`;
+      const fmt=d=>{ if(!d)return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}); };
+      document.getElementById('popick-list').innerHTML=c.pos.map(p=>`
+        <div class="popick-opt" data-po="${p.id}">
+          <div class="po-top"><span class="po-no">PO #${esc(String(p.po_number))}</span><span class="po-date">Created ${fmt(p.order_date)}</span></div>
+          <div class="po-meta">${esc(c.supplier_name)}</div>
+          <div class="po-id">ID: ${esc(p.id)}</div>
+        </div>`).join('');
+      document.getElementById('popick-list').querySelectorAll('.popick-opt').forEach(el=>el.addEventListener('click',async()=>{
+        const po=c.pos.find(p=>p.id===el.dataset.po);
+        await addEntriesToPO(po, c.entries);
+        idx++; showNext();
+      }));
+      document.getElementById('popick-msg').textContent='';
+      ov.classList.add('open');
+    }
+    document.getElementById('popick-skip').onclick=()=>{ idx++; showNext(); };
+    showNext();
+  });
 }
 
 async function reloadLines(){
@@ -1115,6 +1242,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 window.addEventListener('beforeunload',e=>{if(DIRTY){e.preventDefault();e.returnValue='';}});
 load();
+// live sync: if another screen changes this order's fulfillment, refresh the line
+// colours — but never while the user has unsaved edits (would clobber their work).
+subscribeFulfillment(async()=>{
+  if(DIRTY) return;                 // don't interrupt active editing
+  if(document.getElementById('split-overlay')?.classList.contains('open')) return;
+  if(document.getElementById('popick-overlay')?.classList.contains('open')) return;
+  await reloadLines();
+});
 </script>
 </body>
 </html>

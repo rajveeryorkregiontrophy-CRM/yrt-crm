@@ -79,6 +79,7 @@
   .drawer-body{padding:22px;overflow-y:auto;flex:1;}
   .drawer-foot{padding:14px 22px;border-top:2px solid var(--line-2);display:flex;gap:10px;justify-content:flex-end;}
   .frow{display:flex;gap:12px;margin-bottom:14px;}.frow .field{flex:1;}.field{margin-bottom:14px;}
+  .field-hint{font-size:11px;color:var(--text-3);margin-top:5px;line-height:1.4;}
   label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;margin-bottom:5px;}
   input.in,select.in,textarea.in{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--text);}
   input.in:focus,select.in:focus,textarea.in:focus{outline:none;border-color:var(--brass);}textarea.in{resize:vertical;min-height:64px;}
@@ -151,12 +152,14 @@ function smConfirm(msg,title,opts){opts=opts||{};return new Promise(res=>{__ensu
 
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
-let PRODUCTS=[],EDITING=null,CAT='all';
+let PRODUCTS=[],EDITING=null,CAT='all',SUPPLIERS=[];
 
 async function load(){
   const {data,error}=await db.from('products').select('*').order('category_code').order('name');
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   PRODUCTS=data||[];
+  const {data:sups}=await db.from('suppliers').select('id,supplier_number,company_name,short_name').order('company_name');
+  SUPPLIERS=sups||[];
   document.getElementById('nav-products').textContent=PRODUCTS.length;
   renderCats();render();
 }
@@ -199,7 +202,8 @@ function form(p){
     <div class="field"><label>Product Name *</label><input class="in" id="name" value="${esc(p.name||'')}"></div>
     <div class="field"><label>Description</label><textarea class="in" id="description">${esc(p.description||'')}</textarea></div>
     <div class="frow"><div class="field"><label>Unit</label><input class="in" id="unit" value="${esc(p.unit||'Pc')}"></div>
-      <div class="field"><label>Base Price</label><input class="in" id="base_price" type="number" step="0.01" value="${p.base_price??0}"></div></div>`;
+      <div class="field"><label>Base Price</label><input class="in" id="base_price" type="number" step="0.01" value="${p.base_price??0}"></div></div>
+    <div class="field"><label>Default Supplier</label><select class="in" id="default_supplier_id"><option value="">— None —</option>${SUPPLIERS.map(s=>`<option value="${s.id}" ${p.default_supplier_id===s.id?'selected':''}>${esc(s.company_name||s.short_name||'')}${s.supplier_number?' (#'+s.supplier_number+')':''}</option>`).join('')}</select><div class="field-hint">Auto-fills as the supplier when this product is added to a Sales Order (you can still override it).</div></div>`;
 }
 function newP(){EDITING=null;document.getElementById('d-title').textContent='New Product';document.getElementById('d-del').style.display='none';form({});openD();}
 function edit(id){const p=PRODUCTS.find(x=>x.id===id);EDITING=p;document.getElementById('d-title').textContent='Edit Product';document.getElementById('d-del').style.display='inline-flex';form(p);openD();}
@@ -209,7 +213,8 @@ async function save(){
   msg.textContent='Saving…';msg.className='msg';
   const payload={category_code:document.getElementById('category_code').value||null,category_name:document.getElementById('category_name').value||null,
     style_number:document.getElementById('style_number').value||null,name,description:document.getElementById('description').value||null,
-    unit:document.getElementById('unit').value||'Pc',base_price:parseFloat(document.getElementById('base_price').value)||0};
+    unit:document.getElementById('unit').value||'Pc',base_price:parseFloat(document.getElementById('base_price').value)||0,
+    default_supplier_id:document.getElementById('default_supplier_id').value||null};
   let err;
   if(EDITING){({error:err}=await db.from('products').update(payload).eq('id',EDITING.id));}
   else{({error:err}=await db.from('products').insert(payload));}
