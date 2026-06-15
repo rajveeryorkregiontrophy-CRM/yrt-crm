@@ -189,9 +189,40 @@ document.getElementById('m-create').addEventListener('click',async()=>{
   const existing=POS.find(p=>p.status==='open'&&p.supplier_id===supplier_id);
   if(existing){document.getElementById('m-msg').textContent='This supplier already has an open PO (#'+existing.po_number+').';return;}
   const subject=document.getElementById('m-subject').value.trim()||null;
-  const {data,error}=await db.from('purchase_orders').insert({supplier_id,subject,status:'open'}).select().single();
-  if(error){document.getElementById('m-msg').textContent=error.message;return;}
-  closeModal();location.href='po.html?id='+encodeURIComponent(data.id);
+  document.getElementById('m-msg').textContent='Creating…';document.getElementById('m-msg').style.color='var(--text-3)';
+  const {data:newPO,error}=await db.from('purchase_orders').insert({supplier_id,subject,status:'open'}).select().single();
+  if(error){document.getElementById('m-msg').textContent=error.message;document.getElementById('m-msg').style.color='var(--danger)';return;}
+
+  // ---- AUTO-PULL: gather existing sales-order line items for this supplier ----
+  // Step 1: which quotes are Sales Orders? (we only pull from orders)
+  const {data:orderQuotes}=await db.from('quotes').select('id,stage_id').eq('record_type','order');
+  const orderMap={}; (orderQuotes||[]).forEach(q=>{orderMap[q.id]=q.stage_id;});
+  const orderIds=Object.keys(orderMap);
+  if(orderIds.length){
+    // Step 2: line items for this supplier, not already in a PO, belonging to those orders
+    const {data:pending}=await db.from('quote_items')
+      .select('*')
+      .eq('supplier_id',supplier_id)
+      .eq('in_po',false)
+      .in('quote_id',orderIds);
+    if(pending && pending.length){
+      const poRows=pending.map((it,idx)=>({
+        po_id:newPO.id, line_order:idx+1, source_quote_item_id:it.id,
+        style_number:it.style_number||null, category_name:it.category_name||null,
+        part_no:it.style_number||null, product_name:it.description||null, description:it.description||null,
+        quantity:Number(it.quantity)||0, rate:Number(it.unit_price)||0,
+        amount:(Number(it.quantity)||0)*(Number(it.unit_price)||0),
+        ordered_for:orderMap[it.quote_id]?String(orderMap[it.quote_id]):null
+      }));
+      const {error:pe}=await db.from('po_items').insert(poRows);
+      if(!pe){
+        const ids=pending.map(it=>it.id);
+        await db.from('quote_items').update({in_po:true,po_id:newPO.id}).in('id',ids);
+      }
+    }
+  }
+
+  closeModal();location.href='po.html?id='+encodeURIComponent(newPO.id);
 });
 
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());

@@ -37,7 +37,7 @@
   .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
   .btn-brass:hover{background:#c3cad8;}
 
-  .wrap{max-width:1340px;margin:0 auto;padding:16px 22px 30px;}
+  .wrap{max-width:1340px;margin:0 auto;padding:16px 22px 90px;}
   /* at-a-glance summary strip */
   .summary{max-width:1340px;margin:0 auto;padding:0 22px;}
   .summary-inner{display:flex;align-items:stretch;gap:0;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px;}
@@ -89,7 +89,9 @@
   .lines-scroll::-webkit-scrollbar{width:9px;}.lines-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2);}
   .lines-scroll thead th{position:sticky;top:0;background:var(--paper-2);z-index:2;}
   /* inline totals under product listing (modern CRM style) */
-  .order-totals{display:flex;justify-content:flex-end;padding:16px 16px 18px;border-top:1px solid var(--line);margin-top:4px;}
+  .listing-foot{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;border-top:1px solid var(--line);margin-top:4px;padding:16px 16px 18px;}
+  .listing-foot .meta-foot{border:none;background:transparent;padding:0;flex:1;align-self:center;}
+  .order-totals{display:flex;justify-content:flex-end;padding:0;}
   .ot-inner{width:300px;}
   .ot-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13.5px;}
   .ot-row .ot-lbl{color:var(--muted);font-weight:500;}
@@ -100,6 +102,46 @@
   .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
   .cb-sup{text-overflow:ellipsis;}
   .sup-id-tag.in-po-tag{color:var(--danger);}
+  /* fulfillment colour system */
+  .fs-inpo .cb-sup,.fs-inpo .sup-id-tag,.fs-inpo .alloc-count{color:#ff4d4d !important;font-weight:700;}
+  .fs-issued .cb-sup,.fs-issued .sup-id-tag,.fs-issued .alloc-count{color:#8a92a2 !important;font-weight:700;}
+  .fs-arrived .cb-sup,.fs-arrived .sup-id-tag,.fs-arrived .alloc-count{color:#ffb627 !important;font-weight:700;}
+  .fs-verified .cb-sup,.fs-verified .sup-id-tag,.fs-verified .alloc-count{color:#3ddc84 !important;font-weight:700;}
+  .fs-backordered .cb-sup,.fs-backordered .sup-id-tag,.fs-backordered .alloc-count{color:#b06bff !important;font-weight:700;}
+  .legend{margin-left:auto;display:flex;gap:13px;flex-wrap:wrap;}
+  .legend .lg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--muted);font-weight:600;}
+  .legend .lg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .alloc-btn{margin-top:5px;font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-3);cursor:pointer;font-family:inherit;}
+  .alloc-btn:hover{border-color:var(--brass);color:var(--brass-2);}
+  .alloc-summary{display:flex;flex-direction:column;gap:2px;cursor:pointer;}
+  .alloc-summary .alloc-count{font-size:12px;font-weight:700;color:var(--brass-2);}
+  .alloc-summary .alloc-edit{font-size:10px;color:var(--text-3);}
+  /* split allocation modal */
+  .split-overlay{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:250;padding:20px;}
+  .split-overlay.open{display:flex;}
+  .split-modal{background:var(--paper-2);border:1px solid var(--line-2);border-radius:14px;width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+  .split-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line);}
+  .split-head h3{font-family:var(--fd);font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.03em;}
+  .split-x{margin-left:auto;background:var(--bg-4);border:none;color:var(--text-2);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:17px;}
+  .split-body{padding:18px 22px;overflow-y:auto;}
+  .split-meta{font-size:13px;color:var(--text-2);margin-bottom:14px;padding:10px 13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;}
+  .split-meta b{color:var(--ink);}
+  .split-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+  .split-row .sr-sup{flex:1;position:relative;}
+  .split-row input,.split-row .sr-supinput{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;color:var(--ink);}
+  .split-row input:focus{outline:none;border-color:var(--brass);}
+  .split-row .sr-qty{width:90px;}
+  .split-row .sr-del{background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:0 4px;}
+  .sr-menu{display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--paper-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:30;max-height:200px;overflow-y:auto;}
+  .sr-menu.open{display:block;}
+  .sr-opt{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;font-size:13px;}
+  .sr-opt:hover{background:var(--bg-3);}.sr-opt .sr-side{font-family:var(--fm);color:var(--text-3);font-size:11px;}
+  .split-add{width:100%;padding:9px;border:1px dashed var(--line-strong);background:transparent;border-radius:7px;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px;}
+  .split-add:hover{border-color:var(--brass);color:var(--brass-2);}
+  .split-tally{margin-top:14px;font-size:13px;font-weight:600;text-align:right;}
+  .split-tally.ok{color:var(--approved);}.split-tally.bad{color:var(--danger);}
+  .split-foot{display:flex;align-items:center;gap:10px;padding:16px 22px;border-top:1px solid var(--line);justify-content:flex-end;}
+  .split-msg{margin-right:auto;font-size:12.5px;color:var(--danger);}
   .li-input:hover{border-color:var(--line-2);}
   .li-input:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li-input.num{text-align:right;font-family:var(--font-mono);}
@@ -186,6 +228,19 @@
   </div>
 </div>
 
+<div class="split-overlay" id="split-overlay">
+  <div class="split-modal">
+    <div class="split-head"><h3>Split across suppliers / POs</h3><button class="split-x" id="split-x">×</button></div>
+    <div class="split-body">
+      <div class="split-meta" id="split-meta"></div>
+      <div class="split-rows" id="split-rows"></div>
+      <button class="split-add" id="split-add">+ Add allocation</button>
+      <div class="split-tally" id="split-tally"></div>
+    </div>
+    <div class="split-foot"><span class="split-msg" id="split-msg"></span><button class="btn" id="split-cancel">Cancel</button><button class="modal-btn-primary" id="split-save">Save split</button></div>
+  </div>
+</div>
+
 <header class="topbar">
   <a class="back" href="index.html">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -250,14 +305,22 @@
 
     <!-- Line items -->
     <div class="card">
-      <div class="card-h"><h3>Product Listing</h3></div>
+      <div class="card-h"><h3>Product Listing</h3>
+        <div class="legend sup-col" id="po-legend">
+          <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>In PO</span>
+          <span class="lg"><span class="lg-dot" style="background:#8a92a2"></span>Issued</span>
+          <span class="lg"><span class="lg-dot" style="background:#ffb627"></span>Arrived</span>
+          <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Verified</span>
+          <span class="lg"><span class="lg-dot" style="background:#b06bff"></span>Back Order</span>
+        </div>
+      </div>
       <div class="lines-scroll">
       <table>
         <thead><tr>
           <th style="width:150px;">Category</th>
           <th style="width:130px;">Style #</th>
           <th>Description</th>
-          <th style="width:150px;">Supplier</th>
+          <th class="sup-col" style="width:150px;">Supplier</th>
           <th class="num" style="width:48px;">Qty</th>
           <th style="width:48px;">Unit</th>
           <th class="num" style="width:84px;">Unit Price</th>
@@ -269,15 +332,17 @@
       </table>
       </div>
       <button class="add-line" id="add-line">+ Add line item</button>
-      <div class="order-totals">
-        <div class="ot-inner">
-          <div class="ot-row"><span class="ot-lbl">Subtotal</span><span class="ot-amt" id="t-sub">$0.00</span></div>
-          <div class="ot-row"><span class="ot-lbl">Discount</span><span class="ot-amt" id="t-disc">$0.00</span></div>
-          <div class="ot-row"><span class="ot-lbl">HST (13%)</span><span class="ot-amt" id="t-hst">$0.00</span></div>
-          <div class="ot-row ot-grand"><span class="ot-lbl">Grand Total</span><span class="ot-amt" id="t-grand">$0.00</span></div>
+      <div class="listing-foot">
+        <div class="meta-foot" id="meta"></div>
+        <div class="order-totals">
+          <div class="ot-inner">
+            <div class="ot-row"><span class="ot-lbl">Subtotal</span><span class="ot-amt" id="t-sub">$0.00</span></div>
+            <div class="ot-row"><span class="ot-lbl">Discount</span><span class="ot-amt" id="t-disc">$0.00</span></div>
+            <div class="ot-row"><span class="ot-lbl">HST (13%)</span><span class="ot-amt" id="t-hst">$0.00</span></div>
+            <div class="ot-row ot-grand"><span class="ot-lbl">Grand Total</span><span class="ot-amt" id="t-grand">$0.00</span></div>
+          </div>
         </div>
       </div>
-      <div class="meta-foot" id="meta"></div>
     </div>
   </div>
 
@@ -420,7 +485,25 @@ async function load(){
   LINES=items||[];
   // resolve supplier display info for any line that has a supplier_id
   LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.company_name||s.short_name||''; l._supplier_number=s.supplier_number; } } });
+  await loadAllocations();
   render();
+}
+
+// Pull split allocations for the current line items (multi-PO support)
+async function loadAllocations(){
+  const ids=LINES.map(l=>l.id).filter(Boolean);
+  if(!ids.length)return;
+  const {data:allocs}=await db.from('quote_item_allocations').select('*').in('quote_item_id',ids);
+  if(!allocs||!allocs.length)return;
+  const byItem={};
+  allocs.forEach(a=>{
+    const s=SUPPLIERS.find(x=>x.id===a.supplier_id);
+    (byItem[a.quote_item_id]=byItem[a.quote_item_id]||[]).push({
+      id:a.id, supplier_id:a.supplier_id, quantity:a.quantity, in_po:a.in_po, po_id:a.po_id, status:a.status,
+      _supplier_name:s?(s.company_name||s.short_name||''):'', _supplier_number:s?s.supplier_number:null
+    });
+  });
+  LINES.forEach(l=>{ if(byItem[l.id]&&byItem[l.id].length>1){ l._allocations=byItem[l.id]; } });
 }
 
 function applyRecordType(){
@@ -435,6 +518,13 @@ function applyRecordType(){
   // Convert to Invoice only really makes sense on an order
   const bi=document.getElementById('btn-invoice');
   if(bi)bi.style.display=ORDER.record_type==='order'?'':'none';
+  // Supplier column (PO linking) only on Sales Orders
+  applySupplierColVisibility();
+}
+
+function applySupplierColVisibility(){
+  const isOrder=ORDER&&ORDER.record_type==='order';
+  document.querySelectorAll('.sup-col').forEach(el=>{ el.style.display=isOrder?'':'none'; });
 }
 
 function render(){
@@ -542,7 +632,12 @@ function renderLines(){
       <td class="cb-cell"><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Category" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
       <td class="cb-cell"><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Style #" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
       <td><input class="li-input" value="${esc(ln.description||'')}" data-i="${i}" data-k="description" placeholder="Description"></td>
-      <td class="cb-cell ${ln.in_po?'in-po':''}"><input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-id-tag ${ln.in_po?'in-po-tag':''}">#${esc(String(ln._supplier_number))}${ln.in_po?' • IN PO':''}</div>`:''}</td>
+      <td class="cb-cell sup-col ${fulfillClass(ln)}">
+        ${(ln._allocations&&ln._allocations.length)
+          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${ln._allocations.length} suppliers</span><span class="alloc-edit">Edit split</span></div>`
+          : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-id-tag">#${esc(String(ln._supplier_number))}${fulfillTag(ln)}</div>`:''}`}
+        <button class="alloc-btn" data-alloc="${i}" title="Split across multiple POs / suppliers">⊟ Split</button>
+      </td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
       <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
@@ -578,6 +673,8 @@ function renderLines(){
   tb.querySelectorAll('.cb-style').forEach(inp=>wireCombo(inp,'style'));
   tb.querySelectorAll('.cb-sup').forEach(inp=>wireSupplierCombo(inp));
   tb.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>{LINES.splice(+b.dataset.del,1);renderLines();recalc();markDirty();}));
+  tb.querySelectorAll('.alloc-btn,[data-alloc].alloc-summary').forEach(b=>b.addEventListener('click',()=>openSplit(+b.dataset.alloc)));
+  applySupplierColVisibility();
   recalc();
 }
 
@@ -701,6 +798,106 @@ function wireSupplierCombo(inp){
 
 function addLine(){LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
 
+// fulfillment colour system: in_po(red) -> issued(grey) -> arrived(amber) -> verified(green) -> backordered(violet)
+const FULFILL={in_po:'fs-inpo',issued:'fs-issued',arrived:'fs-arrived',verified:'fs-verified',backordered:'fs-backordered'};
+const FULFILL_LABEL={in_po:'IN PO',issued:'ISSUED',arrived:'ARRIVED',verified:'VERIFIED',backordered:'BACK ORDER'};
+function fulfillState(ln){
+  // explicit fulfillment_status wins; else fall back to in_po
+  const s=ln.fulfillment_status&&ln.fulfillment_status!=='none'?ln.fulfillment_status:(ln.in_po?'in_po':null);
+  return s;
+}
+function fulfillClass(ln){const s=fulfillState(ln);return s?FULFILL[s]||'':'';}
+function fulfillTag(ln){const s=fulfillState(ln);return s?' • '+(FULFILL_LABEL[s]||''):'';}
+
+// ---------- Split / allocations ----------
+let SPLIT_I=null, SPLIT_ROWS=[];
+function openSplit(i){
+  if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Splitting items across POs is available on Sales Orders only.','info'); return; }
+  const ln=LINES[i]; if(!ln){return;}
+  SPLIT_I=i;
+  // seed rows from existing allocations, or from the single supplier, or one empty row
+  if(ln._allocations&&ln._allocations.length){
+    SPLIT_ROWS=ln._allocations.map(a=>({supplier_id:a.supplier_id,_name:a._supplier_name||'',_num:a._supplier_number,quantity:a.quantity}));
+  }else if(ln.supplier_id){
+    SPLIT_ROWS=[{supplier_id:ln.supplier_id,_name:ln._supplier_name||'',_num:ln._supplier_number,quantity:parseFloat(ln.quantity)||0}];
+  }else{
+    SPLIT_ROWS=[{supplier_id:null,_name:'',_num:null,quantity:parseFloat(ln.quantity)||0}];
+  }
+  document.getElementById('split-meta').innerHTML=`<b>${esc(ln.description||ln.style_number||'Line item')}</b> — total quantity required: <b>${parseFloat(ln.quantity)||0}</b>`;
+  renderSplitRows();
+  document.getElementById('split-msg').textContent='';
+  document.getElementById('split-overlay').classList.add('open');
+}
+function closeSplit(){document.getElementById('split-overlay').classList.remove('open');SPLIT_I=null;}
+function renderSplitRows(){
+  const box=document.getElementById('split-rows');
+  box.innerHTML=SPLIT_ROWS.map((r,idx)=>`
+    <div class="split-row">
+      <div class="sr-sup">
+        <input class="sr-supinput" data-idx="${idx}" value="${esc(r._name||'')}" placeholder="Supplier" autocomplete="off">
+        <div class="sr-menu" data-menu="${idx}"></div>
+      </div>
+      <input class="sr-qty" type="number" min="0" data-idx="${idx}" value="${r.quantity??''}" placeholder="Qty">
+      <button class="sr-del" data-idx="${idx}">×</button>
+    </div>`).join('');
+  box.querySelectorAll('.sr-supinput').forEach(inp=>wireSplitSupplier(inp));
+  box.querySelectorAll('.sr-qty').forEach(q=>q.addEventListener('input',()=>{SPLIT_ROWS[+q.dataset.idx].quantity=parseFloat(q.value)||0;updateTally();}));
+  box.querySelectorAll('.sr-del').forEach(b=>b.addEventListener('click',()=>{SPLIT_ROWS.splice(+b.dataset.idx,1);if(!SPLIT_ROWS.length)SPLIT_ROWS.push({supplier_id:null,_name:'',_num:null,quantity:0});renderSplitRows();}));
+  updateTally();
+}
+function wireSplitSupplier(inp){
+  const idx=+inp.dataset.idx;
+  const menu=inp.parentElement.querySelector('.sr-menu');
+  const close=()=>{menu.classList.remove('open');menu.innerHTML='';};
+  const open=()=>{
+    const q=inp.value.toLowerCase().trim();
+    const matches=SUPPLIERS.filter(s=>!q||(s.company_name||s.short_name||'').toLowerCase().includes(q)||String(s.supplier_number||'').includes(q)).slice(0,8);
+    if(!matches.length){close();return;}
+    menu.innerHTML=matches.map((m,k)=>`<div class="sr-opt" data-k="${k}"><span>${esc(m.company_name||m.short_name||'')}</span><span class="sr-side">#${esc(String(m.supplier_number||''))}</span></div>`).join('');
+    menu.classList.add('open');
+    menu.querySelectorAll('.sr-opt').forEach(opt=>opt.addEventListener('mousedown',e=>{
+      e.preventDefault();const m=matches[+opt.dataset.k];
+      SPLIT_ROWS[idx].supplier_id=m.id;SPLIT_ROWS[idx]._name=m.company_name||m.short_name||'';SPLIT_ROWS[idx]._num=m.supplier_number;
+      inp.value=SPLIT_ROWS[idx]._name;close();
+    }));
+  };
+  inp.addEventListener('focus',open);
+  inp.addEventListener('input',()=>{SPLIT_ROWS[idx].supplier_id=null;SPLIT_ROWS[idx]._name=inp.value;open();});
+  inp.addEventListener('blur',()=>setTimeout(close,150));
+}
+function updateTally(){
+  const ln=LINES[SPLIT_I]; if(!ln)return;
+  const need=parseFloat(ln.quantity)||0;
+  const sum=SPLIT_ROWS.reduce((s,r)=>s+(parseFloat(r.quantity)||0),0);
+  const el=document.getElementById('split-tally');
+  el.textContent=`Allocated ${sum} of ${need}`+(sum===need?' ✓':sum>need?' — over by '+(sum-need):' — '+(need-sum)+' unallocated');
+  el.className='split-tally '+(sum===need?'ok':'bad');
+}
+document.getElementById('split-add').addEventListener('click',()=>{SPLIT_ROWS.push({supplier_id:null,_name:'',_num:null,quantity:0});renderSplitRows();});
+document.getElementById('split-x').addEventListener('click',closeSplit);
+document.getElementById('split-cancel').addEventListener('click',closeSplit);
+document.getElementById('split-overlay').addEventListener('click',e=>{if(e.target.id==='split-overlay')closeSplit();});
+document.getElementById('split-save').addEventListener('click',()=>{
+  const ln=LINES[SPLIT_I]; if(!ln)return;
+  // validate: every row needs a supplier + qty>0
+  for(const r of SPLIT_ROWS){
+    if(!r.supplier_id){document.getElementById('split-msg').textContent='Each allocation needs a supplier.';return;}
+    if(!(parseFloat(r.quantity)>0)){document.getElementById('split-msg').textContent='Each allocation needs a quantity greater than 0.';return;}
+  }
+  const need=parseFloat(ln.quantity)||0;
+  const sum=SPLIT_ROWS.reduce((s,r)=>s+(parseFloat(r.quantity)||0),0);
+  if(sum!==need){document.getElementById('split-msg').textContent='Allocated quantity ('+sum+') must equal the line quantity ('+need+').';return;}
+  // if only one row, treat as a single-supplier line (clear allocations)
+  if(SPLIT_ROWS.length===1){
+    ln.supplier_id=SPLIT_ROWS[0].supplier_id;ln._supplier_name=SPLIT_ROWS[0]._name;ln._supplier_number=SPLIT_ROWS[0]._num;
+    ln._allocations=null;
+  }else{
+    ln.supplier_id=null;ln._supplier_name='';ln._supplier_number=null;
+    ln._allocations=SPLIT_ROWS.map(r=>({supplier_id:r.supplier_id,_supplier_name:r._name,_supplier_number:r._num,quantity:parseFloat(r.quantity)||0}));
+  }
+  closeSplit();renderLines();markDirty();
+}); 
+
 function recalc(){
   const sub=LINES.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
   const disc=LINES.reduce((s,l)=>s+((parseFloat(l.amount)||0)*((parseFloat(l.discount_pct)||0)/100)),0);
@@ -749,6 +946,16 @@ async function save(silent){
     const {data:ins,error:e2}=await db.from('quote_items').insert(rows).select();
     if(e2){if(msg){msg.textContent='Lines error: '+e2.message;msg.className='status-msg err';}return;}
     insertedItems=ins||[];
+    // re-save split allocations, mapped to the freshly inserted item IDs (by index)
+    const allocRows=[];
+    LINES.forEach((l,idx)=>{
+      if(l._allocations&&l._allocations.length>1&&insertedItems[idx]){
+        l._allocations.forEach(a=>{
+          allocRows.push({quote_item_id:insertedItems[idx].id, supplier_id:a.supplier_id||null, quantity:parseFloat(a.quantity)||0, in_po:false, po_id:null, status:'pending'});
+        });
+      }
+    });
+    if(allocRows.length){ await db.from('quote_item_allocations').insert(allocRows); }
   }
   // 3. sync supplier lines into their open POs
   const warnings=await syncToPOs(insertedItems);
@@ -777,13 +984,27 @@ async function syncToPOs(insertedItems){
   const warnings=[];
   // PO linking only applies to Sales Orders — not inquiries or quotations
   if(ORDER.record_type!=='order') return warnings;
-  // group lines by supplier_id (only those with a supplier and a quantity)
+  // group single-supplier lines by supplier_id (skip lines that are split — those go via allocations)
   const bySup={};
-  insertedItems.forEach(it=>{ if(it.supplier_id&&Number(it.quantity)>0){ (bySup[it.supplier_id]=bySup[it.supplier_id]||[]).push(it); } });
+  insertedItems.forEach(it=>{ if(it.supplier_id&&Number(it.quantity)>0){ (bySup[it.supplier_id]=bySup[it.supplier_id]||[]).push({type:'item',ref:it,style_number:it.style_number,description:it.description,quantity:Number(it.quantity),unit_price:Number(it.unit_price),id:it.id}); } });
+
+  // pull fresh allocations for these items and add them to the grouping
+  const itemIds=insertedItems.map(it=>it.id);
+  let allocs=[];
+  if(itemIds.length){
+    const {data:al}=await db.from('quote_item_allocations').select('*').in('quote_item_id',itemIds);
+    allocs=al||[];
+  }
+  const itemById={};insertedItems.forEach(it=>itemById[it.id]=it);
+  allocs.forEach(a=>{
+    if(!a.supplier_id||!(Number(a.quantity)>0))return;
+    const it=itemById[a.quote_item_id]||{};
+    (bySup[a.supplier_id]=bySup[a.supplier_id]||[]).push({type:'alloc',ref:a,style_number:it.style_number,description:it.description,quantity:Number(a.quantity),unit_price:Number(it.unit_price),id:a.id});
+  });
+
   const supIds=Object.keys(bySup);
   if(!supIds.length)return warnings;
 
-  // find open POs for these suppliers
   const {data:openPOs}=await db.from('purchase_orders').select('id,po_number,supplier_id').eq('status','open').in('supplier_id',supIds);
   const poBySup={};(openPOs||[]).forEach(p=>{poBySup[p.supplier_id]=p;});
 
@@ -792,26 +1013,29 @@ async function syncToPOs(insertedItems){
     const sup=SUPPLIERS.find(s=>s.id===sid);
     const supName=sup?(sup.company_name||sup.short_name):'this supplier';
     if(!po){
-      warnings.push(supName+' has no open PO — those items were not added to a PO. Create an open PO for them on the Purchase Orders page.');
+      warnings.push(supName+' has no open PO yet. These items are saved and will be added automatically the moment you create an open PO for this supplier.');
       continue;
     }
-    // remove any existing po_items previously sourced from THIS order for this PO (avoid duplicates)
-    const srcIds=bySup[sid].map(x=>x.id);
+    // remove existing po_items previously sourced from THIS order for this PO (avoid duplicates)
     await db.from('po_items').delete().eq('po_id',po.id).eq('ordered_for',ORDER.stage_id?String(ORDER.stage_id):'');
-    // insert fresh po_items from these lines
-    const poRows=bySup[sid].map((it,idx)=>({
-      po_id:po.id, line_order:idx+1, source_quote_item_id:it.id,
-      style_number:it.style_number||null, category_name:it.category_name||null,
-      part_no:it.style_number||null, product_name:it.description||null, description:it.description||null,
-      quantity:Number(it.quantity)||0, rate:Number(it.unit_price)||0, amount:(Number(it.quantity)||0)*(Number(it.unit_price)||0),
+    const poRows=bySup[sid].map((entry,idx)=>({
+      po_id:po.id, line_order:idx+1,
+      source_quote_item_id:entry.type==='item'?entry.id:(entry.ref.quote_item_id||null),
+      source_allocation_id:entry.type==='alloc'?entry.id:null,
+      style_number:entry.style_number||null, category_name:null,
+      part_no:entry.style_number||null, product_name:entry.description||null, description:entry.description||null,
+      quantity:entry.quantity, rate:entry.unit_price||0, amount:entry.quantity*(entry.unit_price||0),
       ordered_for:ORDER.stage_id?String(ORDER.stage_id):null
     }));
     if(poRows.length){
       const {error}=await db.from('po_items').insert(poRows);
       if(error){warnings.push('Could not add items to PO #'+po.po_number+': '+error.message);continue;}
-      // mark the quote_items as in_po (red)
-      const itemIds=bySup[sid].map(x=>x.id);
-      await db.from('quote_items').update({in_po:true,po_id:po.id}).in('id',itemIds);
+      // mark single-supplier quote_items red
+      const itemIdsToMark=bySup[sid].filter(e=>e.type==='item').map(e=>e.id);
+      if(itemIdsToMark.length) await db.from('quote_items').update({in_po:true,po_id:po.id}).in('id',itemIdsToMark);
+      // mark allocations in_po
+      const allocIdsToMark=bySup[sid].filter(e=>e.type==='alloc').map(e=>e.id);
+      if(allocIdsToMark.length) await db.from('quote_item_allocations').update({in_po:true,po_id:po.id,status:'issued'}).in('id',allocIdsToMark);
     }
   }
   return warnings;
@@ -821,6 +1045,7 @@ async function reloadLines(){
   const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
   LINES=items||[];
   LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.company_name||s.short_name||''; l._supplier_number=s.supplier_number; } } });
+  await loadAllocations();
   renderLines();recalc();
 }
 

@@ -90,6 +90,20 @@
   .q-date{font-family:var(--fm);font-size:12.5px;color:var(--text-2);}
 
   .badge-st{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);}
+  .fs-pill{display:inline-block;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:7px;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;white-space:nowrap;}
+  .fs-pill:hover{filter:brightness(1.15);}
+  .fs-none{color:#5a6273;}
+  .fs-popup-ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:300;padding:20px;}
+  .fs-popup-ov.open{display:flex;}
+  .fs-popup{background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;width:100%;max-width:460px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+  .fsp-head{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);}
+  .fsp-head h3{font-family:var(--fd);font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:.03em;}
+  .fsp-x{margin-left:auto;background:var(--bg-4);border:none;color:var(--text-2);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:17px;}
+  .fsp-list{padding:12px 20px 18px;overflow-y:auto;}
+  .fsp-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .fsp-row:last-child{border-bottom:none;}
+  .fsp-desc{flex:1;font-size:13px;color:var(--text);}
+  .fsp-empty{padding:20px;text-align:center;color:var(--text-3);}
   .badge-st::before{content:'';width:7px;height:7px;border-radius:50%;background:rgba(0,0,0,.45);}
   .st-send_art{background:var(--art);color:var(--art-ink);}
   .st-approval_due{background:var(--due);color:var(--due-ink);}
@@ -160,9 +174,30 @@
     </div>
   </div>
 </div>
+<div class="fs-popup-ov" id="fs-popup">
+  <div class="fs-popup">
+    <div class="fsp-head"><h3 id="fsp-title">Line status</h3><button class="fsp-x" id="fsp-x">×</button></div>
+    <div class="fsp-list" id="fsp-body"></div>
+  </div>
+</div>
 <script type="module">
 import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
 await requireAuth();
+
+// ---- shared styled modal (replaces native alert/confirm) ----
+function __ensureModal(){
+  if(document.getElementById('__sm_ov'))return;
+  const css=document.createElement('style');
+  css.textContent='#__sm_ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px;}#__sm_ov.open{display:flex;}#__sm{background:#16181d;border:1px solid #414a5c;border-radius:14px;width:100%;max-width:410px;overflow:hidden;font-family:Inter,system-ui,sans-serif;}#__sm .h{display:flex;gap:13px;align-items:flex-start;padding:22px 24px 0;}#__sm .ic{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;}#__sm .ic.warn{background:rgba(255,182,39,.15);color:#ffb627;}#__sm .ic.info{background:rgba(61,165,255,.15);color:#3da5ff;}#__sm .ic.danger{background:rgba(255,77,77,.15);color:#ff4d4d;}#__sm .ic svg{width:22px;height:22px;}#__sm .t{font-family:Archivo,sans-serif;font-weight:800;font-size:16px;color:#eef0f4;margin-bottom:5px;}#__sm .m{font-size:13.5px;color:#c4cad6;line-height:1.5;}#__sm .f{display:flex;gap:10px;padding:20px 24px 22px;justify-content:flex-end;}#__sm .b{padding:10px 17px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}#__sm .b:hover{border-color:#9098a8;}#__sm .b.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}#__sm .b.danger{background:#ff4d4d;color:#fff;border-color:#ff4d4d;}#__sm .b.plain{background:transparent;border-color:transparent;color:#9098a8;}';
+  document.head.appendChild(css);
+  const ov=document.createElement('div');ov.id='__sm_ov';
+  ov.innerHTML='<div id="__sm"><div class="h"><div class="ic warn" id="__sm_ic"></div><div><div class="t" id="__sm_t"></div><div class="m" id="__sm_m"></div></div></div><div class="f" id="__sm_f"></div></div>';
+  document.body.appendChild(ov);
+}
+const __SM_IC={warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',danger:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'};
+function smAlert(msg,title,type){return new Promise(res=>{__ensureModal();type=type||'info';document.getElementById('__sm_ic').className='ic '+type;document.getElementById('__sm_ic').innerHTML=__SM_IC[type]||__SM_IC.info;document.getElementById('__sm_t').textContent=title||'Notice';document.getElementById('__sm_m').textContent=msg||'';const f=document.getElementById('__sm_f');f.innerHTML='<button class="b primary" id="__sm_ok">Got it</button>';const ov=document.getElementById('__sm_ov');const close=()=>{ov.classList.remove('open');res(true);};f.querySelector('#__sm_ok').onclick=close;ov.onclick=e=>{if(e.target===ov)close();};ov.classList.add('open');});}
+function smConfirm(msg,title,opts){opts=opts||{};return new Promise(res=>{__ensureModal();const type=opts.type||'warn';document.getElementById('__sm_ic').className='ic '+type;document.getElementById('__sm_ic').innerHTML=__SM_IC[type]||__SM_IC.warn;document.getElementById('__sm_t').textContent=title||'Confirm';document.getElementById('__sm_m').textContent=msg||'';const f=document.getElementById('__sm_f');f.innerHTML='<button class="b plain" id="__sm_no">'+(opts.cancelText||'Cancel')+'</button><button class="b '+(opts.danger?'danger':'primary')+'" id="__sm_yes">'+(opts.confirmText||'Confirm')+'</button>';const ov=document.getElementById('__sm_ov');const close=v=>{ov.classList.remove('open');res(v);};f.querySelector('#__sm_yes').onclick=()=>close(true);f.querySelector('#__sm_no').onclick=()=>close(false);ov.onclick=e=>{if(e.target===ov)close(false);};ov.classList.add('open');});}
+
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const today=new Date();today.setHours(0,0,0,0);
 document.getElementById('today').textContent=DOW[today.getDay()]+', '+today.getDate()+' '+MON[today.getMonth()]+' '+today.getFullYear();
@@ -191,8 +226,62 @@ async function load(){
   document.getElementById('c-inquiry').textContent=DATA.inquiry.length;
   document.getElementById('c-quote').textContent=DATA.quote.length;
   document.getElementById('c-order').textContent=DATA.order.length;
+  // load fulfillment statuses for all sales-order line items (for the dashboard rollup)
+  await loadFulfillment();
   render();
 }
+
+// Map each sales order -> array of its line-item fulfillment statuses
+let FULFILL_BY_ORDER={};
+async function loadFulfillment(){
+  FULFILL_BY_ORDER={};
+  const orderIds=DATA.order.map(o=>o.id);
+  if(!orderIds.length)return;
+  const {data:items}=await db.from('quote_items').select('quote_id,fulfillment_status,supplier_id,description,style_number').in('quote_id',orderIds);
+  (items||[]).forEach(it=>{
+    (FULFILL_BY_ORDER[it.quote_id]=FULFILL_BY_ORDER[it.quote_id]||[]).push(it);
+  });
+}
+
+// Roll the per-line statuses up into a single order-level summary
+const FS_RANK={backordered:0,in_po:1,none:1,issued:2,arrived:3,verified:4};
+const FS_META={
+  none:{label:'No Suppliers',color:'#5a6273',bg:'rgba(90,98,115,.16)'},
+  in_po:{label:'In PO',color:'#ff4d4d',bg:'rgba(255,77,77,.14)'},
+  issued:{label:'Items Issued',color:'#8a92a2',bg:'rgba(138,146,162,.16)'},
+  arrived:{label:'Items Arrived',color:'#ffb627',bg:'rgba(255,182,39,.16)'},
+  verified:{label:'All Items Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
+  backordered:{label:'Back Ordered',color:'#b06bff',bg:'rgba(176,107,255,.16)'},
+  mixed:{label:'Mixed Status',color:'#3da5ff',bg:'rgba(61,165,255,.16)'}
+};
+function rollup(orderId){
+  const items=FULFILL_BY_ORDER[orderId]||[];
+  if(!items.length)return null;   // no line items -> no badge
+  const states=items.map(it=>{
+    const s=it.fulfillment_status&&it.fulfillment_status!=='none'?it.fulfillment_status:(it.supplier_id?'in_po':'none');
+    return s;
+  });
+  const uniq=[...new Set(states)];
+  if(uniq.length===1)return uniq[0];
+  // any backorder shows as mixed (with backorder noted in the popup)
+  return 'mixed';
+}
+
+// quick-view popup: per-line statuses without opening the full order
+function openFulfillPopup(orderId){
+  const order=DATA.order.find(o=>o.id===orderId);
+  const items=FULFILL_BY_ORDER[orderId]||[];
+  const ov=document.getElementById('fs-popup');
+  document.getElementById('fsp-title').textContent='Order #'+(order?order.stage_id:'')+' — line status';
+  const rows=items.map(it=>{
+    const s=it.fulfillment_status&&it.fulfillment_status!=='none'?it.fulfillment_status:(it.supplier_id?'in_po':'none');
+    const m=FS_META[s]||FS_META.none;
+    return `<div class="fsp-row"><div class="fsp-desc">${esc(it.description||it.style_number||'Item')}</div><span class="fs-pill" style="color:${m.color};background:${m.bg};">${m.label}</span></div>`;
+  }).join('');
+  document.getElementById('fsp-body').innerHTML=rows||'<div class="fsp-empty">No line items.</div>';
+  ov.classList.add('open');
+}
+function closeFulfillPopup(){document.getElementById('fs-popup').classList.remove('open');}
 
 function render(){
   document.getElementById('list-title').textContent=TAB_TITLE[TAB];
@@ -216,9 +305,11 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:28%;">Client</th><th>Subject</th><th style="width:140px;">Stage</th><th style="width:230px;">Dates</th><th class="num" style="width:110px;">Total</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:24%;">Client</th><th>Subject</th><th style="width:130px;">Stage</th><th style="width:160px;">Fulfillment</th><th style="width:190px;">Dates</th><th class="num" style="width:100px;">Total</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
-      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td>${datesCell(o.pickup_date,o.event_date)}</td><td class="num money-cell">${money(o.grand_total)}</td></tr>`;}).join('')}</tbody></table>`;
+      const fs=rollup(o.id);
+      const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
+      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td>${fsCell}</td><td>${datesCell(o.pickup_date,o.event_date)}</td><td class="num money-cell">${money(o.grand_total)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     // simpler rows for inquiries / quotes
     html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:34%;">Client</th><th>Subject</th><th style="width:150px;">Date</th><th class="num" style="width:120px;">Total</th></tr></thead><tbody>${rows.map(o=>{
@@ -227,6 +318,10 @@ function render(){
   }
   document.getElementById('wrap').innerHTML=html;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.id)));
+  // fulfillment pill -> open status popup instead of navigating
+  document.querySelectorAll('.fs-pill').forEach(p=>p.addEventListener('click',e=>{e.stopPropagation();openFulfillPopup(p.dataset.fs);}));
+  const fx=document.getElementById('fsp-x');if(fx)fx.onclick=closeFulfillPopup;
+  const fov=document.getElementById('fs-popup');if(fov)fov.onclick=e=>{if(e.target===fov)closeFulfillPopup();};
 }
 
 document.querySelectorAll('.stage-tab').forEach(t=>t.addEventListener('click',()=>{
@@ -244,7 +339,7 @@ document.getElementById('new-record').addEventListener('click',async()=>{
     subject:'New '+TAB,serviced_by:'',client_id:cl&&cl[0]?cl[0].id:null,...defaults[TAB]};
   const {data,error}=await db.from('quotes').insert(payload).select().single();
   btn.disabled=false;btn.style.opacity=1;
-  if(error){alert('Could not create: '+error.message);return;}
+  if(error){await smAlert('Could not create: '+error.message,'Error','danger');return;}
   location.href='order.html?id='+encodeURIComponent(data.id);
 });
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());

@@ -126,6 +126,21 @@
 <script type="module">
 import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
 await requireAuth();
+
+// ---- shared styled modal (replaces native alert/confirm) ----
+function __ensureModal(){
+  if(document.getElementById('__sm_ov'))return;
+  const css=document.createElement('style');
+  css.textContent='#__sm_ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px;}#__sm_ov.open{display:flex;}#__sm{background:#16181d;border:1px solid #414a5c;border-radius:14px;width:100%;max-width:410px;overflow:hidden;font-family:Inter,system-ui,sans-serif;}#__sm .h{display:flex;gap:13px;align-items:flex-start;padding:22px 24px 0;}#__sm .ic{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;}#__sm .ic.warn{background:rgba(255,182,39,.15);color:#ffb627;}#__sm .ic.info{background:rgba(61,165,255,.15);color:#3da5ff;}#__sm .ic.danger{background:rgba(255,77,77,.15);color:#ff4d4d;}#__sm .ic svg{width:22px;height:22px;}#__sm .t{font-family:Archivo,sans-serif;font-weight:800;font-size:16px;color:#eef0f4;margin-bottom:5px;}#__sm .m{font-size:13.5px;color:#c4cad6;line-height:1.5;}#__sm .f{display:flex;gap:10px;padding:20px 24px 22px;justify-content:flex-end;}#__sm .b{padding:10px 17px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}#__sm .b:hover{border-color:#9098a8;}#__sm .b.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}#__sm .b.danger{background:#ff4d4d;color:#fff;border-color:#ff4d4d;}#__sm .b.plain{background:transparent;border-color:transparent;color:#9098a8;}';
+  document.head.appendChild(css);
+  const ov=document.createElement('div');ov.id='__sm_ov';
+  ov.innerHTML='<div id="__sm"><div class="h"><div class="ic warn" id="__sm_ic"></div><div><div class="t" id="__sm_t"></div><div class="m" id="__sm_m"></div></div></div><div class="f" id="__sm_f"></div></div>';
+  document.body.appendChild(ov);
+}
+const __SM_IC={warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',danger:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'};
+function smAlert(msg,title,type){return new Promise(res=>{__ensureModal();type=type||'info';document.getElementById('__sm_ic').className='ic '+type;document.getElementById('__sm_ic').innerHTML=__SM_IC[type]||__SM_IC.info;document.getElementById('__sm_t').textContent=title||'Notice';document.getElementById('__sm_m').textContent=msg||'';const f=document.getElementById('__sm_f');f.innerHTML='<button class="b primary" id="__sm_ok">Got it</button>';const ov=document.getElementById('__sm_ov');const close=()=>{ov.classList.remove('open');res(true);};f.querySelector('#__sm_ok').onclick=close;ov.onclick=e=>{if(e.target===ov)close();};ov.classList.add('open');});}
+function smConfirm(msg,title,opts){opts=opts||{};return new Promise(res=>{__ensureModal();const type=opts.type||'warn';document.getElementById('__sm_ic').className='ic '+type;document.getElementById('__sm_ic').innerHTML=__SM_IC[type]||__SM_IC.warn;document.getElementById('__sm_t').textContent=title||'Confirm';document.getElementById('__sm_m').textContent=msg||'';const f=document.getElementById('__sm_f');f.innerHTML='<button class="b plain" id="__sm_no">'+(opts.cancelText||'Cancel')+'</button><button class="b '+(opts.danger?'danger':'primary')+'" id="__sm_yes">'+(opts.confirmText||'Confirm')+'</button>';const ov=document.getElementById('__sm_ov');const close=v=>{ov.classList.remove('open');res(v);};f.querySelector('#__sm_yes').onclick=()=>close(true);f.querySelector('#__sm_no').onclick=()=>close(false);ov.onclick=e=>{if(e.target===ov)close(false);};ov.classList.add('open');});}
+
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -191,10 +206,10 @@ async function addPayment(){
   recalcTotals();renderPayments();
 }
 async function printInvoice(){
-  if(!confirm('Open a preview of invoice #'+(INV.invoice_number||'')+'?\n\nFrom the preview you can save it as a PDF or print it.'))return;
+  if(!await smConfirm('Output invoice #'+(INV.invoice_number||'')+'? You can save it as a PDF or print it.','Print invoice?',{confirmText:'Continue'}))return;
   let generateDocument;
   try{ ({generateDocument}=await import('./pdf.js')); }
-  catch(err){ alert('Could not load the PDF generator (pdf.js). Make sure pdf.js is deployed alongside invoice.html.'); return; }
+  catch(err){ await smAlert('Could not load the PDF generator (pdf.js).','Couldn’t load','danger'); return; }
   const lines=[CLIENT.bill_address,CLIENT.bill_city,CLIENT.bill_postal,CLIENT.bill_province].filter(Boolean);
   generateDocument('INVOICE',{
     number:String(INV.invoice_number||''), date:INV.invoice_date, dueDate:INV.due_date, servicedBy:INV.serviced_by||'',

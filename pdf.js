@@ -106,6 +106,7 @@ export async function makePDF(docType, data){
   y = Math.max(ly, my) + 18;
 
   // ---- items table header ----
+  const hidePrice = !!data.hideUnitPrice;   // POs don't show unit price
   const cols = { item:M, code:M+82, desc:M+150, qty:M+340, unit:M+372, price:M+438, amount:RIGHT };
   doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(0,0,0);
   doc.text('Item', cols.item, y);
@@ -113,7 +114,7 @@ export async function makePDF(docType, data){
   doc.text('Description', cols.desc, y);
   doc.text('Qty', cols.qty, y, {align:'right'});
   doc.text('Unit', cols.unit, y);
-  doc.text('Unit Price', cols.price, y, {align:'right'});
+  if(!hidePrice) doc.text('Unit Price', cols.price, y, {align:'right'});
   doc.text('Amount', cols.amount, y, {align:'right'});
   y += 4; doc.setDrawColor(0,0,0); doc.setLineWidth(0.6); doc.line(M, y, RIGHT, y); y += 14;
 
@@ -136,7 +137,7 @@ export async function makePDF(docType, data){
     doc.text(descLines, cols.desc, y);
     doc.text(String(it.qty!=null?it.qty:''), cols.qty, y, {align:'right'});
     doc.text(String(it.unit||''), cols.unit, y);
-    doc.text(money(it.unitPrice), cols.price, y, {align:'right'});
+    if(!hidePrice) doc.text(money(it.unitPrice), cols.price, y, {align:'right'});
     doc.text(money(gross), cols.amount, y, {align:'right'});
     y += rowH + 6;
 
