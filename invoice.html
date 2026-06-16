@@ -27,94 +27,98 @@
   .btn-dark{background:#fff;color:#15171c;border:none;}
   .badge-pay{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:5px 11px;border-radius:7px;text-transform:uppercase;font-family:var(--fd);}
   .pay-unpaid{background:var(--unpaid);color:#1a0f08;}.pay-partial{background:var(--partial);color:#231803;}.pay-paid{background:var(--paid);color:#04130a;}
-  .wrap{max-width:1080px;margin:0 auto;padding:22px 24px 70px;}
-  .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start;}
-  @media(max-width:920px){.grid{grid-template-columns:1fr;}}
-  .col-main,.col-side{display:flex;flex-direction:column;gap:18px;}
-  .col-main .card,.col-side .card{margin-bottom:0;}
-  /* bill-to block */
-  .billto{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;}
-  .bt-left{min-width:200px;}
-  .bt-company{font-family:var(--fd);font-weight:800;font-size:16px;color:var(--text);margin-bottom:6px;}
-  .bt-lines{font-size:13px;color:var(--text-2);line-height:1.6;}
-  .bt-contact{font-size:12px;color:var(--text-3);margin-top:8px;}
-  .bt-right{display:flex;flex-direction:column;gap:11px;min-width:200px;}
-  .bt-meta{display:flex;justify-content:space-between;gap:16px;}
-  .bt-meta .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:700;}
-  .bt-meta .v{font-size:13px;font-weight:600;color:var(--text);text-align:right;}
-  /* totals under the line items, right-aligned like a real invoice */
-  .inv-totals{margin-left:auto;width:320px;padding:14px 18px 18px;border-top:1px solid var(--line);}
-  .inv-totals .it-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13.5px;}
-  .inv-totals .it-row .l{color:var(--text-2);}
-  .inv-totals .it-row .v{font-family:var(--fm);font-weight:700;}
-  .inv-totals .grand{border-top:1px solid var(--line-2);margin-top:6px;padding-top:11px;}
-  .inv-totals .grand .l{font-family:var(--fd);font-weight:800;text-transform:uppercase;font-size:13px;color:var(--text);}
-  .inv-totals .grand .v{font-family:var(--fd);font-weight:800;font-size:19px;color:var(--brass-2);}
-  .inv-totals .paid .v{color:var(--paid);}
-  .inv-totals .bal{border-top:1px dashed var(--line);margin-top:6px;padding-top:10px;}
-  .inv-totals .bal .l{font-weight:700;color:var(--text);}
-  .inv-totals .bal .v{color:var(--unpaid);font-size:15px;}
-  .card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);margin-bottom:18px;overflow:hidden;}
-  .card-h{padding:13px 18px;border-bottom:2px solid var(--line-2);}
-  .card-h h3{font-family:var(--fd);font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#aab2c4;}
-  .card-b{padding:18px;}
-  .field{margin-bottom:13px;}.field label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;margin-bottom:4px;}
-  .field .val{font-weight:600;}.field .val.big{font-family:var(--fd);font-size:18px;font-weight:800;}
-  .frow{display:flex;gap:20px;}.frow .field{flex:1;}
-  table{width:100%;border-collapse:collapse;}
-  thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#aab0c0;font-weight:700;padding:9px 10px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
-  thead th.num{text-align:right;}
-  tbody td{padding:10px;border-bottom:1px solid var(--line);font-size:13px;}
-  tbody tr:last-child td{border-bottom:none;}
-  .num{text-align:right;font-family:var(--fm);}
-  .totals .t-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13.5px;}
-  .totals .t-row .l{color:var(--text-2);}.totals .t-row .v{font-family:var(--fm);font-weight:700;}
-  .totals .grand{border-top:2px solid var(--text);margin-top:6px;padding-top:11px;}
-  .totals .grand .l{font-family:var(--fd);font-weight:800;text-transform:uppercase;font-size:13px;}
-  .totals .grand .v{font-family:var(--fd);font-weight:800;font-size:20px;color:var(--brass-2);}
-  .totals .bal .v{color:var(--unpaid);}
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 28px 80px;}
+  .layout{display:grid;grid-template-columns:1fr 332px;gap:24px;align-items:start;}
+  @media(max-width:980px){.layout{grid-template-columns:1fr;}}
+
+  /* ---- The invoice as a real paper document ---- */
+  .sheet{background:#fbfbfd;color:#1a1d24;border-radius:14px;overflow:hidden;position:relative;box-shadow:0 24px 60px -20px rgba(0,0,0,.55),0 2px 0 rgba(255,255,255,.04);}
+  .sheet-band{height:5px;background:linear-gradient(90deg,#caa75d,#e7c989);}
+  .sheet-in{padding:40px 44px 36px;}
+  /* status stamp */
+  .stamp{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%) rotate(-12deg);font-family:var(--fd);font-weight:900;font-size:62px;letter-spacing:.1em;text-transform:uppercase;padding:12px 30px;border:5px solid;border-radius:12px;opacity:.13;pointer-events:none;z-index:2;}
+  .stamp.paid{color:#1ea761;border-color:#1ea761;}
+  .stamp.unpaid{color:#c2410c;border-color:#c2410c;}
+  .stamp.partial{color:#b7791f;border-color:#b7791f;}
+  .stamp.overdue{color:#dc2626;border-color:#dc2626;}
+  /* sheet header */
+  .sh-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:30px;}
+  .sh-brand .bn{font-family:var(--fd);font-weight:900;font-size:19px;letter-spacing:-.01em;color:#15171c;line-height:1.15;text-transform:uppercase;}
+  .sh-brand .bsub{font-size:11.5px;color:#6b7280;margin-top:5px;line-height:1.5;}
+  .sh-doc{text-align:right;}
+  .sh-doc .dlabel{font-family:var(--fd);font-weight:800;font-size:13px;letter-spacing:.16em;color:#9098a8;text-transform:uppercase;}
+  .sh-doc .dnum{font-family:var(--fm);font-weight:700;font-size:22px;color:#15171c;margin-top:2px;}
+  .sh-doc .dmeta{margin-top:12px;display:flex;flex-direction:column;gap:4px;}
+  .sh-doc .dmeta .r{display:flex;justify-content:flex-end;gap:10px;font-size:12px;}
+  .sh-doc .dmeta .r .k{color:#9098a8;}.sh-doc .dmeta .r .vv{color:#374151;font-weight:600;min-width:90px;text-align:right;}
+  .sh-doc .dmeta .r .vv.over{color:#dc2626;font-weight:700;}
+  /* bill to */
+  .sh-parties{display:flex;justify-content:space-between;gap:30px;margin-bottom:26px;}
+  .party .plabel{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#9ca3af;font-weight:700;margin-bottom:7px;}
+  .party .pco{font-family:var(--fd);font-weight:800;font-size:15px;color:#15171c;}
+  .party .padd{font-size:12.5px;color:#4b5563;line-height:1.65;margin-top:3px;}
+  .party .pcon{font-size:11.5px;color:#6b7280;margin-top:6px;}
+  .party.right{text-align:right;}
+  /* line items table on the sheet */
+  .sh-table{width:100%;border-collapse:collapse;margin-bottom:0;}
+  .sh-table thead th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;font-weight:700;text-align:left;padding:0 12px 10px;border-bottom:2px solid #e5e7eb;}
+  .sh-table thead th.num{text-align:right;}
+  .sh-table tbody td{padding:13px 12px;border-bottom:1px solid #eef0f3;font-size:13px;color:#1f2430;vertical-align:top;}
+  .sh-table tbody td.num{text-align:right;font-family:var(--fm);}
+  .sh-table .li-code{font-family:var(--fm);font-size:11.5px;color:#6b7280;}
+  .sh-table .li-desc{color:#1f2430;}
+  /* totals on the sheet */
+  .sh-tot{display:flex;justify-content:flex-end;margin-top:18px;}
+  .sh-tot-box{width:300px;}
+  .sh-tot .row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:#4b5563;}
+  .sh-tot .row .v{font-family:var(--fm);font-weight:600;color:#1f2430;}
+  .sh-tot .row.grand{border-top:2px solid #1a1d24;margin-top:7px;padding-top:12px;}
+  .sh-tot .row.grand .k{font-family:var(--fd);font-weight:800;text-transform:uppercase;font-size:13px;color:#15171c;letter-spacing:.03em;}
+  .sh-tot .row.grand .v{font-family:var(--fd);font-weight:900;font-size:20px;color:#15171c;}
+  .sh-tot .row.paid .v{color:#1ea761;}
+  .sh-tot .row.bal{margin-top:8px;padding:11px 14px;background:#f3f4f6;border-radius:8px;}
+  .sh-tot .row.bal .k{font-weight:800;color:#15171c;}
+  .sh-tot .row.bal .v{font-family:var(--fd);font-weight:900;font-size:17px;color:#c2410c;}
+  .sh-tot .row.bal.clear .v{color:#1ea761;}
+  .sh-foot{margin-top:30px;padding-top:18px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;gap:20px;font-size:11px;color:#9098a8;}
+
+  /* ---- right rail (dark, the CRM workflow) ---- */
+  .rail{display:flex;flex-direction:column;gap:16px;position:sticky;top:78px;}
+  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
+  .panel-h{padding:13px 16px;border-bottom:1px solid var(--line);font-family:var(--fd);font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#aab2c4;}
+  .panel-b{padding:16px;}
+  /* balance hero in rail */
+  .rail-bal{padding:18px 16px;}
+  .rail-bal .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);font-weight:700;}
+  .rail-bal .amt{font-family:var(--fd);font-weight:900;font-size:32px;letter-spacing:-.01em;margin-top:4px;}
+  .rail-bal .amt.due{color:var(--unpaid);}.rail-bal .amt.clear{color:var(--paid);}
+  .rail-bal .status-line{display:flex;align-items:center;gap:8px;margin-top:10px;}
+  .progress{width:100%;height:7px;background:var(--bg-4);border-radius:5px;overflow:hidden;margin-top:12px;}
+  .progress .bar{height:100%;background:var(--paid);transition:width .4s;}
+  .progress-txt{font-size:11px;color:var(--text-3);margin-top:7px;}
+  .field{margin-bottom:13px;}.field label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;margin-bottom:5px;}
+  .field .val{font-weight:600;font-size:13.5px;}
   input.in,select.in{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px;font-size:13.5px;font-family:inherit;color:var(--text);}
-  input.in:focus{outline:none;border-color:var(--brass);}
-  .pay-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;}
-  .pay-row:last-child{border-bottom:none;}
-  .pay-amt{font-family:var(--fm);font-weight:700;color:var(--paid);}
-  .add-pay{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:12px;align-items:end;}
-  .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;}
-  .state{padding:50px;text-align:center;color:var(--text-3);}
-  .msg{font-size:12.5px;margin-top:8px;}.msg.ok{color:var(--paid);}.msg.err{color:var(--danger);}
-  /* status hero */
-  .inv-hero{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:22px 24px;margin-bottom:18px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;}
-  .inv-hero .ih-bal{display:flex;flex-direction:column;gap:3px;}
-  .inv-hero .ih-bal .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;}
-  .inv-hero .ih-bal .amt{font-family:var(--fd);font-weight:900;font-size:30px;letter-spacing:-.01em;}
-  .inv-hero .ih-bal .amt.due{color:var(--unpaid);}.inv-hero .ih-bal .amt.clear{color:var(--paid);}
-  .inv-hero .ih-div{width:1px;align-self:stretch;background:var(--line);}
-  .inv-hero .ih-meta{display:flex;gap:26px;flex-wrap:wrap;}
-  .inv-hero .ih-meta .m{display:flex;flex-direction:column;gap:3px;}
-  .inv-hero .ih-meta .m .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;}
-  .inv-hero .ih-meta .m .v{font-weight:600;font-size:13.5px;}
-  .inv-hero .ih-meta .m .v.over{color:var(--danger);}
-  .inv-hero .ih-status{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
-  .pay-overdue{background:var(--danger);color:#fff;}
-  .progress{width:100%;height:7px;background:var(--bg-4);border-radius:5px;overflow:hidden;margin-top:4px;}
-  .progress .bar{height:100%;background:var(--paid);transition:width .3s;}
-  /* payment form */
+  input.in:focus,select.in:focus{outline:none;border-color:var(--brass);}
   .pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
   .pf-grid .full{grid-column:1 / -1;}
-  .pf-field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:700;margin-bottom:4px;}
+  .pf-field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:700;margin-bottom:5px;}
   .pf-field .req{color:var(--unpaid);}
-  .pay-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;gap:10px;}
+  .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;}
+  .btn-full{width:100%;justify-content:center;}
+  .msg{font-size:12.5px;margin-top:9px;}.msg.ok{color:var(--paid);}.msg.err{color:var(--danger);}
+  .pay-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px;gap:10px;}
   .pay-row:last-child{border-bottom:none;}
-  .pay-row .pr-meta{display:flex;flex-direction:column;gap:2px;}
   .pay-row .pr-method{font-weight:600;color:var(--text);}
-  .pay-row .pr-sub{font-size:11px;color:var(--text-3);}
+  .pay-row .pr-sub{font-size:11px;color:var(--text-3);margin-top:2px;}
   .pay-row .pr-right{display:flex;align-items:center;gap:10px;}
   .pay-amt{font-family:var(--fm);font-weight:700;color:var(--paid);}
-  .pay-del{background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:15px;padding:2px 5px;border-radius:5px;}
-  .pay-del:hover{background:rgba(255,77,77,.15);color:var(--danger);}
-  .pay-empty{color:var(--text-3);font-size:13px;padding:10px 0;text-align:center;}
-  .terms-pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;background:var(--bg-4);color:var(--text-2);}
-  .btn-full{width:100%;justify-content:center;}
+  .pay-del{background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:15px;padding:2px 6px;border-radius:5px;}
+  .pay-del:hover{color:var(--danger);background:rgba(255,77,77,.1);}
+  .pay-empty{color:var(--text-3);font-size:12.5px;padding:8px 0;text-align:center;}
+  .state{padding:50px;text-align:center;color:var(--text-3);}
+  .badge-pay{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:5px 11px;border-radius:7px;text-transform:uppercase;font-family:var(--fd);}
+  .pay-overdue{background:var(--danger);color:#fff;}
 </style>
 </head>
 <body>
@@ -122,67 +126,84 @@
   <a class="back" href="invoices.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Invoices</a>
   <div class="title">Invoice <span class="id" id="t-id">#----</span></div>
   <span class="badge-pay pay-unpaid" id="t-badge">Unpaid</span>
-  <div class="actions"><button class="btn-dark btn" id="btn-pdf">Save Invoice PDF</button></div>
+  <div class="actions"><button class="btn-dark btn" id="btn-pdf">Print / Save PDF</button></div>
 </header>
 <div class="wrap" id="wrap"><div class="state">Loading invoice…</div></div>
 
 <template id="tpl">
-<div class="inv-hero">
-  <div class="ih-bal">
-    <span class="lbl">Balance Due</span>
-    <span class="amt due" id="h-balance">$0.00</span>
-    <div class="progress"><div class="bar" id="h-bar" style="width:0%"></div></div>
-  </div>
-  <div class="ih-div"></div>
-  <div class="ih-meta">
-    <div class="m"><span class="lbl">Client</span><span class="v" id="h-client">—</span></div>
-    <div class="m"><span class="lbl">Invoice Date</span><span class="v" id="h-date">—</span></div>
-    <div class="m"><span class="lbl">Due Date</span><span class="v" id="h-due">—</span></div>
-    <div class="m"><span class="lbl">Total</span><span class="v" id="h-total">—</span></div>
-  </div>
-  <div class="ih-status">
-    <span class="badge-pay pay-unpaid" id="h-badge">Unpaid</span>
-  </div>
-</div>
-
-<div class="grid">
-  <div class="col-main">
-    <div class="card">
-      <div class="card-h"><h3>Bill To</h3></div>
-      <div class="card-b billto">
-        <div class="bt-left">
-          <div class="bt-company" id="f-client">—</div>
-          <div class="bt-lines" id="f-address">—</div>
-          <div class="bt-contact" id="f-contact"></div>
+<div class="layout">
+  <!-- The invoice document itself -->
+  <div class="sheet">
+    <div class="sheet-band"></div>
+    <div class="sheet-in">
+      <div class="stamp" id="sheet-stamp">UNPAID</div>
+      <div class="sh-top">
+        <div class="sh-brand">
+          <div class="bn">York Region Trophy<br>&amp; Promotion</div>
+          <div class="bsub">Unit 6 - 7777 Keele Street, Concord, ON L4K 1Y7<br>905-660-9952 · yrtrophy@bellnet.ca · GST# 702433319</div>
         </div>
-        <div class="bt-right">
-          <div class="bt-meta"><span class="lbl">Subject</span><span class="v" id="f-subject">—</span></div>
-          <div class="bt-meta"><span class="lbl">Serviced By</span><span class="v" id="f-staff">—</span></div>
-          <div class="bt-meta"><span class="lbl">From Order</span><span class="v" id="f-order">—</span></div>
-          <div class="bt-meta"><span class="lbl">Client P.O.</span><span class="v" id="f-po">—</span></div>
+        <div class="sh-doc">
+          <div class="dlabel">Invoice</div>
+          <div class="dnum" id="s-num">#—</div>
+          <div class="dmeta">
+            <div class="r"><span class="k">Issued</span><span class="vv" id="s-date">—</span></div>
+            <div class="r"><span class="k">Due</span><span class="vv" id="s-due">—</span></div>
+            <div class="r"><span class="k">Terms</span><span class="vv" id="s-terms">—</span></div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-h"><h3>Line Items</h3></div>
-      <table>
-        <thead><tr><th style="width:120px;">Item</th><th>Description</th><th class="num" style="width:54px;">Qty</th><th class="num" style="width:90px;">Unit Price</th><th class="num" style="width:100px;">Amount</th></tr></thead>
+
+      <div class="sh-parties">
+        <div class="party">
+          <div class="plabel">Bill To</div>
+          <div class="pco" id="s-client">—</div>
+          <div class="padd" id="s-address">—</div>
+          <div class="pcon" id="s-contact"></div>
+        </div>
+        <div class="party right">
+          <div class="plabel">Details</div>
+          <div class="padd" id="s-details">—</div>
+        </div>
+      </div>
+
+      <table class="sh-table">
+        <thead><tr><th style="width:130px;">Item</th><th>Description</th><th class="num" style="width:50px;">Qty</th><th class="num" style="width:90px;">Unit</th><th class="num" style="width:100px;">Amount</th></tr></thead>
         <tbody id="items"></tbody>
       </table>
-      <div class="inv-totals">
-        <div class="it-row"><span class="l">Subtotal</span><span class="v" id="t-sub">$0.00</span></div>
-        <div class="it-row" id="t-disc-row" style="display:none;"><span class="l">Discount</span><span class="v" id="t-disc">$0.00</span></div>
-        <div class="it-row"><span class="l">HST (13%)</span><span class="v" id="t-hst">$0.00</span></div>
-        <div class="it-row grand"><span class="l">Grand Total</span><span class="v" id="t-grand">$0.00</span></div>
-        <div class="it-row paid"><span class="l">Amount Paid</span><span class="v" id="t-paid">$0.00</span></div>
-        <div class="it-row bal"><span class="l">Balance Due</span><span class="v" id="t-bal">$0.00</span></div>
+
+      <div class="sh-tot">
+        <div class="sh-tot-box">
+          <div class="row"><span class="k">Subtotal</span><span class="v" id="t-sub">$0.00</span></div>
+          <div class="row" id="t-disc-row" style="display:none;"><span class="k">Discount</span><span class="v" id="t-disc">$0.00</span></div>
+          <div class="row"><span class="k">HST (13%)</span><span class="v" id="t-hst">$0.00</span></div>
+          <div class="row grand"><span class="k">Grand Total</span><span class="v" id="t-grand">$0.00</span></div>
+          <div class="row paid" id="t-paid-row" style="display:none;"><span class="k">Amount Paid</span><span class="v" id="t-paid">$0.00</span></div>
+          <div class="row bal" id="t-bal-row"><span class="k">Balance Due</span><span class="v" id="t-bal">$0.00</span></div>
+        </div>
+      </div>
+
+      <div class="sh-foot">
+        <span>Thank you for your business. Div. of Silver Springs Investments Corp.</span>
+        <span>www.yorkregiontrophy.com</span>
       </div>
     </div>
   </div>
-  <div class="col-side">
-    <div class="card">
-      <div class="card-h"><h3>Terms</h3></div>
-      <div class="card-b">
+
+  <!-- Workflow rail -->
+  <div class="rail">
+    <div class="panel">
+      <div class="rail-bal">
+        <div class="lbl">Balance Due</div>
+        <div class="amt due" id="h-balance">$0.00</div>
+        <div class="status-line"><span class="badge-pay pay-unpaid" id="h-badge">Unpaid</span></div>
+        <div class="progress"><div class="bar" id="h-bar" style="width:0%"></div></div>
+        <div class="progress-txt" id="h-prog">$0.00 paid of $0.00</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">Terms</div>
+      <div class="panel-b">
         <div class="field"><label>Payment Terms</label>
           <select class="in" id="f-terms">
             <option value="on_receipt">Due on receipt</option>
@@ -194,9 +215,10 @@
         <div class="field" style="margin-bottom:0;"><label>Due Date</label><div class="val" id="f-due">—</div></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-h"><h3>Record a Payment</h3></div>
-      <div class="card-b">
+
+    <div class="panel">
+      <div class="panel-h">Record a Payment</div>
+      <div class="panel-b">
         <div class="pf-grid">
           <div class="pf-field"><label>Date <span class="req">*</span></label><input class="in" id="pay-date" type="date"></div>
           <div class="pf-field"><label>Amount <span class="req">*</span></label><input class="in" id="pay-amt" type="number" step="0.01" placeholder="0.00"></div>
@@ -213,9 +235,10 @@
         <div class="msg" id="pay-msg"></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-h"><h3>Payment History</h3></div>
-      <div class="card-b"><div id="pay-list"></div></div>
+
+    <div class="panel">
+      <div class="panel-h">Payment History</div>
+      <div class="panel-b"><div id="pay-list"></div></div>
     </div>
   </div>
 </div>
@@ -285,34 +308,44 @@ function render(){
   const w=document.getElementById('wrap');w.innerHTML='';w.appendChild(document.getElementById('tpl').content.cloneNode(true));
   document.getElementById('t-id').textContent='#'+(INV.invoice_number||'—');
   const paid=PAYMENTS.reduce((s,p)=>s+Number(p.amount||0),0);
-  const bal=Math.max(0,Number(INV.grand_total||0)-paid);
-  const pct=Number(INV.grand_total)>0?Math.min(100,Math.round((paid/Number(INV.grand_total))*100)):0;
+  const total=Number(INV.grand_total||0);
+  const bal=Math.max(0,total-paid);
+  const pct=total>0?Math.min(100,Math.round((paid/total)*100)):0;
+  const due=INV.due_date||computeDue(INV.invoice_date,INV.terms);
+  const si=statusInfo();
 
-  // hero
+  // status stamp on the document
+  const stamp=document.getElementById('sheet-stamp');
+  stamp.textContent=si.label.toUpperCase();stamp.className='stamp '+si.key;
+
+  // sheet header
+  document.getElementById('s-num').textContent='#'+(INV.invoice_number||'—');
+  document.getElementById('s-date').textContent=fmtD(INV.invoice_date);
+  const sdue=document.getElementById('s-due');sdue.textContent=fmtD(due);if(isOverdue())sdue.className='vv over';
+  document.getElementById('s-terms').textContent=TERM_LABEL[INV.terms||'net_30'];
+
+  // bill to + details
+  document.getElementById('s-client').textContent=CLIENT.company_name||'—';
+  const addr=[CLIENT.bill_address,[CLIENT.bill_city,CLIENT.bill_province].filter(Boolean).join(', '),CLIENT.bill_postal].filter(Boolean);
+  document.getElementById('s-address').innerHTML=addr.length?addr.map(esc).join('<br>'):'<span style="color:#9ca3af">No billing address on file</span>';
+  const cName=CONTACT?((CONTACT.first_name||'')+' '+(CONTACT.last_name||'')).trim():'';
+  const cBits=[cName,CONTACT?.email1,CONTACT?.tel1].filter(Boolean);
+  document.getElementById('s-contact').innerHTML=cBits.length?cBits.map(esc).join(' · '):'';
+  const details=[];
+  if(INV.subject)details.push('Subject: '+esc(INV.subject));
+  if(INV.serviced_by)details.push('Serviced by '+esc(INV.serviced_by));
+  if(INV.quotes?.stage_id)details.push('From order #'+INV.quotes.stage_id);
+  const cpo=INV.po_number||INV.quotes?.po_number;if(cpo)details.push('Client P.O. '+esc(cpo));
+  document.getElementById('s-details').innerHTML=details.length?details.join('<br>'):'—';
+
+  // rail balance hero
   const hbal=document.getElementById('h-balance');
   hbal.textContent=money(bal);hbal.className='amt '+(bal<=0.005?'clear':'due');
   document.getElementById('h-bar').style.width=pct+'%';
-  document.getElementById('h-client').textContent=CLIENT.company_name||'—';
-  document.getElementById('h-date').textContent=fmtD(INV.invoice_date);
-  const due=INV.due_date||computeDue(INV.invoice_date,INV.terms);
-  const hdue=document.getElementById('h-due');hdue.textContent=fmtD(due);if(isOverdue())hdue.className='v over';
-  document.getElementById('h-total').textContent=money(INV.grand_total);
+  document.getElementById('h-prog').textContent=money(paid)+' paid of '+money(total);
+  const hb=document.getElementById('h-badge');hb.textContent=si.label;hb.className='badge-pay pay-'+si.key;
 
-  const si=statusInfo();
-  ['t-badge','h-badge'].forEach(id=>{const b=document.getElementById(id);if(b){b.textContent=si.label;b.className='badge-pay pay-'+si.key;}});
-
-  // details
-  document.getElementById('f-subject').textContent=INV.subject||'—';
-  document.getElementById('f-staff').textContent=INV.serviced_by||'—';
-  document.getElementById('f-order').textContent=INV.quotes?.stage_id?('#'+INV.quotes.stage_id):'—';
-  document.getElementById('f-po').textContent=INV.po_number||INV.quotes?.po_number||'—';
-  // bill-to block
-  document.getElementById('f-client').textContent=CLIENT.company_name||'—';
-  const addr=[CLIENT.bill_address,[CLIENT.bill_city,CLIENT.bill_province].filter(Boolean).join(', '),CLIENT.bill_postal].filter(Boolean);
-  document.getElementById('f-address').innerHTML=addr.length?addr.map(esc).join('<br>'):'<span style="color:var(--text-3)">No billing address on file</span>';
-  const cName=CONTACT?((CONTACT.first_name||'')+' '+(CONTACT.last_name||'')).trim():'';
-  const cBits=[cName,CONTACT?.email1,CONTACT?.tel1].filter(Boolean);
-  document.getElementById('f-contact').innerHTML=cBits.length?cBits.map(esc).join(' · '):'';
+  // terms
   const termSel=document.getElementById('f-terms');termSel.value=INV.terms||'net_30';
   const fdue=document.getElementById('f-due');if(fdue)fdue.textContent=fmtD(due);
   termSel.onchange=async()=>{
@@ -322,11 +355,10 @@ function render(){
   };
 
   // items
-  document.getElementById('items').innerHTML=ITEMS.length?ITEMS.map(it=>`<tr><td>${esc(it.style_number||it.category_name||'')}</td><td>${esc(it.description||'')}</td><td class="num">${it.quantity}</td><td class="num">${money(it.unit_price)}</td><td class="num">${money(it.net_amount)}</td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--text-3);text-align:center;padding:20px;">No line items</td></tr>';
+  document.getElementById('items').innerHTML=ITEMS.length?ITEMS.map(it=>`<tr><td class="li-code">${esc(it.style_number||it.category_name||'')}</td><td class="li-desc">${esc(it.description||'')}</td><td class="num">${it.quantity}</td><td class="num">${money(it.unit_price)}</td><td class="num">${money(it.net_amount)}</td></tr>`).join(''):'<tr><td colspan="5" style="color:#9ca3af;text-align:center;padding:24px;">No line items</td></tr>';
 
   recalcTotals();
   renderPayments();
-  // default the payment date to today
   document.getElementById('pay-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('add-pay').onclick=addPayment;
   document.getElementById('btn-pdf').onclick=printInvoice;
@@ -339,9 +371,13 @@ function recalcTotals(){
   if(Number(INV.discount_total)>0){document.getElementById('t-disc-row').style.display='';document.getElementById('t-disc').textContent='−'+money(INV.discount_total);}
   document.getElementById('t-hst').textContent=money(INV.hst);
   document.getElementById('t-grand').textContent=money(INV.grand_total);
-  document.getElementById('t-paid').textContent=money(paid);
-  const tp=document.getElementById('t-paid');if(tp&&paid>0)tp.style.color='var(--paid)';
+  // only show the Amount Paid row once something's been paid
+  const paidRow=document.getElementById('t-paid-row');
+  if(paid>0){paidRow.style.display='';document.getElementById('t-paid').textContent='−'+money(paid);}
+  else{paidRow.style.display='none';}
   document.getElementById('t-bal').textContent=money(Math.max(0,bal));
+  const balRow=document.getElementById('t-bal-row');
+  if(balRow)balRow.className='row bal'+(bal<=0.005?' clear':'');
 }
 
 function renderPayments(){
@@ -395,11 +431,12 @@ async function removePayment(id){
   await recomputeStatus();
   render();
 }
-async function printInvoice(){
-  if(!await smConfirm('Output invoice #'+(INV.invoice_number||'')+'? You can save it as a PDF or print it.','Print invoice?',{confirmText:'Continue'}))return;
+function smChoice(title,msg,buttons){return new Promise(res=>{__ensureModal();document.getElementById('__sm_ic').className='ic info';document.getElementById('__sm_ic').innerHTML=__SM_IC.info;document.getElementById('__sm_t').textContent=title;document.getElementById('__sm_m').textContent=msg||'';const f=document.getElementById('__sm_f');f.style.flexDirection='column';f.innerHTML=buttons.map(b=>`<button class="b ${b.primary?'primary':(b.plain?'plain':'')}" data-k="${b.key}" style="width:100%;">${b.label}</button>`).join('');const ov=document.getElementById('__sm_ov');const close=v=>{ov.classList.remove('open');f.style.flexDirection='';res(v);};f.querySelectorAll('button').forEach(btn=>btn.onclick=()=>close(btn.dataset.k));ov.onclick=e=>{if(e.target===ov)close(null);};ov.classList.add('open');});}
+
+async function outputInvoice(mode){
   let generateDocument;
   try{ ({generateDocument}=await import('./pdf.js')); }
-  catch(err){ await smAlert('Could not load the PDF generator (pdf.js).','Couldn’t load','danger'); return; }
+  catch(err){ await smAlert('Could not load the document generator (pdf.js).','Couldn’t load','danger'); return; }
   const lines=[CLIENT.bill_address,CLIENT.bill_city,CLIENT.bill_postal,CLIENT.bill_province].filter(Boolean);
   const paid=PAYMENTS.reduce((s,p)=>s+Number(p.amount||0),0);
   generateDocument('INVOICE',{
@@ -409,7 +446,16 @@ async function printInvoice(){
     items:ITEMS.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.net_amount})),
     subtotal:INV.subtotal||0, hst:INV.hst||0, grandTotal:INV.grand_total||0,
     amountPaid:paid, balanceDue:Math.max(0,Number(INV.grand_total||0)-paid)
-  });
+  }, mode);
+}
+async function printInvoice(){
+  const choice=await smChoice('Output invoice #'+(INV.invoice_number||''),'Save it as a PDF or send it straight to your printer.',[
+    {key:'pdf',label:'Save as PDF',primary:true},
+    {key:'print',label:'Print'},
+    {key:'cancel',label:'Cancel',plain:true}
+  ]);
+  if(choice==='cancel'||choice==null)return;
+  await outputInvoice(choice==='print'?'print':'pdf');
 }
 load();
 </script>
