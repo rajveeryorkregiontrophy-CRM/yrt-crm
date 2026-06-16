@@ -1251,7 +1251,24 @@ async function syncToPOs(insertedItems){
 
 // Insert the given entries into a specific PO and mark sources in_po (red).
 async function addEntriesToPO(po, entries){
-  const poRows=entries.map((entry,idx)=>({
+  if(!entries.length)return;
+  // Guard against duplicates: never insert an item/allocation that already has a
+  // po_item anywhere. (syncToPOs can run several times per save — silent auto-save
+  // on supplier pick, the manual save, realtime reloads — so the insert must be idempotent.)
+  const itemIds=entries.filter(e=>e.type==='item').map(e=>e.id);
+  const allocIds=entries.filter(e=>e.type==='alloc').map(e=>e.id);
+  const existItem=new Set(), existAlloc=new Set();
+  if(itemIds.length){
+    const {data}=await db.from('po_items').select('source_quote_item_id').in('source_quote_item_id',itemIds);
+    (data||[]).forEach(r=>existItem.add(r.source_quote_item_id));
+  }
+  if(allocIds.length){
+    const {data}=await db.from('po_items').select('source_allocation_id').in('source_allocation_id',allocIds);
+    (data||[]).forEach(r=>existAlloc.add(r.source_allocation_id));
+  }
+  const fresh=entries.filter(e=> e.type==='alloc' ? !existAlloc.has(e.id) : !existItem.has(e.id));
+  if(!fresh.length)return;   // everything already in a PO -> nothing to do
+  const poRows=fresh.map((entry,idx)=>({
     po_id:po.id, line_order:idx+1,
     source_quote_item_id:entry.type==='item'?entry.id:(entry.ref.quote_item_id||null),
     source_allocation_id:entry.type==='alloc'?entry.id:null,
@@ -1260,13 +1277,12 @@ async function addEntriesToPO(po, entries){
     quantity:entry.quantity, rate:entry.unit_price||0, amount:entry.quantity*(entry.unit_price||0),
     ordered_for:ORDER.stage_id?String(ORDER.stage_id):null, status:'issued'
   }));
-  if(!poRows.length)return;
   const {error}=await db.from('po_items').insert(poRows);
   if(error)return;
-  const itemIds=entries.filter(e=>e.type==='item').map(e=>e.id);
-  if(itemIds.length) await db.from('quote_items').update({in_po:true,po_id:po.id,fulfillment_status:'in_po'}).in('id',itemIds);
-  const allocIds=entries.filter(e=>e.type==='alloc').map(e=>e.id);
-  if(allocIds.length) await db.from('quote_item_allocations').update({in_po:true,po_id:po.id,status:'in_po'}).in('id',allocIds);
+  const fItemIds=fresh.filter(e=>e.type==='item').map(e=>e.id);
+  if(fItemIds.length) await db.from('quote_items').update({in_po:true,po_id:po.id,fulfillment_status:'in_po'}).in('id',fItemIds);
+  const fAllocIds=fresh.filter(e=>e.type==='alloc').map(e=>e.id);
+  if(fAllocIds.length) await db.from('quote_item_allocations').update({in_po:true,po_id:po.id,status:'in_po'}).in('id',fAllocIds);
 }
 
 // #9/#2 — single combined popup: lists every entry that needs a PO choice, each
