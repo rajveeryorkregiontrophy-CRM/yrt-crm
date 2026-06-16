@@ -1378,7 +1378,9 @@ async function convertToInvoice(){
     balance_due:c.grand_total||0, paid_status:'unpaid'
   }).select().single();
   if(error){await alertModal('Couldn’t create invoice',error.message,'danger');return;}
-  await db.from('quotes').update({art_status:'invoice'}).eq('id',ORDER_ID);
+  // remove the order from the Sales Timeline: flip its record_type to 'invoice'
+  // (the timeline only shows inquiry/quote/order) and mark it invoiced.
+  await db.from('quotes').update({record_type:'invoice',art_status:'invoice',active_status:'invoiced'}).eq('id',ORDER_ID);
   location.href='invoice.html?id='+encodeURIComponent(inv.id);
 }
 

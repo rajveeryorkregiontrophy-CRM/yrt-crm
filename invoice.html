@@ -28,8 +28,32 @@
   .badge-pay{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:5px 11px;border-radius:7px;text-transform:uppercase;font-family:var(--fd);}
   .pay-unpaid{background:var(--unpaid);color:#1a0f08;}.pay-partial{background:var(--partial);color:#231803;}.pay-paid{background:var(--paid);color:#04130a;}
   .wrap{max-width:1080px;margin:0 auto;padding:22px 24px 70px;}
-  .grid{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start;}
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start;}
   @media(max-width:920px){.grid{grid-template-columns:1fr;}}
+  .col-main,.col-side{display:flex;flex-direction:column;gap:18px;}
+  .col-main .card,.col-side .card{margin-bottom:0;}
+  /* bill-to block */
+  .billto{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;}
+  .bt-left{min-width:200px;}
+  .bt-company{font-family:var(--fd);font-weight:800;font-size:16px;color:var(--text);margin-bottom:6px;}
+  .bt-lines{font-size:13px;color:var(--text-2);line-height:1.6;}
+  .bt-contact{font-size:12px;color:var(--text-3);margin-top:8px;}
+  .bt-right{display:flex;flex-direction:column;gap:11px;min-width:200px;}
+  .bt-meta{display:flex;justify-content:space-between;gap:16px;}
+  .bt-meta .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:700;}
+  .bt-meta .v{font-size:13px;font-weight:600;color:var(--text);text-align:right;}
+  /* totals under the line items, right-aligned like a real invoice */
+  .inv-totals{margin-left:auto;width:320px;padding:14px 18px 18px;border-top:1px solid var(--line);}
+  .inv-totals .it-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13.5px;}
+  .inv-totals .it-row .l{color:var(--text-2);}
+  .inv-totals .it-row .v{font-family:var(--fm);font-weight:700;}
+  .inv-totals .grand{border-top:1px solid var(--line-2);margin-top:6px;padding-top:11px;}
+  .inv-totals .grand .l{font-family:var(--fd);font-weight:800;text-transform:uppercase;font-size:13px;color:var(--text);}
+  .inv-totals .grand .v{font-family:var(--fd);font-weight:800;font-size:19px;color:var(--brass-2);}
+  .inv-totals .paid .v{color:var(--paid);}
+  .inv-totals .bal{border-top:1px dashed var(--line);margin-top:6px;padding-top:10px;}
+  .inv-totals .bal .l{font-weight:700;color:var(--text);}
+  .inv-totals .bal .v{color:var(--unpaid);font-size:15px;}
   .card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);margin-bottom:18px;overflow:hidden;}
   .card-h{padding:13px 18px;border-bottom:2px solid var(--line-2);}
   .card-h h3{font-family:var(--fd);font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#aab2c4;}
@@ -122,49 +146,52 @@
 </div>
 
 <div class="grid">
-  <div>
+  <div class="col-main">
     <div class="card">
-      <div class="card-h"><h3>Invoice Details</h3></div>
-      <div class="card-b">
-        <div class="frow">
-          <div class="field"><label>Subject</label><div class="val" id="f-subject">—</div></div>
-          <div class="field"><label>Serviced By</label><div class="val" id="f-staff">—</div></div>
-          <div class="field"><label>From Order</label><div class="val" id="f-order">—</div></div>
+      <div class="card-h"><h3>Bill To</h3></div>
+      <div class="card-b billto">
+        <div class="bt-left">
+          <div class="bt-company" id="f-client">—</div>
+          <div class="bt-lines" id="f-address">—</div>
+          <div class="bt-contact" id="f-contact"></div>
         </div>
-        <div class="frow">
-          <div class="field"><label>Payment Terms</label>
-            <select class="in" id="f-terms">
-              <option value="on_receipt">Due on receipt</option>
-              <option value="net_15">Net 15</option>
-              <option value="net_30">Net 30</option>
-              <option value="net_60">Net 60</option>
-            </select>
-          </div>
-          <div class="field"><label>Due Date</label><div class="val" id="f-due">—</div></div>
-          <div class="field"><label>Client P.O.</label><div class="val" id="f-po">—</div></div>
+        <div class="bt-right">
+          <div class="bt-meta"><span class="lbl">Subject</span><span class="v" id="f-subject">—</span></div>
+          <div class="bt-meta"><span class="lbl">Serviced By</span><span class="v" id="f-staff">—</span></div>
+          <div class="bt-meta"><span class="lbl">From Order</span><span class="v" id="f-order">—</span></div>
+          <div class="bt-meta"><span class="lbl">Client P.O.</span><span class="v" id="f-po">—</span></div>
         </div>
       </div>
     </div>
     <div class="card">
       <div class="card-h"><h3>Line Items</h3></div>
       <table>
-        <thead><tr><th style="width:120px;">Item</th><th>Description</th><th class="num" style="width:60px;">Qty</th><th class="num" style="width:90px;">Unit Price</th><th class="num" style="width:100px;">Amount</th></tr></thead>
+        <thead><tr><th style="width:120px;">Item</th><th>Description</th><th class="num" style="width:54px;">Qty</th><th class="num" style="width:90px;">Unit Price</th><th class="num" style="width:100px;">Amount</th></tr></thead>
         <tbody id="items"></tbody>
       </table>
+      <div class="inv-totals">
+        <div class="it-row"><span class="l">Subtotal</span><span class="v" id="t-sub">$0.00</span></div>
+        <div class="it-row" id="t-disc-row" style="display:none;"><span class="l">Discount</span><span class="v" id="t-disc">$0.00</span></div>
+        <div class="it-row"><span class="l">HST (13%)</span><span class="v" id="t-hst">$0.00</span></div>
+        <div class="it-row grand"><span class="l">Grand Total</span><span class="v" id="t-grand">$0.00</span></div>
+        <div class="it-row paid"><span class="l">Amount Paid</span><span class="v" id="t-paid">$0.00</span></div>
+        <div class="it-row bal"><span class="l">Balance Due</span><span class="v" id="t-bal">$0.00</span></div>
+      </div>
     </div>
   </div>
-  <div>
+  <div class="col-side">
     <div class="card">
-      <div class="card-h"><h3>Summary</h3></div>
+      <div class="card-h"><h3>Terms</h3></div>
       <div class="card-b">
-        <div class="totals">
-          <div class="t-row"><span class="l">Subtotal</span><span class="v" id="t-sub">$0.00</span></div>
-          <div class="t-row" id="t-disc-row" style="display:none;"><span class="l">Discount</span><span class="v" id="t-disc">$0.00</span></div>
-          <div class="t-row"><span class="l">HST (13%)</span><span class="v" id="t-hst">$0.00</span></div>
-          <div class="t-row grand"><span class="l">Grand Total</span><span class="v" id="t-grand">$0.00</span></div>
-          <div class="t-row"><span class="l">Amount Paid</span><span class="v" id="t-paid" style="color:var(--paid)">$0.00</span></div>
-          <div class="t-row bal"><span class="l">Balance Due</span><span class="v" id="t-bal">$0.00</span></div>
+        <div class="field"><label>Payment Terms</label>
+          <select class="in" id="f-terms">
+            <option value="on_receipt">Due on receipt</option>
+            <option value="net_15">Net 15</option>
+            <option value="net_30">Net 30</option>
+            <option value="net_60">Net 60</option>
+          </select>
         </div>
+        <div class="field" style="margin-bottom:0;"><label>Due Date</label><div class="val" id="f-due">—</div></div>
       </div>
     </div>
     <div class="card">
@@ -278,9 +305,16 @@ function render(){
   document.getElementById('f-subject').textContent=INV.subject||'—';
   document.getElementById('f-staff').textContent=INV.serviced_by||'—';
   document.getElementById('f-order').textContent=INV.quotes?.stage_id?('#'+INV.quotes.stage_id):'—';
-  document.getElementById('f-due').textContent=fmtD(due);
   document.getElementById('f-po').textContent=INV.po_number||INV.quotes?.po_number||'—';
+  // bill-to block
+  document.getElementById('f-client').textContent=CLIENT.company_name||'—';
+  const addr=[CLIENT.bill_address,[CLIENT.bill_city,CLIENT.bill_province].filter(Boolean).join(', '),CLIENT.bill_postal].filter(Boolean);
+  document.getElementById('f-address').innerHTML=addr.length?addr.map(esc).join('<br>'):'<span style="color:var(--text-3)">No billing address on file</span>';
+  const cName=CONTACT?((CONTACT.first_name||'')+' '+(CONTACT.last_name||'')).trim():'';
+  const cBits=[cName,CONTACT?.email1,CONTACT?.tel1].filter(Boolean);
+  document.getElementById('f-contact').innerHTML=cBits.length?cBits.map(esc).join(' · '):'';
   const termSel=document.getElementById('f-terms');termSel.value=INV.terms||'net_30';
+  const fdue=document.getElementById('f-due');if(fdue)fdue.textContent=fmtD(due);
   termSel.onchange=async()=>{
     INV.terms=termSel.value;INV.due_date=computeDue(INV.invoice_date,INV.terms);
     await db.from('invoices').update({terms:INV.terms,due_date:INV.due_date}).eq('id',INV_ID);
@@ -306,6 +340,7 @@ function recalcTotals(){
   document.getElementById('t-hst').textContent=money(INV.hst);
   document.getElementById('t-grand').textContent=money(INV.grand_total);
   document.getElementById('t-paid').textContent=money(paid);
+  const tp=document.getElementById('t-paid');if(tp&&paid>0)tp.style.color='var(--paid)';
   document.getElementById('t-bal').textContent=money(Math.max(0,bal));
 }
 
