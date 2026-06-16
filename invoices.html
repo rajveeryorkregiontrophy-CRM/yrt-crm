@@ -70,6 +70,8 @@
   .badge-pay{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.02em;padding:5px 11px;border-radius:7px;text-transform:uppercase;font-family:var(--fd);}
   .badge-pay::before{content:'';width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.4);}
   .pay-unpaid{background:var(--unpaid);color:#1a0f08;}.pay-partial{background:var(--partial);color:#231803;}.pay-paid{background:var(--paid);color:#04130a;}
+  .pay-overdue{background:var(--danger);color:#fff;}
+  .q-date.over{color:var(--danger);font-weight:700;}
   .state{padding:44px;text-align:center;color:var(--text-3);}
   @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}.kpis{grid-template-columns:1fr;}}
 </style>
@@ -99,12 +101,12 @@
     <div class="content">
       <div class="kpis">
         <div class="kpi unpaid"><div class="l">Outstanding</div><div class="v" id="k-out">–</div></div>
-        <div class="kpi partial"><div class="l">Unpaid Invoices</div><div class="v" id="k-cnt">–</div></div>
+        <div class="kpi partial"><div class="l">Overdue Amount</div><div class="v" id="k-cnt">–</div></div>
         <div class="kpi paid"><div class="l">Collected (all time)</div><div class="v" id="k-paid">–</div></div>
       </div>
       <section class="panel">
         <div class="panel-head"><h2>Invoices</h2><span class="count" id="count">—</span>
-          <div class="tabs"><button class="tab active" data-t="all">All</button><button class="tab" data-t="unpaid">Unpaid</button><button class="tab" data-t="partial">Partial</button><button class="tab" data-t="paid">Paid</button></div>
+          <div class="tabs"><button class="tab active" data-t="all">All</button><button class="tab" data-t="unpaid">Unpaid</button><button class="tab" data-t="overdue">Overdue</button><button class="tab" data-t="partial">Partial</button><button class="tab" data-t="paid">Paid</button></div>
         </div>
         <div id="wrap"><div class="state">Loading…</div></div>
       </section>
@@ -119,36 +121,50 @@ const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return x.getDa
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 let ALL=[],TAB='all';
+function invOverdue(i){
+  if(i.paid_status==='paid')return false;
+  const due=i.due_date;
+  if(!due)return false;
+  return new Date(due+'T23:59:59') < new Date();
+}
+function invState(i){
+  if(i.paid_status==='paid')return 'paid';
+  if(invOverdue(i))return 'overdue';
+  if(i.paid_status==='partial')return 'partial';
+  return 'unpaid';
+}
 async function load(){
   const {data,error}=await db.from('invoices').select('*, clients(company_name)').order('invoice_date',{ascending:false});
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   ALL=data||[];document.getElementById('nav-inv').textContent=ALL.length;
   const out=ALL.reduce((s,i)=>s+Number(i.balance_due||0),0);
   const paid=ALL.reduce((s,i)=>s+Number(i.amount_paid||0),0);
-  const unpaidCnt=ALL.filter(i=>i.paid_status!=='paid').length;
+  const overdueAmt=ALL.filter(invOverdue).reduce((s,i)=>s+Number(i.balance_due||0),0);
   document.getElementById('k-out').innerHTML='<small>$</small>'+Math.round(out).toLocaleString('en-CA');
-  document.getElementById('k-cnt').textContent=unpaidCnt;
+  const kc=document.getElementById('k-cnt');if(kc)kc.innerHTML='<small>$</small>'+Math.round(overdueAmt).toLocaleString('en-CA');
   document.getElementById('k-paid').innerHTML='<small>$</small>'+Math.round(paid).toLocaleString('en-CA');
   render();
 }
 function render(){
   const q=(document.getElementById('search').value||'').toLowerCase();
   let rows=ALL.filter(i=>{
-    if(TAB!=='all'&&i.paid_status!==TAB)return false;
+    if(TAB!=='all'&&invState(i)!==TAB)return false;
     if(q){const hay=((i.clients?.company_name||'')+' '+i.invoice_number).toLowerCase();if(!hay.includes(q))return false;}
     return true;
   });
   document.getElementById('count').textContent=rows.length+(rows.length===1?' invoice':' invoices');
-  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No invoices yet. Create one from an order's “Convert to Invoice”.</div>`;return;}
-  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:90px;">Invoice</th><th style="width:30%;">Client</th><th style="width:120px;">Date</th><th class="num" style="width:120px;">Total</th><th class="num" style="width:120px;">Balance</th><th style="width:110px;">Status</th></tr></thead><tbody>${rows.map(i=>`
-    <tr data-id="${i.id}">
+  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No invoices${TAB!=='all'?' in this view':' yet. Create one from an order’s “Convert to Invoice”.'}</div>`;return;}
+  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:84px;">Invoice</th><th style="width:26%;">Client</th><th style="width:110px;">Issued</th><th style="width:110px;">Due</th><th class="num" style="width:110px;">Total</th><th class="num" style="width:110px;">Balance</th><th style="width:108px;">Status</th></tr></thead><tbody>${rows.map(i=>{
+    const st=invState(i);const stLabel={paid:'Paid',overdue:'Overdue',partial:'Partial',unpaid:'Unpaid'}[st];
+    return `<tr data-id="${i.id}">
       <td><span class="inv-no">#${i.invoice_number||'—'}</span></td>
       <td><div class="c-name">${esc(i.clients?.company_name||'—')}</div></td>
       <td><span class="q-date">${fmtD(i.invoice_date)}</span></td>
+      <td><span class="q-date ${st==='overdue'?'over':''}">${fmtD(i.due_date)}</span></td>
       <td class="num"><span class="money">${money(i.grand_total)}</span></td>
       <td class="num"><span class="bal" style="color:${i.balance_due>0?'var(--unpaid)':'var(--paid)'}">${money(i.balance_due)}</span></td>
-      <td><span class="badge-pay pay-${i.paid_status}">${i.paid_status}</span></td>
-    </tr>`).join('')}</tbody></table>`;
+      <td><span class="badge-pay pay-${st}">${stLabel}</span></td>
+    </tr>`;}).join('')}</tbody></table>`;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(tr.dataset.id)));
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');TAB=t.dataset.t;render();}));

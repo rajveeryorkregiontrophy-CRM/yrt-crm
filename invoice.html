@@ -58,6 +58,39 @@
   .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;}
   .state{padding:50px;text-align:center;color:var(--text-3);}
   .msg{font-size:12.5px;margin-top:8px;}.msg.ok{color:var(--paid);}.msg.err{color:var(--danger);}
+  /* status hero */
+  .inv-hero{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:22px 24px;margin-bottom:18px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;}
+  .inv-hero .ih-bal{display:flex;flex-direction:column;gap:3px;}
+  .inv-hero .ih-bal .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;}
+  .inv-hero .ih-bal .amt{font-family:var(--fd);font-weight:900;font-size:30px;letter-spacing:-.01em;}
+  .inv-hero .ih-bal .amt.due{color:var(--unpaid);}.inv-hero .ih-bal .amt.clear{color:var(--paid);}
+  .inv-hero .ih-div{width:1px;align-self:stretch;background:var(--line);}
+  .inv-hero .ih-meta{display:flex;gap:26px;flex-wrap:wrap;}
+  .inv-hero .ih-meta .m{display:flex;flex-direction:column;gap:3px;}
+  .inv-hero .ih-meta .m .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;}
+  .inv-hero .ih-meta .m .v{font-weight:600;font-size:13.5px;}
+  .inv-hero .ih-meta .m .v.over{color:var(--danger);}
+  .inv-hero .ih-status{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .pay-overdue{background:var(--danger);color:#fff;}
+  .progress{width:100%;height:7px;background:var(--bg-4);border-radius:5px;overflow:hidden;margin-top:4px;}
+  .progress .bar{height:100%;background:var(--paid);transition:width .3s;}
+  /* payment form */
+  .pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
+  .pf-grid .full{grid-column:1 / -1;}
+  .pf-field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:700;margin-bottom:4px;}
+  .pf-field .req{color:var(--unpaid);}
+  .pay-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;gap:10px;}
+  .pay-row:last-child{border-bottom:none;}
+  .pay-row .pr-meta{display:flex;flex-direction:column;gap:2px;}
+  .pay-row .pr-method{font-weight:600;color:var(--text);}
+  .pay-row .pr-sub{font-size:11px;color:var(--text-3);}
+  .pay-row .pr-right{display:flex;align-items:center;gap:10px;}
+  .pay-amt{font-family:var(--fm);font-weight:700;color:var(--paid);}
+  .pay-del{background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:15px;padding:2px 5px;border-radius:5px;}
+  .pay-del:hover{background:rgba(255,77,77,.15);color:var(--danger);}
+  .pay-empty{color:var(--text-3);font-size:13px;padding:10px 0;text-align:center;}
+  .terms-pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;background:var(--bg-4);color:var(--text-2);}
+  .btn-full{width:100%;justify-content:center;}
 </style>
 </head>
 <body>
@@ -65,59 +98,97 @@
   <a class="back" href="invoices.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Invoices</a>
   <div class="title">Invoice <span class="id" id="t-id">#----</span></div>
   <span class="badge-pay pay-unpaid" id="t-badge">Unpaid</span>
-  <div class="actions"><button class="btn-dark btn" id="btn-pdf">Print Invoice</button></div>
+  <div class="actions"><button class="btn-dark btn" id="btn-pdf">Save Invoice PDF</button></div>
 </header>
 <div class="wrap" id="wrap"><div class="state">Loading invoice…</div></div>
 
 <template id="tpl">
+<div class="inv-hero">
+  <div class="ih-bal">
+    <span class="lbl">Balance Due</span>
+    <span class="amt due" id="h-balance">$0.00</span>
+    <div class="progress"><div class="bar" id="h-bar" style="width:0%"></div></div>
+  </div>
+  <div class="ih-div"></div>
+  <div class="ih-meta">
+    <div class="m"><span class="lbl">Client</span><span class="v" id="h-client">—</span></div>
+    <div class="m"><span class="lbl">Invoice Date</span><span class="v" id="h-date">—</span></div>
+    <div class="m"><span class="lbl">Due Date</span><span class="v" id="h-due">—</span></div>
+    <div class="m"><span class="lbl">Total</span><span class="v" id="h-total">—</span></div>
+  </div>
+  <div class="ih-status">
+    <span class="badge-pay pay-unpaid" id="h-badge">Unpaid</span>
+  </div>
+</div>
+
 <div class="grid">
   <div>
     <div class="card">
-      <div class="card-h"><h3>Invoice</h3></div>
+      <div class="card-h"><h3>Invoice Details</h3></div>
       <div class="card-b">
-        <div class="frow">
-          <div class="field"><label>Client</label><div class="val big" id="f-client">—</div></div>
-          <div class="field"><label>Invoice Date</label><div class="val" id="f-date">—</div></div>
-        </div>
         <div class="frow">
           <div class="field"><label>Subject</label><div class="val" id="f-subject">—</div></div>
           <div class="field"><label>Serviced By</label><div class="val" id="f-staff">—</div></div>
           <div class="field"><label>From Order</label><div class="val" id="f-order">—</div></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Payment Terms</label>
+            <select class="in" id="f-terms">
+              <option value="on_receipt">Due on receipt</option>
+              <option value="net_15">Net 15</option>
+              <option value="net_30">Net 30</option>
+              <option value="net_60">Net 60</option>
+            </select>
+          </div>
+          <div class="field"><label>Due Date</label><div class="val" id="f-due">—</div></div>
+          <div class="field"><label>Client P.O.</label><div class="val" id="f-po">—</div></div>
         </div>
       </div>
     </div>
     <div class="card">
       <div class="card-h"><h3>Line Items</h3></div>
       <table>
-        <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Amount</th></tr></thead>
+        <thead><tr><th style="width:120px;">Item</th><th>Description</th><th class="num" style="width:60px;">Qty</th><th class="num" style="width:90px;">Unit Price</th><th class="num" style="width:100px;">Amount</th></tr></thead>
         <tbody id="items"></tbody>
       </table>
     </div>
   </div>
   <div>
     <div class="card">
-      <div class="card-h"><h3>Totals</h3></div>
+      <div class="card-h"><h3>Summary</h3></div>
       <div class="card-b">
         <div class="totals">
           <div class="t-row"><span class="l">Subtotal</span><span class="v" id="t-sub">$0.00</span></div>
-          <div class="t-row"><span class="l">HST</span><span class="v" id="t-hst">$0.00</span></div>
+          <div class="t-row" id="t-disc-row" style="display:none;"><span class="l">Discount</span><span class="v" id="t-disc">$0.00</span></div>
+          <div class="t-row"><span class="l">HST (13%)</span><span class="v" id="t-hst">$0.00</span></div>
           <div class="t-row grand"><span class="l">Grand Total</span><span class="v" id="t-grand">$0.00</span></div>
-          <div class="t-row"><span class="l">Paid</span><span class="v" id="t-paid">$0.00</span></div>
+          <div class="t-row"><span class="l">Amount Paid</span><span class="v" id="t-paid" style="color:var(--paid)">$0.00</span></div>
           <div class="t-row bal"><span class="l">Balance Due</span><span class="v" id="t-bal">$0.00</span></div>
         </div>
       </div>
     </div>
     <div class="card">
-      <div class="card-h"><h3>Payments</h3></div>
+      <div class="card-h"><h3>Record a Payment</h3></div>
       <div class="card-b">
-        <div id="pay-list"></div>
-        <div class="add-pay">
-          <div><label style="font-size:10px;color:var(--text-3);text-transform:uppercase;font-weight:700;">Amount</label><input class="in" id="pay-amt" type="number" step="0.01" placeholder="0.00"></div>
-          <div><label style="font-size:10px;color:var(--text-3);text-transform:uppercase;font-weight:700;">Method</label><input class="in" id="pay-method" placeholder="Cheque / e-transfer"></div>
-          <button class="btn-brass btn" id="add-pay">Add</button>
+        <div class="pf-grid">
+          <div class="pf-field"><label>Date <span class="req">*</span></label><input class="in" id="pay-date" type="date"></div>
+          <div class="pf-field"><label>Amount <span class="req">*</span></label><input class="in" id="pay-amt" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="pf-field full"><label>Method <span class="req">*</span></label>
+            <select class="in" id="pay-method">
+              <option value="">— Select method —</option>
+              <option>Cheque</option><option>E-transfer</option><option>Credit Card</option>
+              <option>Cash</option><option>Wire / EFT</option><option>Other</option>
+            </select>
+          </div>
+          <div class="pf-field full"><label>Reference (optional)</label><input class="in" id="pay-ref" placeholder="Cheque #, e-transfer ref…"></div>
         </div>
+        <button class="btn-brass btn btn-full" id="add-pay">Record Payment</button>
         <div class="msg" id="pay-msg"></div>
       </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>Payment History</h3></div>
+      <div class="card-b"><div id="pay-list"></div></div>
     </div>
   </div>
 </div>
@@ -148,62 +219,146 @@ const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;r
 const INV_ID=new URLSearchParams(location.search).get('id');
 let INV=null,ITEMS=[],PAYMENTS=[],CLIENT=null,CONTACT=null;
 
+const TERM_DAYS={on_receipt:0,net_15:15,net_30:30,net_60:60};
+const TERM_LABEL={on_receipt:'Due on receipt',net_15:'Net 15',net_30:'Net 30',net_60:'Net 60'};
+function computeDue(invoiceDate,terms){
+  if(!invoiceDate)return null;
+  const d=new Date(invoiceDate+'T00:00:00');
+  d.setDate(d.getDate()+(TERM_DAYS[terms]??30));
+  return d.toISOString().slice(0,10);
+}
+function isOverdue(){
+  if(!INV||INV.paid_status==='paid')return false;
+  const due=INV.due_date||computeDue(INV.invoice_date,INV.terms||'net_30');
+  if(!due)return false;
+  return new Date(due+'T23:59:59') < new Date();
+}
+
 async function load(){
   if(!INV_ID){document.getElementById('wrap').innerHTML='<div class="state">No invoice specified.</div>';return;}
-  const {data,error}=await db.from('invoices').select('*, clients(*), quotes(stage_id,contact_id)').eq('id',INV_ID).single();
+  const {data,error}=await db.from('invoices').select('*, clients(*), quotes(stage_id,contact_id,po_number)').eq('id',INV_ID).single();
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load invoice. ${error?.message||''}</div>`;return;}
   INV=data;CLIENT=data.clients||{};
+  if(!INV.terms)INV.terms='net_30';
+  if(!INV.due_date)INV.due_date=computeDue(INV.invoice_date,INV.terms);
   if(INV.quote_id){const {data:items}=await db.from('quote_items').select('*').eq('quote_id',INV.quote_id).order('line_order');ITEMS=items||[];
     if(data.quotes?.contact_id){const {data:ct}=await db.from('contacts').select('*').eq('id',data.quotes.contact_id).single();CONTACT=ct;}}
   const {data:pays}=await db.from('payments').select('*').eq('invoice_id',INV_ID).order('pay_date');PAYMENTS=pays||[];
   render();
 }
+
+function statusInfo(){
+  if(INV.paid_status==='paid')return {key:'paid',label:'Paid'};
+  if(isOverdue())return {key:'overdue',label:'Overdue'};
+  if(INV.paid_status==='partial')return {key:'partial',label:'Partial'};
+  return {key:'unpaid',label:'Unpaid'};
+}
+
 function render(){
   const w=document.getElementById('wrap');w.innerHTML='';w.appendChild(document.getElementById('tpl').content.cloneNode(true));
   document.getElementById('t-id').textContent='#'+(INV.invoice_number||'—');
-  const badge=document.getElementById('t-badge');badge.textContent=INV.paid_status;badge.className='badge-pay pay-'+INV.paid_status;
-  document.getElementById('f-client').textContent=CLIENT.company_name||'—';
-  document.getElementById('f-date').textContent=fmtD(INV.invoice_date);
+  const paid=PAYMENTS.reduce((s,p)=>s+Number(p.amount||0),0);
+  const bal=Math.max(0,Number(INV.grand_total||0)-paid);
+  const pct=Number(INV.grand_total)>0?Math.min(100,Math.round((paid/Number(INV.grand_total))*100)):0;
+
+  // hero
+  const hbal=document.getElementById('h-balance');
+  hbal.textContent=money(bal);hbal.className='amt '+(bal<=0.005?'clear':'due');
+  document.getElementById('h-bar').style.width=pct+'%';
+  document.getElementById('h-client').textContent=CLIENT.company_name||'—';
+  document.getElementById('h-date').textContent=fmtD(INV.invoice_date);
+  const due=INV.due_date||computeDue(INV.invoice_date,INV.terms);
+  const hdue=document.getElementById('h-due');hdue.textContent=fmtD(due);if(isOverdue())hdue.className='v over';
+  document.getElementById('h-total').textContent=money(INV.grand_total);
+
+  const si=statusInfo();
+  ['t-badge','h-badge'].forEach(id=>{const b=document.getElementById(id);if(b){b.textContent=si.label;b.className='badge-pay pay-'+si.key;}});
+
+  // details
   document.getElementById('f-subject').textContent=INV.subject||'—';
   document.getElementById('f-staff').textContent=INV.serviced_by||'—';
   document.getElementById('f-order').textContent=INV.quotes?.stage_id?('#'+INV.quotes.stage_id):'—';
-  document.getElementById('items').innerHTML=ITEMS.length?ITEMS.map(it=>`<tr><td>${esc(it.description||'')}</td><td class="num">${it.quantity}</td><td class="num">${money(it.unit_price)}</td><td class="num">${money(it.net_amount)}</td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--text-3);text-align:center;padding:20px;">No line items</td></tr>';
+  document.getElementById('f-due').textContent=fmtD(due);
+  document.getElementById('f-po').textContent=INV.po_number||INV.quotes?.po_number||'—';
+  const termSel=document.getElementById('f-terms');termSel.value=INV.terms||'net_30';
+  termSel.onchange=async()=>{
+    INV.terms=termSel.value;INV.due_date=computeDue(INV.invoice_date,INV.terms);
+    await db.from('invoices').update({terms:INV.terms,due_date:INV.due_date}).eq('id',INV_ID);
+    render();
+  };
+
+  // items
+  document.getElementById('items').innerHTML=ITEMS.length?ITEMS.map(it=>`<tr><td>${esc(it.style_number||it.category_name||'')}</td><td>${esc(it.description||'')}</td><td class="num">${it.quantity}</td><td class="num">${money(it.unit_price)}</td><td class="num">${money(it.net_amount)}</td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--text-3);text-align:center;padding:20px;">No line items</td></tr>';
+
   recalcTotals();
   renderPayments();
+  // default the payment date to today
+  document.getElementById('pay-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('add-pay').onclick=addPayment;
   document.getElementById('btn-pdf').onclick=printInvoice;
 }
+
 function recalcTotals(){
   const paid=PAYMENTS.reduce((s,p)=>s+Number(p.amount||0),0);
   const bal=Number(INV.grand_total||0)-paid;
   document.getElementById('t-sub').textContent=money(INV.subtotal);
+  if(Number(INV.discount_total)>0){document.getElementById('t-disc-row').style.display='';document.getElementById('t-disc').textContent='−'+money(INV.discount_total);}
   document.getElementById('t-hst').textContent=money(INV.hst);
   document.getElementById('t-grand').textContent=money(INV.grand_total);
   document.getElementById('t-paid').textContent=money(paid);
-  document.getElementById('t-bal').textContent=money(bal);
+  document.getElementById('t-bal').textContent=money(Math.max(0,bal));
 }
+
 function renderPayments(){
   const el=document.getElementById('pay-list');
-  if(!PAYMENTS.length){el.innerHTML='<div style="color:var(--text-3);font-size:13px;padding:6px 0;">No payments recorded.</div>';return;}
-  el.innerHTML=PAYMENTS.map(p=>`<div class="pay-row"><span>${fmtD(p.pay_date)} · ${esc(p.method||'—')}</span><span class="pay-amt">${money(p.amount)}</span></div>`).join('');
+  if(!PAYMENTS.length){el.innerHTML='<div class="pay-empty">No payments recorded yet.</div>';return;}
+  el.innerHTML=PAYMENTS.map(p=>`<div class="pay-row">
+    <div class="pr-meta"><span class="pr-method">${esc(p.method||'Payment')}</span><span class="pr-sub">${fmtD(p.pay_date)}${p.reference?' · '+esc(p.reference):''}</span></div>
+    <div class="pr-right"><span class="pay-amt">${money(p.amount)}</span><button class="pay-del" data-id="${p.id}" title="Remove payment">×</button></div>
+  </div>`).join('');
+  el.querySelectorAll('.pay-del').forEach(b=>b.addEventListener('click',()=>removePayment(b.dataset.id)));
 }
-async function addPayment(){
-  const amt=parseFloat(document.getElementById('pay-amt').value);const method=document.getElementById('pay-method').value;
-  const msg=document.getElementById('pay-msg');
-  if(!amt||amt<=0){msg.textContent='Enter a valid amount';msg.className='msg err';return;}
-  msg.textContent='Saving…';msg.className='msg';
-  const {error}=await db.from('payments').insert({invoice_id:INV_ID,amount:amt,method:method||null,pay_date:new Date().toISOString().slice(0,10)});
-  if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
-  // recompute and update invoice status/balance
-  const {data:pays}=await db.from('payments').select('*').eq('invoice_id',INV_ID);PAYMENTS=pays||[];
-  const paid=PAYMENTS.reduce((s,p)=>s+Number(p.amount||0),0);const bal=Number(INV.grand_total||0)-paid;
-  const status=bal<=0.005?'paid':paid>0?'partial':'unpaid';
+
+async function recomputeStatus(){
+  const {data:pays}=await db.from('payments').select('*').eq('invoice_id',INV_ID).order('pay_date');PAYMENTS=pays||[];
+  const paid=PAYMENTS.reduce((s,p)=>s+Number(p.amount||0),0);
+  const bal=Number(INV.grand_total||0)-paid;
+  // an invoice is only 'paid' when fully covered; partial when some paid; else unpaid
+  const status=bal<=0.005?'paid':(paid>0?'partial':'unpaid');
   await db.from('invoices').update({amount_paid:paid,balance_due:Math.max(0,bal),paid_status:status}).eq('id',INV_ID);
   INV.amount_paid=paid;INV.balance_due=Math.max(0,bal);INV.paid_status=status;
-  document.getElementById('pay-amt').value='';document.getElementById('pay-method').value='';
-  msg.textContent='Payment recorded ✓';msg.className='msg ok';
-  const badge=document.getElementById('t-badge');badge.textContent=status;badge.className='badge-pay pay-'+status;
-  recalcTotals();renderPayments();
+}
+
+async function addPayment(){
+  const date=document.getElementById('pay-date').value;
+  const amt=parseFloat(document.getElementById('pay-amt').value);
+  const method=document.getElementById('pay-method').value;
+  const ref=document.getElementById('pay-ref').value.trim();
+  const msg=document.getElementById('pay-msg');
+  // Date + Method + Amount are all required before a payment is recorded
+  if(!date){msg.textContent='Choose the payment date.';msg.className='msg err';return;}
+  if(!method){msg.textContent='Select a payment method.';msg.className='msg err';return;}
+  if(!amt||amt<=0){msg.textContent='Enter a valid amount.';msg.className='msg err';return;}
+  const balance=Number(INV.grand_total||0)-PAYMENTS.reduce((s,p)=>s+Number(p.amount||0),0);
+  if(amt>balance+0.005){
+    const ok=await smConfirm('This payment ('+money(amt)+') is more than the balance due ('+money(Math.max(0,balance))+'). Record it anyway?','Amount exceeds balance',{confirmText:'Record anyway',cancelText:'Cancel'});
+    if(!ok)return;
+  }
+  msg.textContent='Recording…';msg.className='msg';
+  const {error}=await db.from('payments').insert({invoice_id:INV_ID,amount:amt,method,reference:ref||null,pay_date:date});
+  if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
+  await recomputeStatus();
+  document.getElementById('pay-amt').value='';document.getElementById('pay-method').value='';document.getElementById('pay-ref').value='';
+  render();
+  document.getElementById('pay-msg').textContent='Payment recorded ✓';document.getElementById('pay-msg').className='msg ok';
+}
+
+async function removePayment(id){
+  const ok=await smConfirm('Remove this payment? The invoice balance will be recalculated.','Remove payment?',{confirmText:'Remove',cancelText:'Keep',danger:true});
+  if(!ok)return;
+  await db.from('payments').delete().eq('id',id);
+  await recomputeStatus();
+  render();
 }
 async function printInvoice(){
   if(!await smConfirm('Output invoice #'+(INV.invoice_number||'')+'? You can save it as a PDF or print it.','Print invoice?',{confirmText:'Continue'}))return;
@@ -211,12 +366,14 @@ async function printInvoice(){
   try{ ({generateDocument}=await import('./pdf.js')); }
   catch(err){ await smAlert('Could not load the PDF generator (pdf.js).','Couldn’t load','danger'); return; }
   const lines=[CLIENT.bill_address,CLIENT.bill_city,CLIENT.bill_postal,CLIENT.bill_province].filter(Boolean);
+  const paid=PAYMENTS.reduce((s,p)=>s+Number(p.amount||0),0);
   generateDocument('INVOICE',{
-    number:String(INV.invoice_number||''), date:INV.invoice_date, dueDate:INV.due_date, servicedBy:INV.serviced_by||'',
+    number:String(INV.invoice_number||''), date:INV.invoice_date, dueDate:INV.due_date||computeDue(INV.invoice_date,INV.terms), terms:TERM_LABEL[INV.terms||'net_30'], servicedBy:INV.serviced_by||'',
     clientContact:CONTACT?((CONTACT.first_name||'')+' '+(CONTACT.last_name||'')).trim():'', pageNo:1,
     client:{company:CLIENT.company_name||'', lines, tel:CONTACT?.tel1||'', email:CONTACT?.email1||''},
     items:ITEMS.map(l=>({category:l.category_name||l.category_code||'',code:l.style_number||'',description:l.description||'',qty:l.quantity,unit:l.unit||'Pc',unitPrice:l.unit_price,amount:l.net_amount})),
-    subtotal:INV.subtotal||0, hst:INV.hst||0, grandTotal:INV.grand_total||0
+    subtotal:INV.subtotal||0, hst:INV.hst||0, grandTotal:INV.grand_total||0,
+    amountPaid:paid, balanceDue:Math.max(0,Number(INV.grand_total||0)-paid)
   });
 }
 load();

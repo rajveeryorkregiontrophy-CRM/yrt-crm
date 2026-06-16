@@ -103,13 +103,22 @@
   .ot-grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:19px;color:var(--brass-2);}
   .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
   .cb-sup{text-overflow:ellipsis;}
-  .sup-id-tag.in-po-tag{color:var(--danger);}
-  /* fulfillment colour system */
-  .fs-placed .cb-sup,.fs-placed .sup-id-tag,.fs-placed .alloc-count{color:#e0883a !important;font-weight:700;}
-  .fs-inpo .cb-sup,.fs-inpo .sup-id-tag,.fs-inpo .alloc-count{color:#ff4d4d !important;font-weight:700;}
-  .fs-issued .cb-sup,.fs-issued .sup-id-tag,.fs-issued .alloc-count{color:#8a92a2 !important;font-weight:700;}
-  .fs-instock .cb-sup,.fs-instock .sup-id-tag,.fs-instock .alloc-count{color:#3da5ff !important;font-weight:700;}
+  /* fulfillment colour: the status pill carries the colour; the split summary count tints to match */
+  .fs-placed .alloc-count{color:#e0883a !important;font-weight:700;}
+  .fs-inpo .alloc-count{color:#ff4d4d !important;font-weight:700;}
+  .fs-issued .alloc-count{color:#8a92a2 !important;font-weight:700;}
+  .fs-instock .alloc-count{color:#3da5ff !important;font-weight:700;}
   .instock-tag{font-size:9.5px;font-weight:800;color:#3da5ff;margin-top:2px;text-transform:uppercase;letter-spacing:.03em;}
+  .sup-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
+  .sup-id-tag{font-family:var(--fm);font-size:10px;color:var(--text-3);font-weight:700;}
+  .fs-pill{display:inline-block;font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;text-transform:uppercase;letter-spacing:.03em;line-height:1.3;white-space:nowrap;}
+  .fs-pill-placed{color:#e0883a;background:rgba(224,136,58,.16);}
+  .fs-pill-partial{color:#e0883a;background:rgba(224,136,58,.16);}
+  .fs-pill-in_po{color:#ff4d4d;background:rgba(255,77,77,.14);}
+  .fs-pill-issued{color:#8a92a2;background:rgba(138,146,162,.18);}
+  .fs-pill-received{color:#3ddc84;background:rgba(61,220,132,.16);}
+  .fs-pill-backordered{color:#b06bff;background:rgba(176,107,255,.16);}
+  .fs-pill-instock{color:#3da5ff;background:rgba(61,165,255,.16);}
   .fs-arrived .cb-sup,.fs-arrived .sup-id-tag,.fs-arrived .alloc-count{color:#ffb627 !important;font-weight:700;}
   .fs-verified .cb-sup,.fs-verified .sup-id-tag,.fs-verified .alloc-count{color:#3ddc84 !important;font-weight:700;}
   .fs-backordered .cb-sup,.fs-backordered .sup-id-tag,.fs-backordered .alloc-count{color:#b06bff !important;font-weight:700;}
@@ -671,10 +680,10 @@ function renderLines(){
       <td class="cb-cell sup-col ${fulfillClass(ln)}">
         ${(ln._allocations&&ln._allocations.length)
           ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">${ln._allocations.length} PO${ln._allocations.length>1?'s':''} · edit</span></div>${(()=>{const assigned=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.supplier_quantity)||0;return assigned<need?`<div class="partial-tag">${assigned} of ${need} in PO</div>`:'';})()}`
-          : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-id-tag">#${esc(String(ln._supplier_number))}${fulfillTag(ln)}</div>`:''}`}
+          : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn ${(fulfillState(ln)==='issued'||fulfillState(ln)==='received'||fulfillState(ln)==='backordered')?'locked':''}" data-alloc="${i}" title="Split supplier quantity across multiple POs">⊟ Split PO</button>
       </td>
-      <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'disabled title="Set by split"':''}>${(ln.supplier_id&&ln.supplier_quantity!=null&&ln.supplier_quantity!==''&&Number(ln.supplier_quantity)===0)?'<div class="instock-tag">In Stock</div>':''}</td>
+      <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'disabled title="Set by split"':''}></td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
       <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
@@ -863,10 +872,22 @@ function wireSupplierCombo(inp){
 function autoGrow(el){ if(!el)return; el.style.height='auto'; el.style.height=(el.scrollHeight)+'px'; }
 function addLine(){LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
 
-// fulfillment colour system: placed(amber) -> in_po(red) -> issued(grey) -> received(green); backordered(violet); instock(blue)
-const FULFILL={placed:'fs-placed',in_po:'fs-inpo',issued:'fs-issued',received:'fs-verified',backordered:'fs-backordered',instock:'fs-instock'};
-const FULFILL_LABEL={placed:'OPEN PO REQ',in_po:'IN PO',issued:'ISSUED',received:'RECEIVED',backordered:'BACK ORDER',instock:'IN STOCK'};
+// fulfillment colour system: placed(amber) -> in_po(red) -> issued(grey) -> received(green); backordered(violet); instock(blue); partial(amber)
+const FULFILL={placed:'fs-placed',partial:'fs-placed',in_po:'fs-inpo',issued:'fs-issued',received:'fs-verified',backordered:'fs-backordered',instock:'fs-instock'};
+const FULFILL_LABEL={placed:'OPEN PO REQ',partial:'PARTIALLY IN PO',in_po:'IN PO',issued:'ISSUED',received:'RECEIVED',backordered:'BACK ORDER',instock:'IN STOCK'};
 function fulfillState(ln){
+  // split lines: derive from their allocations
+  if(ln._allocations&&ln._allocations.length){
+    const assigned=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);
+    const need=parseFloat(ln.supplier_quantity)||0;
+    // surface any committed allocation status (issued/received/backordered) first
+    const statuses=ln._allocations.map(a=>a.status).filter(Boolean);
+    if(statuses.includes('backordered')) return 'backordered';
+    if(statuses.length && statuses.every(s=>s==='received')) return 'received';
+    if(statuses.includes('issued')) return 'issued';
+    if(need>0 && assigned<need) return 'partial';   // not the whole qty is in a PO yet
+    return 'in_po';                                  // fully allocated into PO(s)
+  }
   const fs=ln.fulfillment_status;
   if(fs&&fs!=='none'&&fs!=='in_po') return fs;        // issued/received/backordered
   if(!ln.supplier_id) return null;
@@ -876,7 +897,7 @@ function fulfillState(ln){
   return 'placed';
 }
 function fulfillClass(ln){const s=fulfillState(ln);return s?FULFILL[s]||'':'';}
-function fulfillTag(ln){const s=fulfillState(ln);return s?' • '+(FULFILL_LABEL[s]||''):'';}
+function fulfillTag(ln){const s=fulfillState(ln);if(!s)return '';return `<span class="fs-pill fs-pill-${s}">${FULFILL_LABEL[s]||''}</span>`;}
 
 // ---------- Split / allocations (one fixed supplier, supplier-qty across multiple POs) ----------
 let SPLIT_I=null, SPLIT_ROWS=[], SPLIT_SUP=null, SPLIT_POS=[];
@@ -1347,9 +1368,12 @@ async function convertToInvoice(){
   let invNum=null;
   if(se||seq==null){ const {data:mx}=await db.from('invoices').select('invoice_number').order('invoice_number',{ascending:false}).limit(1); invNum=(mx&&mx[0]&&mx[0].invoice_number?mx[0].invoice_number:20000)+1; }
   else invNum=seq;
+  const invDate=new Date();
+  const dueDate=new Date(invDate.getTime()+30*86400000);   // Net 30 by default
   const {data:inv,error}=await db.from('invoices').insert({
     invoice_number:invNum, quote_id:ORDER_ID, client_id:ORDER.client_id, subject:ORDER.subject,
-    serviced_by:ORDER.serviced_by, invoice_date:new Date().toISOString().slice(0,10),
+    serviced_by:ORDER.serviced_by, invoice_date:invDate.toISOString().slice(0,10),
+    terms:'net_30', due_date:dueDate.toISOString().slice(0,10),
     subtotal:c.subtotal||0, discount_total:c.discount_total||0, hst:c.hst||0, grand_total:c.grand_total||0,
     balance_due:c.grand_total||0, paid_status:'unpaid'
   }).select().single();
@@ -1360,31 +1384,30 @@ async function convertToInvoice(){
 
 function label(s){return {send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice',no_data:'No Data'}[s]||s;}
 
-// Intercept "Inbox" back link and Cancel button to use an in-app unsaved-changes prompt
+// Intercept "Inbox" back link and Cancel button to use an in-app unsaved-changes prompt.
+// Three options: save & leave, leave without saving, or stay. (You're never trapped.)
 async function guardedLeave(dest){
   if(DIRTY){
-    const ok=await confirmModal('Leave without saving?','You have unsaved changes on this record. If you leave now, they’ll be lost.',{confirmText:'Leave',cancelText:'Stay',danger:true});
-    if(!ok)return;
+    const choice=await choiceModal('Unsaved changes','You have unsaved changes on this record. What would you like to do?',[
+      {key:'save',label:'Save changes & leave',primary:true},
+      {key:'leave',label:'Leave without saving'},
+      {key:'stay',label:'Stay on this page',plain:true}
+    ]);
+    if(choice==='stay'||choice==null) return;
+    if(choice==='save'){ await save(); }      // auto-save then leave
     DIRTY=false;
   }
   location.href=dest;
 }
-document.addEventListener('DOMContentLoaded',()=>{
+{
   const back=document.querySelector('.topbar .back');
   if(back)back.addEventListener('click',e=>{e.preventDefault();guardedLeave('index.html');});
   const cancel=document.getElementById('btn-cancel');
   if(cancel)cancel.addEventListener('click',e=>{e.preventDefault();guardedLeave('index.html');});
-});
+}
 
-// (native "Leave site?" beforeunload prompt intentionally removed — we guard the
-//  in-app Back/Inbox navigation with a styled confirm instead.)
-const _backLink=document.getElementById('back-link');
-if(_backLink) _backLink.addEventListener('click',async e=>{
-  if(!DIRTY) return;                 // no unsaved changes -> navigate normally
-  e.preventDefault();
-  const go=await confirmModal('Leave without saving?','You have unsaved changes on this order. If you leave now, they will be lost.',{confirmText:'Leave',cancelText:'Stay',danger:true});
-  if(go){ DIRTY=false; location.href='index.html'; }
-});
+// (native "Leave site?" beforeunload prompt intentionally removed — the in-app
+//  navigation guard above handles unsaved changes with a styled three-option prompt.)
 load();
 // live sync: if another screen changes this order's fulfillment, refresh the line
 // colours — but never while the user has unsaved edits (would clobber their work).
