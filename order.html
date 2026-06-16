@@ -173,6 +173,30 @@
   .popick-line .pl-sub{font-size:11.5px;color:var(--text-3);margin-top:2px;}
   .popick-line .pl-po{width:200px;background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-size:12.5px;font-family:inherit;cursor:pointer;}
   .partial-tag{font-size:9.5px;font-weight:800;color:#e0883a;margin-top:2px;text-transform:uppercase;letter-spacing:.03em;}
+  .full-tag{font-size:9.5px;font-weight:800;color:#3ddc84;margin-top:2px;text-transform:uppercase;letter-spacing:.03em;}
+  .order-balance{background:var(--bg-3);border:1px solid var(--line-2);border-radius:10px;padding:14px;margin:14px 0;}
+  .order-balance.done{border-color:rgba(61,220,132,.4);}
+  .ob-grid{display:flex;justify-content:space-around;text-align:center;}
+  .ob-cell{display:flex;flex-direction:column;gap:3px;}
+  .ob-cell .ob-n{font-family:var(--fd);font-weight:800;font-size:22px;color:var(--text);}
+  .ob-cell .ob-l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:700;}
+  .ob-cell.hl .ob-n{color:var(--brass-2);}
+  .order-balance.done .ob-cell.hl .ob-n{color:#3ddc84;}
+  .placed-list{margin-bottom:14px;}
+  .pl-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:700;margin-bottom:8px;}
+  .pl-empty{font-size:12.5px;color:var(--text-3);padding:6px 0;}
+  .pl-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--bg-3);border:1px solid var(--line);border-radius:8px;margin-bottom:7px;font-size:13px;}
+  .pl-st{font-size:9px;font-weight:800;text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-left:6px;letter-spacing:.03em;}
+  .pl-open{background:rgba(255,77,77,.14);color:#ff4d4d;}
+  .pl-sent,.pl-received,.pl-verified{background:rgba(138,146,162,.18);color:#8a92a2;}
+  .pl-remove{background:transparent;border:1px solid var(--line-2);color:var(--text-2);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+  .pl-remove:hover{border-color:var(--danger);color:var(--danger);}
+  .pl-lock{font-size:10px;font-weight:800;color:#8a92a2;text-transform:uppercase;letter-spacing:.03em;}
+  .order-form{border-top:1px solid var(--line);padding-top:14px;}
+  .of-row{display:flex;align-items:center;gap:10px;margin:8px 0 12px;}
+  .of-qty{width:90px;background:var(--bg);border:1px solid var(--line-2);color:var(--text);border-radius:6px;padding:9px 10px;font-size:13.5px;font-family:inherit;}
+  .of-arrow{color:var(--text-3);}
+  .of-po{flex:1;background:var(--bg);border:1px solid var(--line-2);color:var(--text);border-radius:6px;padding:9px 10px;font-size:13px;font-family:inherit;cursor:pointer;}
   .li-input:hover{border-color:var(--line-2);}
   .li-input:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li-input.num{text-align:right;font-family:var(--font-mono);}
@@ -272,15 +296,22 @@
 
 <div class="split-overlay" id="split-overlay">
   <div class="split-modal">
-    <div class="split-head"><h3>Split supplier quantity across POs</h3><button class="split-x" id="split-x">×</button></div>
+    <div class="split-head"><h3>Order quantity to a purchase order</h3><button class="split-x" id="split-x">×</button></div>
     <div class="split-body">
       <div class="split-meta" id="split-meta"></div>
-      <label class="split-lbl">Allocate the supplier quantity across POs</label>
-      <div class="split-rows" id="split-rows"></div>
-      <button class="split-add" id="split-add">+ Add another PO</button>
-      <div class="split-tally" id="split-tally"></div>
+      <div class="order-balance" id="order-balance"></div>
+      <div class="placed-list" id="placed-list"></div>
+      <div class="order-form" id="order-form">
+        <label class="split-lbl">Order more from this line</label>
+        <div class="of-row">
+          <input class="of-qty" id="of-qty" type="number" min="0" placeholder="Qty">
+          <span class="of-arrow">→</span>
+          <select class="of-po" id="of-po"></select>
+        </div>
+        <button class="split-add" id="of-add">Add to purchase order</button>
+      </div>
     </div>
-    <div class="split-foot"><span class="split-msg" id="split-msg"></span><button class="btn" id="split-cancel">Cancel</button><button class="modal-btn-primary" id="split-save">Save split</button></div>
+    <div class="split-foot"><span class="split-msg" id="split-msg"></span><button class="btn" id="split-cancel">Done</button></div>
   </div>
 </div>
 
@@ -679,11 +710,11 @@ function renderLines(){
       <td><textarea class="li-input li-desc" rows="1" data-i="${i}" data-k="description" placeholder="Description">${esc(ln.description||'')}</textarea></td>
       <td class="cb-cell sup-col ${fulfillClass(ln)}">
         ${(ln._allocations&&ln._allocations.length)
-          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">${ln._allocations.length} PO${ln._allocations.length>1?'s':''} · edit</span></div>${(()=>{const assigned=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.supplier_quantity)||0;return assigned<need?`<div class="partial-tag">${assigned} of ${need} in PO</div>`:'';})()}`
+          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.supplier_quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</div>`:''}`}
-        <button class="alloc-btn ${(fulfillState(ln)==='issued'||fulfillState(ln)==='received'||fulfillState(ln)==='backordered')?'locked':''}" data-alloc="${i}" title="Split supplier quantity across multiple POs">⊟ Split PO</button>
+        <button class="alloc-btn" data-alloc="${i}" title="Order this line's quantity to a purchase order">⊞ Order to PO</button>
       </td>
-      <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'disabled title="Set by split"':''}></td>
+      <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'title="Ordered against this quantity"':''}></td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
       <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
@@ -721,7 +752,7 @@ function renderLines(){
   tb.querySelectorAll('.cb-cat').forEach(inp=>wireCombo(inp,'cat'));
   tb.querySelectorAll('.cb-style').forEach(inp=>wireCombo(inp,'style'));
   tb.querySelectorAll('.cb-sup').forEach(inp=>wireSupplierCombo(inp));
-  tb.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>{LINES.splice(+b.dataset.del,1);renderLines();recalc();markDirty();}));
+  tb.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>deleteLine(+b.dataset.del)));
   tb.querySelectorAll('.alloc-btn,[data-alloc].alloc-summary').forEach(b=>b.addEventListener('click',()=>openSplit(+b.dataset.alloc)));
   applySupplierColVisibility();
   recalc();
@@ -899,92 +930,209 @@ function fulfillState(ln){
 function fulfillClass(ln){const s=fulfillState(ln);return s?FULFILL[s]||'':'';}
 function fulfillTag(ln){const s=fulfillState(ln);if(!s)return '';return `<span class="fs-pill fs-pill-${s}">${FULFILL_LABEL[s]||''}</span>`;}
 
-// ---------- Split / allocations (one fixed supplier, supplier-qty across multiple POs) ----------
-let SPLIT_I=null, SPLIT_ROWS=[], SPLIT_SUP=null, SPLIT_POS=[];
-async function openSplit(i){
-  if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Splitting items across POs is available on Sales Orders only.','info'); return; }
+// #4 — deleting a sales line: ordered quantities in ISSUED POs stay intact;
+// quantities in OPEN POs prompt the user whether to remove those too.
+async function deleteLine(i){
   const ln=LINES[i]; if(!ln){return;}
-  const st=fulfillState(ln);
-  if(st==='issued'||st==='received'||st==='backordered'){
-    alertModal('Split locked','This line has already been issued to the supplier, so its purchase-order split can no longer be changed.<br><br>If the supplier cannot fulfill it, use <b>Back Order</b> in the Receiving area instead.','info');
+  if(ln.id){
+    // find this line's allocations and their PO status
+    const {data:allocs}=await db.from('quote_item_allocations').select('id,po_id,purchase_orders(status)').eq('quote_item_id',ln.id);
+    const openAllocs=(allocs||[]).filter(a=>a.purchase_orders&&a.purchase_orders.status==='open');
+    const issuedAllocs=(allocs||[]).filter(a=>a.purchase_orders&&a.purchase_orders.status&&a.purchase_orders.status!=='open');
+    // also catch a non-split line that's directly on a PO
+    let directOpen=false, directIssued=false;
+    if(!allocs||!allocs.length){
+      const {data:pis}=await db.from('po_items').select('id,po_id,purchase_orders(status)').eq('source_quote_item_id',ln.id);
+      directOpen=(pis||[]).some(p=>p.purchase_orders&&p.purchase_orders.status==='open');
+      directIssued=(pis||[]).some(p=>p.purchase_orders&&p.purchase_orders.status&&p.purchase_orders.status!=='open');
+    }
+    const hasOpen=openAllocs.length>0||directOpen;
+    const hasIssued=issuedAllocs.length>0||directIssued;
+
+    if(hasOpen){
+      // prompt: also remove the open-PO quantities?
+      const choice=await choiceModal('This line is on a purchase order',
+        'This line has quantities ordered in an <b>open</b> purchase order'+(hasIssued?' (and some already issued, which will stay)':'')+'. Do you want to remove the open-PO quantities as well?',[
+        {key:'yes',label:'Yes, remove the open-PO quantities too',danger:true},
+        {key:'no',label:'No, keep them on the PO'},
+        {key:'cancel',label:'Cancel',plain:true}
+      ]);
+      if(choice==='cancel'||choice==null)return;
+      if(choice==='yes'){
+        // delete po_items + allocations that are on OPEN POs only
+        const openAllocIds=openAllocs.map(a=>a.id);
+        if(openAllocIds.length){
+          await db.from('po_items').delete().in('source_allocation_id',openAllocIds);
+          await db.from('quote_item_allocations').delete().in('id',openAllocIds);
+        }
+        if(directOpen){
+          // remove the direct po_items that are on open POs
+          const {data:pis}=await db.from('po_items').select('id,po_id,purchase_orders(status)').eq('source_quote_item_id',ln.id);
+          const delIds=(pis||[]).filter(p=>p.purchase_orders&&p.purchase_orders.status==='open').map(p=>p.id);
+          if(delIds.length) await db.from('po_items').delete().in('id',delIds);
+        }
+      }
+      // if 'no', leave open-PO lines intact (they become detached records on the PO)
+    } else if(hasIssued){
+      // only issued quantities -> they stay; just confirm the line removal
+      const ok=await confirmModal('Remove this line?','Quantities already issued to a supplier will remain on their purchase order. The line will be removed from this order.',{confirmText:'Remove line',cancelText:'Keep'});
+      if(!ok)return;
+    }
+    // PO records survive a quote_item delete automatically: po_items.source_*_id are
+    // ON DELETE SET NULL, so the ordered lines stay on their POs (open or issued),
+    // just detached. We only EXPLICITLY remove the open-PO lines if the user chose to.
+    // remove the quote_item itself (its allocations cascade away; po_items keep, detached)
+    await db.from('quote_items').delete().eq('id',ln.id);
+  }
+  LINES.splice(i,1);
+  renderLines();recalc();markDirty();
+}
+
+
+// Each line tracks ordered qty (allocations) vs supplier qty. You can order the
+// balance into open POs repeatedly until nothing is left to order.
+let ORD_I=null, ORD_SUP=null, ORD_POS=[], ORD_PLACED=[];
+async function openSplit(i){
+  if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Ordering items to a PO is available on Sales Orders only.','info'); return; }
+  const ln=LINES[i]; if(!ln){return;}
+  if(!ln.id){ alertModal('Save first','Save the order once before ordering this line to a purchase order, so the line has a record to attach to.','info'); return; }
+  if(!ln.supplier_id){
+    alertModal('Pick a supplier first','Choose the supplier for this line, then order its quantity to a purchase order.','info');
     return;
   }
-  if(!ln.supplier_id && !(ln._allocations&&ln._allocations.length)){
-    alertModal('Pick a supplier first','Choose the supplier for this line, then split its supplier quantity across multiple purchase orders.','info');
+  if(!(parseFloat(ln.supplier_quantity)>0)){
+    alertModal('Set a supplier quantity','Enter how many units to order from the supplier for this line first.','info');
     return;
   }
-  SPLIT_I=i;
-  if(ln._allocations&&ln._allocations.length){
-    SPLIT_SUP={id:ln._allocations[0].supplier_id,name:ln._allocations[0]._supplier_name||ln._supplier_name||'',num:ln._allocations[0]._supplier_number};
-    SPLIT_ROWS=ln._allocations.map(a=>({quantity:a.quantity, po_id:a.po_id||''}));
-  }else{
-    SPLIT_SUP={id:ln.supplier_id,name:ln._supplier_name||'',num:ln._supplier_number};
-    SPLIT_ROWS=[{quantity:parseFloat(ln.supplier_quantity)||0, po_id:''}];
-  }
-  // load this supplier's OPEN POs so each row can be assigned to a specific one
-  const {data:pos}=await db.from('purchase_orders').select('id,po_number,order_date').eq('status','open').eq('supplier_id',SPLIT_SUP.id).order('po_number');
-  SPLIT_POS=pos||[];
-  const supQty=parseFloat(ln.supplier_quantity)||0;
-  document.getElementById('split-meta').innerHTML=`<b>${esc(ln.description||ln.style_number||'Line item')}</b><br>Supplier: <b>${esc(SPLIT_SUP.name||'—')}</b>${SPLIT_SUP.num?` (#${esc(String(SPLIT_SUP.num))})`:''}<br>Supplier quantity: <b>${supQty}</b> — assign how much goes to each PO. Any remainder stays unassigned until you add it to a PO later.`;
-  renderSplitRows();
+  ORD_I=i;
+  ORD_SUP={id:ln.supplier_id,name:ln._supplier_name||'',num:ln._supplier_number};
+  // load existing allocations (what's already been ordered) + their PO + status
+  const {data:allocs}=await db.from('quote_item_allocations').select('*, purchase_orders(po_number,status,order_date)').eq('quote_item_id',ln.id).order('created_at',{ascending:true});
+  ORD_PLACED=allocs||[];
+  // load this supplier's OPEN POs to order more into
+  const {data:pos}=await db.from('purchase_orders').select('id,po_number,order_date').eq('status','open').eq('supplier_id',ORD_SUP.id).order('po_number');
+  ORD_POS=pos||[];
+  renderOrderModal();
   document.getElementById('split-msg').textContent='';
   document.getElementById('split-overlay').classList.add('open');
 }
-function closeSplit(){document.getElementById('split-overlay').classList.remove('open');SPLIT_I=null;}
-function poOptions(sel){
-  const fmt=d=>{ if(!d)return ''; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-CA',{month:'short',day:'numeric'}); };
-  return '<option value="">— choose PO —</option>'+SPLIT_POS.map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>PO #${p.po_number}${p.order_date?' · '+fmt(p.order_date):''}</option>`).join('');
-}
-function renderSplitRows(){
-  const box=document.getElementById('split-rows');
-  const multiPO=SPLIT_POS.length>1;
-  box.innerHTML=SPLIT_ROWS.map((r,idx)=>`
-    <div class="split-row">
-      <input class="sr-qty" type="number" min="0" data-idx="${idx}" value="${r.quantity??''}" placeholder="Qty">
-      <span class="sr-arrow">→</span>
-      ${SPLIT_POS.length?`<select class="sr-po" data-idx="${idx}">${poOptions(r.po_id)}</select>`:`<span class="sr-nopo">No open PO — will be added when one is created</span>`}
-      <button class="sr-del" data-idx="${idx}">×</button>
-    </div>`).join('');
-  box.querySelectorAll('.sr-qty').forEach(q=>q.addEventListener('input',()=>{SPLIT_ROWS[+q.dataset.idx].quantity=parseFloat(q.value)||0;updateTally();}));
-  box.querySelectorAll('.sr-po').forEach(s=>s.addEventListener('change',()=>{SPLIT_ROWS[+s.dataset.idx].po_id=s.value||'';}));
-  box.querySelectorAll('.sr-del').forEach(b=>b.addEventListener('click',()=>{SPLIT_ROWS.splice(+b.dataset.idx,1);if(!SPLIT_ROWS.length)SPLIT_ROWS.push({quantity:0,po_id:''});renderSplitRows();}));
-  updateTally();
-}
-function updateTally(){
-  const ln=LINES[SPLIT_I]; if(!ln)return;
+function closeSplit(){document.getElementById('split-overlay').classList.remove('open');ORD_I=null;}
+function orderedSum(){return ORD_PLACED.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);}
+function renderOrderModal(){
+  const ln=LINES[ORD_I]; if(!ln)return;
   const need=parseFloat(ln.supplier_quantity)||0;
-  const sum=SPLIT_ROWS.reduce((s,r)=>s+(parseFloat(r.quantity)||0),0);
-  const el=document.getElementById('split-tally');
-  const remain=need-sum;
-  if(sum>need){ el.textContent=`Assigned ${sum} of ${need} — over by ${sum-need}`; el.className='split-tally bad'; }
-  else if(remain>0){ el.textContent=`Assigned ${sum} of ${need} — ${remain} will stay unassigned`; el.className='split-tally partial'; }
-  else { el.textContent=`Assigned ${sum} of ${need} ✓`; el.className='split-tally ok'; }
+  const ordered=orderedSum();
+  const balance=Math.max(0,need-ordered);
+  const fmt=d=>{ if(!d)return ''; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-CA',{month:'short',day:'numeric'}); };
+
+  document.getElementById('split-meta').innerHTML=`<b>${esc(ln.description||ln.style_number||'Line item')}</b><br>Supplier: <b>${esc(ORD_SUP.name||'—')}</b>${ORD_SUP.num?` (#${esc(String(ORD_SUP.num))})`:''}`;
+
+  // balance banner
+  const bEl=document.getElementById('order-balance');
+  bEl.className='order-balance'+(balance===0?' done':'');
+  bEl.innerHTML=`<div class="ob-grid">
+      <div class="ob-cell"><span class="ob-n">${need}</span><span class="ob-l">Supplier Qty</span></div>
+      <div class="ob-cell"><span class="ob-n">${ordered}</span><span class="ob-l">Ordered</span></div>
+      <div class="ob-cell hl"><span class="ob-n">${balance}</span><span class="ob-l">Still to Order</span></div>
+    </div>`;
+
+  // placed orders ledger
+  const pl=document.getElementById('placed-list');
+  if(ORD_PLACED.length){
+    pl.innerHTML='<div class="pl-h">Already ordered</div>'+ORD_PLACED.map(a=>{
+      const po=a.purchase_orders||{};
+      const st=a.status&&a.status!=='pending'?a.status:(a.in_po?'in PO':'pending');
+      const locked=po.status&&po.status!=='open';   // issued/sent/received PO -> can't remove here
+      return `<div class="pl-row">
+        <div class="pl-l"><b>${parseFloat(a.quantity)||0}</b> units → PO #${po.po_number||'—'} <span class="pl-st pl-${(po.status||'open')}">${esc(po.status||'open')}</span></div>
+        ${locked?'<span class="pl-lock">issued</span>':`<button class="pl-remove" data-aid="${a.id}" data-pid="${a.po_id||''}">remove</button>`}
+      </div>`;
+    }).join('');
+  }else{
+    pl.innerHTML='<div class="pl-empty">Nothing ordered yet.</div>';
+  }
+
+  // order-more form
+  const form=document.getElementById('order-form');
+  if(balance<=0){
+    form.style.display='none';
+  }else{
+    form.style.display='';
+    const qi=document.getElementById('of-qty');qi.value=balance;qi.max=balance;
+    const sel=document.getElementById('of-po');
+    if(ORD_POS.length){
+      sel.innerHTML=ORD_POS.map(p=>`<option value="${p.id}">PO #${p.po_number}${p.order_date?' · '+fmt(p.order_date):''}</option>`).join('');
+      sel.disabled=false;
+      document.getElementById('of-add').disabled=false;
+    }else{
+      sel.innerHTML='<option value="">No open PO for this supplier</option>';
+      sel.disabled=true;
+      document.getElementById('of-add').disabled=true;
+      document.getElementById('split-msg').innerHTML='<span style="color:var(--text-3)">Create an open PO for '+esc(ORD_SUP.name)+' to order the balance.</span>';
+    }
+  }
+  // wire remove buttons
+  pl.querySelectorAll('.pl-remove').forEach(btn=>btn.addEventListener('click',()=>removePlaced(btn.dataset.aid,btn.dataset.pid)));
 }
-document.getElementById('split-add').addEventListener('click',()=>{SPLIT_ROWS.push({quantity:0,po_id:''});renderSplitRows();});
+async function addOrderToPO(){
+  const ln=LINES[ORD_I]; if(!ln)return;
+  const need=parseFloat(ln.supplier_quantity)||0;
+  const balance=need-orderedSum();
+  const qty=parseFloat(document.getElementById('of-qty').value)||0;
+  const poId=document.getElementById('of-po').value;
+  const msg=document.getElementById('split-msg');
+  if(!(qty>0)){msg.textContent='Enter a quantity greater than 0.';return;}
+  if(qty>balance){msg.textContent='You can order at most '+balance+' more (the remaining balance).';return;}
+  if(!poId){msg.textContent='Choose which open PO to order into.';return;}
+  // 1) create the allocation (the order record)
+  const {data:alloc,error:ae}=await db.from('quote_item_allocations').insert({
+    quote_item_id:ln.id, supplier_id:ORD_SUP.id, quantity:qty, in_po:true, po_id:poId, status:'in_po'
+  }).select().single();
+  if(ae){msg.textContent='Could not save: '+ae.message;return;}
+  // 2) add the matching po_item to the chosen PO
+  await db.from('po_items').insert({
+    po_id:poId, source_quote_item_id:null, source_allocation_id:alloc.id,
+    style_number:ln.style_number||null, category_name:ln.category_name||null,
+    part_no:ln.style_number||null, product_name:ln.description||null, description:ln.description||null,
+    quantity:qty, rate:Number(ln.unit_price)||0, amount:qty*(Number(ln.unit_price)||0),
+    ordered_for:ORDER.stage_id?String(ORDER.stage_id):null, status:'issued'
+  });
+  // 3) reflect on the line (it now has at least one ordered portion)
+  await db.from('quote_items').update({in_po:true,po_id:poId,fulfillment_status:'in_po'}).eq('id',ln.id);
+  // refresh the modal's data
+  const {data:allocs}=await db.from('quote_item_allocations').select('*, purchase_orders(po_number,status,order_date)').eq('quote_item_id',ln.id).order('created_at',{ascending:true});
+  ORD_PLACED=allocs||[];
+  msg.textContent='';
+  await reloadLineFromDb(ln);
+  renderOrderModal();
+}
+async function removePlaced(allocId,poId){
+  const ok=await confirmModal('Remove from PO?','This removes the ordered quantity from that open purchase order and returns it to the balance.',{confirmText:'Remove',cancelText:'Keep',danger:true});
+  if(!ok)return;
+  // delete the po_item, then the allocation
+  await db.from('po_items').delete().eq('source_allocation_id',allocId);
+  await db.from('quote_item_allocations').delete().eq('id',allocId);
+  const ln=LINES[ORD_I];
+  const {data:allocs}=await db.from('quote_item_allocations').select('*, purchase_orders(po_number,status,order_date)').eq('quote_item_id',ln.id).order('created_at',{ascending:true});
+  ORD_PLACED=allocs||[];
+  // if nothing left ordered, clear the line's in_po flag
+  if(!ORD_PLACED.length){ await db.from('quote_items').update({in_po:false,po_id:null,fulfillment_status:'none'}).eq('id',ln.id); }
+  await reloadLineFromDb(ln);
+  renderOrderModal();
+}
+// pull the line's current allocation summary back into LINES so the row reflects it
+async function reloadLineFromDb(ln){
+  const {data:allocs}=await db.from('quote_item_allocations').select('*').eq('quote_item_id',ln.id);
+  if(allocs&&allocs.length){ ln._allocations=allocs.map(a=>({id:a.id,supplier_id:a.supplier_id,quantity:a.quantity,po_id:a.po_id,status:a.status,_supplier_name:ln._supplier_name,_supplier_number:ln._supplier_number})); }
+  else { ln._allocations=null; }
+  const {data:qi}=await db.from('quote_items').select('in_po,po_id,fulfillment_status').eq('id',ln.id).single();
+  if(qi){ ln.in_po=qi.in_po; ln.po_id=qi.po_id; ln.fulfillment_status=qi.fulfillment_status; }
+  renderLines();
+}
+document.getElementById('of-add').addEventListener('click',addOrderToPO);
 document.getElementById('split-x').addEventListener('click',closeSplit);
 document.getElementById('split-cancel').addEventListener('click',closeSplit);
 document.getElementById('split-overlay').addEventListener('click',e=>{if(e.target.id==='split-overlay')closeSplit();});
-document.getElementById('split-save').addEventListener('click',()=>{
-  const ln=LINES[SPLIT_I]; if(!ln)return;
-  for(const r of SPLIT_ROWS){
-    if(!(parseFloat(r.quantity)>0)){document.getElementById('split-msg').textContent='Each row needs a quantity greater than 0.';return;}
-  }
-  const need=parseFloat(ln.supplier_quantity)||0;
-  const sum=SPLIT_ROWS.reduce((s,r)=>s+(parseFloat(r.quantity)||0),0);
-  if(sum>need){document.getElementById('split-msg').textContent='Assigned quantity ('+sum+') cannot exceed the supplier quantity ('+need+').';return;}
-  // if more than one open PO exists, each row must choose a PO
-  if(SPLIT_POS.length>1){
-    for(const r of SPLIT_ROWS){ if(!r.po_id){document.getElementById('split-msg').textContent='Choose which PO each quantity goes to.';return;} }
-  }
-  // build allocations (each row = a portion, optionally tied to a specific PO)
-  ln.supplier_id=SPLIT_SUP.id;ln._supplier_name=SPLIT_SUP.name;ln._supplier_number=SPLIT_SUP.num;
-  if(SPLIT_ROWS.length===1 && !SPLIT_ROWS[0].po_id && sum===need){
-    ln._allocations=null;   // single full portion, no specific PO -> treat as plain line
-  }else{
-    ln._allocations=SPLIT_ROWS.map(r=>({supplier_id:SPLIT_SUP.id,_supplier_name:SPLIT_SUP.name,_supplier_number:SPLIT_SUP.num,quantity:parseFloat(r.quantity)||0, po_id:r.po_id||null}));
-  }
-  closeSplit();renderLines();markDirty();
-}); 
 
 function recalc(){
   const sub=LINES.reduce((s,l)=>s+(parseFloat(l.amount)||0),0);
@@ -1377,6 +1525,21 @@ async function deleteOrder(){
 
 async function convertToInvoice(){
   if(DIRTY){ const s=await confirmModal('Save first?','You have unsaved changes. They’ll be saved before creating the invoice.',{confirmText:'Save & continue',cancelText:'Cancel'}); if(!s)return; await save(); }
+  // #3 — warn if any line still has a quantity that hasn't been ordered to a PO
+  const notOrdered=[];
+  for(const ln of LINES){
+    if(!ln.supplier_id) continue;                          // no supplier -> nothing to order
+    const need=parseFloat(ln.supplier_quantity)||0;
+    if(need<=0) continue;                                   // in-stock / no supplier qty
+    const ordered=(ln._allocations||[]).reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);
+    if(ordered<need) notOrdered.push((ln.description||ln.style_number||'A line item')+` (${need-ordered} of ${need} not ordered)`);
+  }
+  if(notOrdered.length){
+    const proceed=await confirmModal('Some items aren’t fully ordered',
+      'These line items still have quantities that have not been ordered to a purchase order:<br><br>• '+notOrdered.map(esc).join('<br>• ')+'<br><br>You can still create the invoice, but the goods may not be on order yet.',
+      {confirmText:'Convert anyway',cancelText:'Go back',danger:true});
+    if(!proceed)return;
+  }
   const ok=await confirmModal('Create invoice?','This generates a new invoice from order #'+ORDER.stage_id+' and moves it to the invoice stage.',{confirmText:'Create invoice',cancelText:'Cancel'});
   if(!ok)return;
   const c=ORDER._calc||{subtotal:ORDER.subtotal,discount_total:ORDER.discount_total,hst:ORDER.hst,grand_total:ORDER.grand_total};
