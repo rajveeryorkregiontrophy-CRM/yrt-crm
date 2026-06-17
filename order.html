@@ -395,9 +395,8 @@
           <th style="width:110px;">Category</th>
           <th style="width:90px;">Style #</th>
           <th style="min-width:200px;">Description</th>
-          <th class="sup-col" style="width:130px;">Supplier</th>
-          <th class="sup-col num" style="width:60px;">Supp. Qty</th>
-          <th class="num" style="width:56px;">Order Qty</th>
+          <th class="sup-col" style="width:150px;">Supplier</th>
+          <th class="num" style="width:64px;">Order Qty</th>
           <th style="width:40px;">Unit</th>
           <th class="num" style="width:74px;">Unit Price</th>
           <th style="width:84px;">Discount</th>
@@ -710,11 +709,10 @@ function renderLines(){
       <td><textarea class="li-input li-desc" rows="1" data-i="${i}" data-k="description" placeholder="Description">${esc(ln.description||'')}</textarea></td>
       <td class="cb-cell sup-col ${fulfillClass(ln)}">
         ${(ln._allocations&&ln._allocations.length)
-          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.supplier_quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
+          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn" data-alloc="${i}" title="Order this line's quantity to a purchase order">⊞ Order to PO</button>
       </td>
-      <td class="sup-col"><input class="li-input num" value="${ln.supplier_quantity??''}" data-i="${i}" data-k="supplier_quantity" placeholder="0" ${(ln._allocations&&ln._allocations.length)?'title="Ordered against this quantity"':''}></td>
       <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
       <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
@@ -886,8 +884,7 @@ function wireSupplierCombo(inp){
       LINES[i]._supplier_number=m.supplier_number;
       inp.value=LINES[i]._supplier_name;
       close();renderLines();markDirty();
-      // auto-save so the item flows into the supplier's open PO without manual save
-      maybeAutoSyncPO(m.id);
+      // ordering to a PO is now a deliberate action via "Order to PO" — no auto-push.
     }));
   };
   inp.addEventListener('focus',open);
@@ -907,25 +904,23 @@ function addLine(){LINES.push({category_code:'',category_name:'',style_number:''
 const FULFILL={placed:'fs-placed',partial:'fs-placed',in_po:'fs-inpo',issued:'fs-issued',received:'fs-verified',backordered:'fs-backordered',instock:'fs-instock'};
 const FULFILL_LABEL={placed:'OPEN PO REQ',partial:'PARTIALLY IN PO',in_po:'IN PO',issued:'ISSUED',received:'RECEIVED',backordered:'BACK ORDER',instock:'IN STOCK'};
 function fulfillState(ln){
-  // split lines: derive from their allocations
+  // lines with orders placed: derive from their allocations
   if(ln._allocations&&ln._allocations.length){
     const assigned=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);
-    const need=parseFloat(ln.supplier_quantity)||0;
+    const need=parseFloat(ln.quantity)||0;
     // surface any committed allocation status (issued/received/backordered) first
     const statuses=ln._allocations.map(a=>a.status).filter(Boolean);
     if(statuses.includes('backordered')) return 'backordered';
     if(statuses.length && statuses.every(s=>s==='received')) return 'received';
     if(statuses.includes('issued')) return 'issued';
-    if(need>0 && assigned<need) return 'partial';   // not the whole qty is in a PO yet
-    return 'in_po';                                  // fully allocated into PO(s)
+    if(need>0 && assigned<need) return 'partial';   // not the whole order qty is on a PO yet
+    return 'in_po';                                  // fully ordered into PO(s)
   }
   const fs=ln.fulfillment_status;
   if(fs&&fs!=='none'&&fs!=='in_po') return fs;        // issued/received/backordered
   if(!ln.supplier_id) return null;
-  const sq=ln.supplier_quantity;
-  if(sq!=null&&sq!==''&&Number(sq)===0) return 'instock';
   if(ln.in_po||fs==='in_po') return 'in_po';
-  return 'placed';
+  return 'placed';                                    // supplier set, nothing ordered yet
 }
 function fulfillClass(ln){const s=fulfillState(ln);return s?FULFILL[s]||'':'';}
 function fulfillTag(ln){const s=fulfillState(ln);if(!s)return '';return `<span class="fs-pill fs-pill-${s}">${FULFILL_LABEL[s]||''}</span>`;}
@@ -991,7 +986,7 @@ async function deleteLine(i){
 
 // Each line tracks ordered qty (allocations) vs supplier qty. You can order the
 // balance into open POs repeatedly until nothing is left to order.
-let ORD_I=null, ORD_SUP=null, ORD_POS=[], ORD_PLACED=[];
+let ORD_I=null, ORD_SUP=null, ORD_POS=[], ORD_PLACED=[], ORD_DIRECT=[];
 async function openSplit(i){
   if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Ordering items to a PO is available on Sales Orders only.','info'); return; }
   const ln=LINES[i]; if(!ln){return;}
@@ -1000,8 +995,8 @@ async function openSplit(i){
     alertModal('Pick a supplier first','Choose the supplier for this line, then order its quantity to a purchase order.','info');
     return;
   }
-  if(!(parseFloat(ln.supplier_quantity)>0)){
-    alertModal('Set a supplier quantity','Enter how many units to order from the supplier for this line first.','info');
+  if(!(parseFloat(ln.quantity)>0)){
+    alertModal('Set an order quantity','Enter the order quantity for this line first.','info');
     return;
   }
   ORD_I=i;
@@ -1009,6 +1004,10 @@ async function openSplit(i){
   // load existing allocations (what's already been ordered) + their PO + status
   const {data:allocs}=await db.from('quote_item_allocations').select('*, purchase_orders(po_number,status,order_date)').eq('quote_item_id',ln.id).order('created_at',{ascending:true});
   ORD_PLACED=allocs||[];
+  // also count any direct po_items sourced from this line that AREN'T tied to an allocation
+  // (so the balance reflects every PO line ever created for this product, per spec).
+  const {data:directPis}=await db.from('po_items').select('id,quantity,po_id,source_allocation_id,purchase_orders(po_number,status,order_date)').eq('source_quote_item_id',ln.id);
+  ORD_DIRECT=(directPis||[]).filter(p=>!p.source_allocation_id);
   // load this supplier's OPEN POs to order more into
   const {data:pos}=await db.from('purchase_orders').select('id,po_number,order_date').eq('status','open').eq('supplier_id',ORD_SUP.id).order('po_number');
   ORD_POS=pos||[];
@@ -1017,10 +1016,14 @@ async function openSplit(i){
   document.getElementById('split-overlay').classList.add('open');
 }
 function closeSplit(){document.getElementById('split-overlay').classList.remove('open');ORD_I=null;}
-function orderedSum(){return ORD_PLACED.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);}
+function orderedSum(){
+  const allocSum=ORD_PLACED.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);
+  const directSum=ORD_DIRECT.reduce((s,p)=>s+(parseFloat(p.quantity)||0),0);
+  return allocSum+directSum;
+}
 function renderOrderModal(){
   const ln=LINES[ORD_I]; if(!ln)return;
-  const need=parseFloat(ln.supplier_quantity)||0;
+  const need=parseFloat(ln.quantity)||0;
   const ordered=orderedSum();
   const balance=Math.max(0,need-ordered);
   const fmt=d=>{ if(!d)return ''; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-CA',{month:'short',day:'numeric'}); };
@@ -1031,23 +1034,32 @@ function renderOrderModal(){
   const bEl=document.getElementById('order-balance');
   bEl.className='order-balance'+(balance===0?' done':'');
   bEl.innerHTML=`<div class="ob-grid">
-      <div class="ob-cell"><span class="ob-n">${need}</span><span class="ob-l">Supplier Qty</span></div>
+      <div class="ob-cell"><span class="ob-n">${need}</span><span class="ob-l">Order Qty</span></div>
       <div class="ob-cell"><span class="ob-n">${ordered}</span><span class="ob-l">Ordered</span></div>
       <div class="ob-cell hl"><span class="ob-n">${balance}</span><span class="ob-l">Still to Order</span></div>
     </div>`;
 
-  // placed orders ledger
+  // placed orders ledger (allocations + any direct PO lines)
   const pl=document.getElementById('placed-list');
-  if(ORD_PLACED.length){
-    pl.innerHTML='<div class="pl-h">Already ordered</div>'+ORD_PLACED.map(a=>{
-      const po=a.purchase_orders||{};
-      const st=a.status&&a.status!=='pending'?a.status:(a.in_po?'in PO':'pending');
-      const locked=po.status&&po.status!=='open';   // issued/sent/received PO -> can't remove here
-      return `<div class="pl-row">
-        <div class="pl-l"><b>${parseFloat(a.quantity)||0}</b> units → PO #${po.po_number||'—'} <span class="pl-st pl-${(po.status||'open')}">${esc(po.status||'open')}</span></div>
-        ${locked?'<span class="pl-lock">issued</span>':`<button class="pl-remove" data-aid="${a.id}" data-pid="${a.po_id||''}">remove</button>`}
-      </div>`;
-    }).join('');
+  const allocRows=ORD_PLACED.map(a=>{
+    const po=a.purchase_orders||{};
+    const locked=po.status&&po.status!=='open';
+    return `<div class="pl-row">
+      <div class="pl-l"><b>${parseFloat(a.quantity)||0}</b> units → PO #${po.po_number||'—'} <span class="pl-st pl-${(po.status||'open')}">${esc(po.status||'open')}</span></div>
+      ${locked?'<span class="pl-lock">issued</span>':`<button class="pl-remove" data-aid="${a.id}" data-pid="${a.po_id||''}">remove</button>`}
+    </div>`;
+  });
+  const directRows=ORD_DIRECT.map(p=>{
+    const po=p.purchase_orders||{};
+    const locked=po.status&&po.status!=='open';
+    return `<div class="pl-row">
+      <div class="pl-l"><b>${parseFloat(p.quantity)||0}</b> units → PO #${po.po_number||'—'} <span class="pl-st pl-${(po.status||'open')}">${esc(po.status||'open')}</span></div>
+      ${locked?'<span class="pl-lock">issued</span>':`<button class="pl-remove-direct" data-pid2="${p.id}">remove</button>`}
+    </div>`;
+  });
+  const allRows=allocRows.concat(directRows);
+  if(allRows.length){
+    pl.innerHTML='<div class="pl-h">Already ordered</div>'+allRows.join('');
   }else{
     pl.innerHTML='<div class="pl-empty">Nothing ordered yet.</div>';
   }
@@ -1073,16 +1085,17 @@ function renderOrderModal(){
   }
   // wire remove buttons
   pl.querySelectorAll('.pl-remove').forEach(btn=>btn.addEventListener('click',()=>removePlaced(btn.dataset.aid,btn.dataset.pid)));
+  pl.querySelectorAll('.pl-remove-direct').forEach(btn=>btn.addEventListener('click',()=>removeDirect(btn.dataset.pid2)));
 }
 async function addOrderToPO(){
   const ln=LINES[ORD_I]; if(!ln)return;
-  const need=parseFloat(ln.supplier_quantity)||0;
+  const need=parseFloat(ln.quantity)||0;
   const balance=need-orderedSum();
   const qty=parseFloat(document.getElementById('of-qty').value)||0;
   const poId=document.getElementById('of-po').value;
   const msg=document.getElementById('split-msg');
   if(!(qty>0)){msg.textContent='Enter a quantity greater than 0.';return;}
-  if(qty>balance){msg.textContent='You can order at most '+balance+' more (the remaining balance).';return;}
+  if(qty>balance){msg.textContent='You can order at most '+balance+' more — the order quantity is '+need+' and '+orderedSum()+' is already on a PO.';return;}
   if(!poId){msg.textContent='Choose which open PO to order into.';return;}
   // 1) create the allocation (the order record)
   const {data:alloc,error:ae}=await db.from('quote_item_allocations').insert({
@@ -1103,6 +1116,17 @@ async function addOrderToPO(){
   const {data:allocs}=await db.from('quote_item_allocations').select('*, purchase_orders(po_number,status,order_date)').eq('quote_item_id',ln.id).order('created_at',{ascending:true});
   ORD_PLACED=allocs||[];
   msg.textContent='';
+  await reloadLineFromDb(ln);
+  renderOrderModal();
+}
+async function removeDirect(poItemId){
+  const ok=await confirmModal('Remove from PO?','This removes the ordered quantity from that open purchase order and returns it to the balance.',{confirmText:'Remove',cancelText:'Keep',danger:true});
+  if(!ok)return;
+  await db.from('po_items').delete().eq('id',poItemId);
+  const ln=LINES[ORD_I];
+  const {data:directPis}=await db.from('po_items').select('id,quantity,po_id,source_allocation_id,purchase_orders(po_number,status,order_date)').eq('source_quote_item_id',ln.id);
+  ORD_DIRECT=(directPis||[]).filter(p=>!p.source_allocation_id);
+  if(!ORD_PLACED.length && !ORD_DIRECT.length){ await db.from('quote_items').update({in_po:false,po_id:null,fulfillment_status:'none'}).eq('id',ln.id); }
   await reloadLineFromDb(ln);
   renderOrderModal();
 }
@@ -1219,7 +1243,7 @@ async function save(silent){
       quantity:parseFloat(l.quantity)||0,unit:l.unit||'Pc',unit_price:parseFloat(l.unit_price)||0,
       amount:parseFloat(l.amount)||0,discount_pct:parseFloat(l.discount_pct)||0,net_amount:parseFloat(l.net_amount)||0,
       supplier_id:l.supplier_id||null,
-      supplier_quantity:l.supplier_quantity!=null&&l.supplier_quantity!==''?parseFloat(l.supplier_quantity)||0:null};
+      supplier_quantity:parseFloat(l.quantity)||0};   // basis is order qty now; mirror it
     if(l.id && existingIds.has(l.id)){
       // existing row -> UPDATE (do NOT touch in_po, po_id, fulfillment_status)
       await db.from('quote_items').update(base).eq('id',l.id);
@@ -1283,19 +1307,10 @@ async function save(silent){
     }
   }
 
-  // 3. sync supplier lines into their open POs (only items not yet in a PO move)
-  const warnings=await syncToPOs(insertedItems);
-  // #9 — if any supplier had multiple open POs, let the user pick which PO
-  const choices=syncToPOs._needsChoice||[];
-  if(choices.length){ await resolvePOChoices(choices); syncToPOs._needsChoice=[]; }
+  // Ordering to a PO is now manual (via "Order to PO"), so save no longer
+  // auto-pushes line items into POs.
   DIRTY=false;
   if(msg){msg.textContent='Saved ✓';msg.className='status-msg saved';}
-  if(warnings.length && !silent){
-    const sups=[...new Set(warnings)];
-    await alertModal('Purchase order required',
-      'Some items have supplier quantities assigned but are not linked to an open Purchase Order. Please create the required Purchase Order(s). Once created, these items will automatically be added.'+
-      '<br><br><b>Suppliers needing a PO:</b><br>'+sups.map(s=>'• '+esc(s)).join('<br>'),'warn');
-  }
   // reload to reflect current fulfillment state
   await reloadLines();
 }
@@ -1529,8 +1544,8 @@ async function convertToInvoice(){
   const notOrdered=[];
   for(const ln of LINES){
     if(!ln.supplier_id) continue;                          // no supplier -> nothing to order
-    const need=parseFloat(ln.supplier_quantity)||0;
-    if(need<=0) continue;                                   // in-stock / no supplier qty
+    const need=parseFloat(ln.quantity)||0;
+    if(need<=0) continue;
     const ordered=(ln._allocations||[]).reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);
     if(ordered<need) notOrdered.push((ln.description||ln.style_number||'A line item')+` (${need-ordered} of ${need} not ordered)`);
   }
