@@ -238,57 +238,63 @@ async function loadFulfillment(){
   FULFILL_BY_ORDER={};
   const orderIds=DATA.order.map(o=>o.id);
   if(!orderIds.length)return;
-  const {data:items}=await db.from('quote_items').select('id,quote_id,fulfillment_status,supplier_id,supplier_quantity,in_po,description,style_number').in('quote_id',orderIds);
+  const {data:items}=await db.from('quote_items').select('id,quote_id,fulfillment_status,supplier_id,quantity,in_po,description,style_number').in('quote_id',orderIds);
   const itemIds=(items||[]).map(it=>it.id);
-  // pull allocations to detect split lines that aren't fully assigned to a PO
-  let allocByItem={};
+  // pull allocations AND direct po_items so "ordered" reflects every PO line for the item
+  let allocByItem={}, directByItem={}, statusByItem={};
   if(itemIds.length){
-    const {data:allocs}=await db.from('quote_item_allocations').select('quote_item_id,quantity').in('quote_item_id',itemIds);
+    const {data:allocs}=await db.from('quote_item_allocations').select('quote_item_id,quantity,status').in('quote_item_id',itemIds);
     (allocs||[]).forEach(a=>{ (allocByItem[a.quote_item_id]=allocByItem[a.quote_item_id]||[]).push(a); });
+    // direct po_items (sourced from the quote_item, not an allocation)
+    const {data:pis}=await db.from('po_items').select('source_quote_item_id,quantity,status,source_allocation_id').in('source_quote_item_id',itemIds);
+    (pis||[]).forEach(p=>{ if(!p.source_allocation_id){ (directByItem[p.source_quote_item_id]=directByItem[p.source_quote_item_id]||[]).push(p); } });
   }
   (items||[]).forEach(it=>{
-    const al=allocByItem[it.id];
-    if(al&&al.length){
-      const assigned=al.reduce((s,a)=>s+(Number(a.quantity)||0),0);
-      const need=it.supplier_quantity!=null?Number(it.supplier_quantity):0;
-      it._assigned=assigned; it._need=need;
-      it._partial = need>0 && assigned<need;   // some qty not yet placed in a PO
-    }
+    const al=allocByItem[it.id]||[];
+    const dir=directByItem[it.id]||[];
+    const ordered=al.reduce((s,a)=>s+(Number(a.quantity)||0),0)+dir.reduce((s,p)=>s+(Number(p.quantity)||0),0);
+    const need=Number(it.quantity)||0;
+    it._ordered=ordered; it._need=need;
+    it._partial = need>0 && ordered>0 && ordered<need;     // some, but not all, on a PO
+    // collect committed statuses from both allocations and direct PO lines
+    const sts=[...al.map(a=>a.status), ...dir.map(p=>p.status)].filter(s=>s&&s!=='pending'&&s!=='in_po');
+    it._poStatuses=sts;
     (FULFILL_BY_ORDER[it.quote_id]=FULFILL_BY_ORDER[it.quote_id]||[]).push(it);
   });
 }
 
-// Derive a single status for one line item.
+// Derive a single status for one line item, based on Order Qty.
 function itemState(it){
-  const fs=it.fulfillment_status;
-  if(fs&&fs!=='none'&&fs!=='in_po') return fs;      // issued/received/backordered
   if(!it.supplier_id) return 'none';
-  const sq=it.supplier_quantity;
-  if(sq!=null && Number(sq)===0) return 'instock';
-  if(it._partial) return 'partial';                  // split, not fully assigned to a PO
-  if(it.in_po || fs==='in_po') return 'in_po';
-  return 'placed';                                   // supplier+qty, no PO yet
+  const sts=it._poStatuses||[];
+  // committed states take priority
+  if(sts.includes('backordered')) return 'backordered';
+  if(sts.length && sts.every(s=>s==='received')) return 'received';
+  if(sts.includes('issued')||sts.includes('verified')) return 'issued';
+  const ordered=it._ordered||0;
+  const need=it._need||0;
+  if(ordered<=0) return 'placed';                    // supplier set, nothing ordered yet
+  if(ordered<need) return 'partial';                 // partially ordered
+  return 'in_po';                                    // fully ordered onto PO(s)
 }
 
 const FS_META={
-  none:{label:'No Suppliers',color:'#5a6273',bg:'rgba(90,98,115,.16)'},
-  placed:{label:'Open PO Required',color:'#e0883a',bg:'rgba(224,136,58,.16)'},
-  partial:{label:'Partially in PO',color:'#e0883a',bg:'rgba(224,136,58,.16)'},
-  in_po:{label:'In PO',color:'#ff4d4d',bg:'rgba(255,77,77,.14)'},
-  issued:{label:'Items Issued',color:'#8a92a2',bg:'rgba(138,146,162,.16)'},
-  received:{label:'All Items Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
+  none:{label:'No Supplier',color:'#9098a8',bg:'rgba(144,152,168,.16)'},
+  placed:{label:'Not Ordered',color:'#e0883a',bg:'rgba(224,136,58,.16)'},
+  partial:{label:'Partly Ordered',color:'#f0b34e',bg:'rgba(240,179,78,.18)'},
+  in_po:{label:'Ordered',color:'#ff4d4d',bg:'rgba(255,77,77,.14)'},
+  issued:{label:'Issued',color:'#8a92a2',bg:'rgba(138,146,162,.18)'},
+  received:{label:'Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
   backordered:{label:'Back Ordered',color:'#b06bff',bg:'rgba(176,107,255,.16)'},
-  instock:{label:'In Stock',color:'#3da5ff',bg:'rgba(61,165,255,.16)'},
   mixed:{label:'Mixed Status',color:'#3da5ff',bg:'rgba(61,165,255,.16)'}
 };
 function rollup(orderId){
   const items=FULFILL_BY_ORDER[orderId]||[];
   if(!items.length)return null;
-  const states=items.map(itemState);
-  // treat 'instock' as satisfied for rollup purposes (doesn't need purchasing)
-  const meaningful=states.filter(s=>s!=='instock');
-  const base=meaningful.length?meaningful:states;
-  const uniq=[...new Set(base)];
+  const withSup=items.filter(it=>it.supplier_id);
+  if(!withSup.length)return 'none';
+  const states=withSup.map(itemState);
+  const uniq=[...new Set(states)];
   if(uniq.length===1)return uniq[0];
   return 'mixed';
 }
@@ -302,7 +308,7 @@ function openFulfillPopup(orderId){
   const rows=items.map(it=>{
     const s=itemState(it);
     const m=FS_META[s]||FS_META.none;
-    const detail=it._partial?`<span class="fsp-detail">${it._assigned} of ${it._need} in PO</span>`:'';
+    const detail=it._partial?`<span class="fsp-detail">${it._ordered} of ${it._need} ordered</span>`:'';
     return `<div class="fsp-row"><div class="fsp-desc">${esc(it.description||it.style_number||'Item')}${detail}</div><span class="fs-pill" style="color:${m.color};background:${m.bg};">${m.label}</span></div>`;
   }).join('');
   document.getElementById('fsp-body').innerHTML=rows||'<div class="fsp-empty">No line items.</div>';

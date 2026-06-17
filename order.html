@@ -105,6 +105,7 @@
   .cb-sup{text-overflow:ellipsis;}
   /* fulfillment colour: the status pill carries the colour; the split summary count tints to match */
   .fs-placed .alloc-count{color:#e0883a !important;font-weight:700;}
+  .fs-partial .alloc-count{color:#f0b34e !important;font-weight:700;}
   .fs-inpo .alloc-count{color:#ff4d4d !important;font-weight:700;}
   .fs-issued .alloc-count{color:#8a92a2 !important;font-weight:700;}
   .fs-instock .alloc-count{color:#3da5ff !important;font-weight:700;}
@@ -113,7 +114,7 @@
   .sup-id-tag{font-family:var(--fm);font-size:10px;color:var(--text-3);font-weight:700;}
   .fs-pill{display:inline-block;font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;text-transform:uppercase;letter-spacing:.03em;line-height:1.3;white-space:nowrap;}
   .fs-pill-placed{color:#e0883a;background:rgba(224,136,58,.16);}
-  .fs-pill-partial{color:#e0883a;background:rgba(224,136,58,.16);}
+  .fs-pill-partial{color:#f0b34e;background:rgba(240,179,78,.18);}
   .fs-pill-in_po{color:#ff4d4d;background:rgba(255,77,77,.14);}
   .fs-pill-issued{color:#8a92a2;background:rgba(138,146,162,.18);}
   .fs-pill-received{color:#3ddc84;background:rgba(61,220,132,.16);}
@@ -381,27 +382,27 @@
     <div class="card">
       <div class="card-h"><h3>Product Listing</h3>
         <div class="legend sup-col" id="po-legend">
-          <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Open PO Req</span>
-          <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>In PO</span>
+          <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Not Ordered</span>
+          <span class="lg"><span class="lg-dot" style="background:#f0b34e"></span>Partly Ordered</span>
+          <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>Ordered</span>
           <span class="lg"><span class="lg-dot" style="background:#8a92a2"></span>Issued</span>
           <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Received</span>
           <span class="lg"><span class="lg-dot" style="background:#b06bff"></span>Back Order</span>
-          <span class="lg"><span class="lg-dot" style="background:#3da5ff"></span>In Stock</span>
         </div>
       </div>
       <div class="lines-scroll">
       <table>
         <thead><tr>
-          <th style="width:110px;">Category</th>
-          <th style="width:90px;">Style #</th>
-          <th style="min-width:200px;">Description</th>
-          <th class="sup-col" style="width:150px;">Supplier</th>
-          <th class="num" style="width:64px;">Order Qty</th>
-          <th style="width:40px;">Unit</th>
-          <th class="num" style="width:74px;">Unit Price</th>
-          <th style="width:84px;">Discount</th>
-          <th class="num" style="width:84px;">Amount</th>
-          <th style="width:26px;"></th>
+          <th style="width:120px;">Category</th>
+          <th style="width:100px;">Style #</th>
+          <th style="min-width:240px;">Description</th>
+          <th class="sup-col" style="width:170px;">Supplier</th>
+          <th class="num" style="width:72px;">Order Qty</th>
+          <th style="width:48px;">Unit</th>
+          <th class="num" style="width:86px;">Unit Price</th>
+          <th style="width:96px;">Discount</th>
+          <th class="num" style="width:96px;">Amount</th>
+          <th style="width:30px;"></th>
         </tr></thead>
         <tbody id="lines"></tbody>
       </table>
@@ -568,17 +569,28 @@ async function load(){
 async function loadAllocations(){
   const ids=LINES.map(l=>l.id).filter(Boolean);
   if(!ids.length)return;
+  // 1) explicit allocations (created via "Order to PO")
   const {data:allocs}=await db.from('quote_item_allocations').select('*').in('quote_item_id',ids);
-  if(!allocs||!allocs.length)return;
+  // 2) direct po_items sourced from a line but NOT tied to an allocation (older/auto path)
+  const {data:directPis}=await db.from('po_items').select('id,source_quote_item_id,source_allocation_id,quantity,status,po_id, purchase_orders(supplier_id)').in('source_quote_item_id',ids);
   const byItem={};
-  allocs.forEach(a=>{
+  (allocs||[]).forEach(a=>{
     const s=SUPPLIERS.find(x=>x.id===a.supplier_id);
     (byItem[a.quote_item_id]=byItem[a.quote_item_id]||[]).push({
-      id:a.id, supplier_id:a.supplier_id, quantity:a.quantity, in_po:a.in_po, po_id:a.po_id, status:a.status,
+      id:a.id, supplier_id:a.supplier_id, quantity:a.quantity, in_po:a.in_po, po_id:a.po_id, status:a.status, _direct:false,
       _supplier_name:s?(s.company_name||s.short_name||''):'', _supplier_number:s?s.supplier_number:null
     });
   });
-  LINES.forEach(l=>{ if(byItem[l.id]&&byItem[l.id].length>=1){ l._allocations=byItem[l.id]; } });
+  (directPis||[]).forEach(p=>{
+    if(p.source_allocation_id) return;   // already represented by its allocation
+    const supId=p.purchase_orders?.supplier_id;
+    const s=SUPPLIERS.find(x=>x.id===supId);
+    (byItem[p.source_quote_item_id]=byItem[p.source_quote_item_id]||[]).push({
+      id:'pi:'+p.id, _poItemId:p.id, supplier_id:supId, quantity:p.quantity, in_po:true, po_id:p.po_id, status:p.status, _direct:true,
+      _supplier_name:s?(s.company_name||s.short_name||''):'', _supplier_number:s?s.supplier_number:null
+    });
+  });
+  LINES.forEach(l=>{ l._allocations = (byItem[l.id]&&byItem[l.id].length) ? byItem[l.id] : null; });
 }
 
 function applyRecordType(){
@@ -901,8 +913,8 @@ function autoGrow(el){ if(!el)return; el.style.height='auto'; el.style.height=(e
 function addLine(){LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});renderLines();markDirty();}
 
 // fulfillment colour system: placed(amber) -> in_po(red) -> issued(grey) -> received(green); backordered(violet); instock(blue); partial(amber)
-const FULFILL={placed:'fs-placed',partial:'fs-placed',in_po:'fs-inpo',issued:'fs-issued',received:'fs-verified',backordered:'fs-backordered',instock:'fs-instock'};
-const FULFILL_LABEL={placed:'OPEN PO REQ',partial:'PARTIALLY IN PO',in_po:'IN PO',issued:'ISSUED',received:'RECEIVED',backordered:'BACK ORDER',instock:'IN STOCK'};
+const FULFILL={placed:'fs-placed',partial:'fs-partial',in_po:'fs-inpo',issued:'fs-issued',received:'fs-verified',backordered:'fs-backordered',instock:'fs-instock'};
+const FULFILL_LABEL={placed:'NOT ORDERED',partial:'PARTLY ORDERED',in_po:'ORDERED',issued:'ISSUED',received:'RECEIVED',backordered:'BACK ORDER',instock:'IN STOCK'};
 function fulfillState(ln){
   // lines with orders placed: derive from their allocations
   if(ln._allocations&&ln._allocations.length){
