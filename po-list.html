@@ -259,18 +259,10 @@ function renderReceiving(){
           </div>
         </td></tr>`;}).join('')}
       </tbody></table>
-      ${received<total?`<div class="rc-foot"><button class="rc-receive-all" data-po="${p.id}">Receive all remaining</button></div>`:''}
+      ${received<total?'':''}
     </div>`;
   }).join('');
   document.querySelectorAll('.rc-act').forEach(b=>b.addEventListener('click',()=>markReceiving(b.dataset.item,b.dataset.act,b.dataset.po)));
-  document.querySelectorAll('.rc-receive-all').forEach(b=>b.addEventListener('click',()=>receiveAll(b.dataset.po)));
-}
-
-async function receiveAll(poId){
-  const po=POS.find(p=>p.id===poId); if(!po)return;
-  const pending=(po.po_items||[]).filter(i=>(i.status||'issued')!=='received'&&(i.status||'issued')!=='backordered');
-  for(const it of pending){ await markReceiving(it.id,'received',poId,true); }
-  await load();   // refresh once at the end
 }
 
 async function markReceiving(itemId,status,poId,skipRender){
@@ -283,19 +275,32 @@ async function markReceiving(itemId,status,poId,skipRender){
   if(it){
     it.status=status;
     if(it.source_allocation_id){
-      // update this allocation, then recompute the PARENT line from all its allocations
+      // update this allocation, then recompute the PARENT line from ALL its orders
       await db.from('quote_item_allocations').update({status}).eq('id',it.source_allocation_id);
       const {data:al}=await db.from('quote_item_allocations').select('quote_item_id,status').eq('id',it.source_allocation_id).single();
-      if(al&&al.quote_item_id){
-        const {data:sibs}=await db.from('quote_item_allocations').select('status').eq('quote_item_id',al.quote_item_id);
-        const parentFs=aggregateStatus((sibs||[]).map(s=>s.status));
-        await db.from('quote_items').update({fulfillment_status:parentFs}).eq('id',al.quote_item_id);
-      }
+      if(al&&al.quote_item_id){ await recomputeParentLine(al.quote_item_id); }
     }else if(it.source_quote_item_id){
-      await db.from('quote_items').update({fulfillment_status:status}).eq('id',it.source_quote_item_id);
+      await recomputeParentLine(it.source_quote_item_id, status);
     }
   }
   if(!skipRender) renderReceiving();
+}
+
+// Recompute a sales line's status from ALL its orders (allocations + direct PO lines),
+// accounting for partial ordering (ordered < order qty must not look fully done).
+async function recomputeParentLine(quoteItemId, directStatus){
+  const {data:qi}=await db.from('quote_items').select('id,quantity').eq('id',quoteItemId).single();
+  if(!qi)return;
+  const {data:allocs}=await db.from('quote_item_allocations').select('quantity,status').eq('quote_item_id',quoteItemId);
+  const {data:pis}=await db.from('po_items').select('quantity,status,source_allocation_id').eq('source_quote_item_id',quoteItemId);
+  const directPis=(pis||[]).filter(p=>!p.source_allocation_id);
+  const ordered=(allocs||[]).reduce((s,a)=>s+(Number(a.quantity)||0),0)+directPis.reduce((s,p)=>s+(Number(p.quantity)||0),0);
+  const need=Number(qi.quantity)||0;
+  const statuses=[...(allocs||[]).map(a=>a.status), ...directPis.map(p=>p.status)];
+  let fs=aggregateStatus(statuses);
+  // partial guard: can't be "received"/"issued" if the whole order qty isn't even on POs yet
+  if(ordered<need && (fs==='received'||fs==='issued')){ fs='in_po'; }
+  await db.from('quote_items').update({fulfillment_status:fs}).eq('id',quoteItemId);
 }
 
 // Combine allocation statuses into one parent line status

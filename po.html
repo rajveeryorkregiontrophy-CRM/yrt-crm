@@ -265,14 +265,30 @@ async function markItemStatus(i,status){
 function addLine(){LINES.push({part_no:'',product_name:'',quantity:1,rate:0,amount:0,ordered_for:'',line_order:LINES.length+1});renderLines();dirty();}
 function recalc(){document.getElementById('t-total').textContent=money(LINES.reduce((s,l)=>s+(parseFloat(l.amount)||0),0));}
 
+// Recompute a sales line's in_po + fulfillment_status from whatever orders remain.
+async function recomputeLineFromOrders(quoteItemId){
+  if(!quoteItemId)return;
+  const {data:qi}=await db.from('quote_items').select('id,quantity').eq('id',quoteItemId).single();
+  if(!qi)return;
+  const {data:allocs}=await db.from('quote_item_allocations').select('quantity,status').eq('quote_item_id',quoteItemId);
+  const {data:pis}=await db.from('po_items').select('quantity,status,source_allocation_id').eq('source_quote_item_id',quoteItemId);
+  const directPis=(pis||[]).filter(p=>!p.source_allocation_id);
+  const orderedQty=(allocs||[]).reduce((s,a)=>s+(Number(a.quantity)||0),0)+directPis.reduce((s,p)=>s+(Number(p.quantity)||0),0);
+  const need=Number(qi.quantity)||0;
+  if(orderedQty<=0){
+    await db.from('quote_items').update({in_po:false,po_id:null,fulfillment_status:'none'}).eq('id',quoteItemId);
+    return;
+  }
+  const statuses=[...(allocs||[]).map(a=>a.status), ...directPis.map(p=>p.status)];
+  let fs=aggregateStatus(statuses);
+  // partial guard: if not the whole order qty is on POs yet, it isn't fully done
+  if(orderedQty<need && (fs==='received'||fs==='issued')){ fs='in_po'; }
+  await db.from('quote_items').update({in_po:true,fulfillment_status:fs}).eq('id',quoteItemId);
+}
+
 async function save(silent){
   const msg=document.getElementById('msg');
-  // In-Hand Date is mandatory
-  if(!PO.in_hand_date){
-    if(!silent){ await pConfirm('In-Hand Date required','Please set an <b>In-Hand Date</b> before saving this Purchase Order.',{confirmText:'OK',cancelText:'Close',type:'warn'}); }
-    const ih=document.getElementById('i-inhand'); if(ih){ih.focus();try{ih.showPicker&&ih.showPicker();}catch(e){}}
-    return false;
-  }
+  // In-Hand Date is a reminder, only enforced when sending the PO as a PDF (not on save).
   msg.textContent='Saving…';msg.className='msg';
   const {error:e1}=await db.from('purchase_orders').update({supplier_id:PO.supplier_id,subject:PO.subject,order_date:PO.order_date,in_hand_date:PO.in_hand_date,dispatch_mode:PO.dispatch_mode,status:PO.status}).eq('id',PO_ID);
   if(e1){msg.textContent='Error: '+e1.message;msg.className='msg err';return false;}
@@ -282,19 +298,23 @@ async function save(silent){
   const keptIds=new Set(LINES.filter(l=>l.id).map(l=>l.id));
   const toDelete=[...existingIds].filter(id=>!keptIds.has(id));
   if(toDelete.length){
-    // Before deleting, release the source sales-order lines: clear supplier + supplier qty
-    // so the Sales Order reflects that these items are no longer being purchased.
+    // Removing a PO line returns its quantity to the sales-order line's balance.
+    // In the draw-down model a line can be ordered across several POs, so we only
+    // remove THIS allocation/po_item — we never wipe the line's supplier or other orders.
     const {data:delItems}=await db.from('po_items').select('id,source_quote_item_id,source_allocation_id').in('id',toDelete);
-    const qiIds=[...new Set((delItems||[]).map(d=>d.source_quote_item_id).filter(Boolean))];
     const allocIds=[...new Set((delItems||[]).map(d=>d.source_allocation_id).filter(Boolean))];
-    if(qiIds.length){
-      await db.from('quote_items').update({supplier_id:null,supplier_quantity:null,in_po:false,po_id:null,fulfillment_status:'none'}).in('id',qiIds);
-    }
+    const qiIds=[...new Set((delItems||[]).map(d=>d.source_quote_item_id).filter(Boolean))];
+    // resolve the parent lines of those allocations BEFORE we delete them
+    let allocParents=[];
     if(allocIds.length){
-      // remove the allocations entirely (the split portion is gone)
+      const {data:ap}=await db.from('quote_item_allocations').select('quote_item_id').in('id',allocIds);
+      allocParents=(ap||[]).map(a=>a.quote_item_id).filter(Boolean);
       await db.from('quote_item_allocations').delete().in('id',allocIds);
     }
     await db.from('po_items').delete().in('id',toDelete);
+    // recompute each affected parent line's in_po / fulfillment from what's LEFT
+    const affected=[...new Set([...qiIds, ...allocParents])];
+    for(const qid of affected){ await recomputeLineFromOrders(qid); }
   }
   for(let idx=0; idx<LINES.length; idx++){
     const l=LINES[idx];
@@ -362,8 +382,14 @@ const _backLink=document.getElementById('back-link');
 if(_backLink) _backLink.addEventListener('click',async e=>{
   if(!DIRTY) return;
   e.preventDefault();
-  const go=await pConfirm('Leave without saving?','You have unsaved changes on this purchase order. If you leave now, they will be lost.',{confirmText:'Leave',cancelText:'Stay',type:'warn'});
-  if(go){ DIRTY=false; location.href='po-list.html'; }
+  const choice=await pChoice('Unsaved changes','You have unsaved changes on this purchase order. What would you like to do?',[
+    {key:'save',label:'Save changes & leave',primary:true},
+    {key:'leave',label:'Leave without saving'},
+    {key:'stay',label:'Stay on this page',plain:true}
+  ]);
+  if(choice==='stay'||choice==null) return;
+  if(choice==='save'){ const ok=await save(); if(ok===false) return; }
+  DIRTY=false; location.href='po-list.html';
 });
 load();
 // live sync: refresh this PO if it changes elsewhere, unless mid-edit
@@ -373,7 +399,7 @@ subscribeFulfillment(async()=>{ if(!DIRTY) await load(); });
 function ensureModal(){
   if(document.getElementById('pmodal-ov'))return;
   const css=document.createElement('style');
-  css.textContent=`#pmodal-ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:400;padding:20px;}#pmodal-ov.open{display:flex;}#pmodal{background:#16181d;border:1px solid #414a5c;border-radius:14px;width:100%;max-width:410px;overflow:hidden;}#pmodal .ph{display:flex;gap:13px;align-items:flex-start;padding:22px 24px 0;}#pmodal .pi{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;}#pmodal .pi.warn{background:rgba(255,182,39,.15);color:#ffb627;}#pmodal .pi.info{background:rgba(61,165,255,.15);color:#3da5ff;}#pmodal .pi svg{width:22px;height:22px;}#pmodal .pt{font-family:Archivo,sans-serif;font-weight:800;font-size:16px;color:#eef0f4;margin-bottom:5px;}#pmodal .pm{font-size:13.5px;color:#c4cad6;line-height:1.5;}#pmodal .pf{display:flex;gap:10px;padding:20px 24px 22px;justify-content:flex-end;}#pmodal .pb{padding:10px 17px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}#pmodal .pb:hover{border-color:#9098a8;}#pmodal .pb.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}#pmodal .pb.plain{background:transparent;border-color:transparent;color:#9098a8;}`;
+  css.textContent=`#pmodal-ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:400;padding:20px;}#pmodal-ov.open{display:flex;}#pmodal{background:#16181d;border:1px solid #414a5c;border-radius:14px;width:100%;max-width:410px;overflow:hidden;}#pmodal .ph{display:flex;gap:13px;align-items:flex-start;padding:22px 24px 0;}#pmodal .pi{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;}#pmodal .pi.warn{background:rgba(255,182,39,.15);color:#ffb627;}#pmodal .pi.info{background:rgba(61,165,255,.15);color:#3da5ff;}#pmodal .pi svg{width:22px;height:22px;}#pmodal .pt{font-family:Archivo,sans-serif;font-weight:800;font-size:16px;color:#eef0f4;margin-bottom:5px;}#pmodal .pm{font-size:13.5px;color:#c4cad6;line-height:1.5;}#pmodal .pf{display:flex;gap:10px;padding:20px 24px 22px;justify-content:flex-end;}#pmodal .pf.stacked{flex-direction:column;}#pmodal .pf.stacked .pb{width:100%;text-align:center;}#pmodal .pb{padding:10px 17px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}#pmodal .pb:hover{border-color:#9098a8;}#pmodal .pb.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}#pmodal .pb.plain{background:transparent;border-color:transparent;color:#9098a8;}`;
   document.head.appendChild(css);
   const ov=document.createElement('div');ov.id='pmodal-ov';
   ov.innerHTML=`<div id="pmodal"><div class="ph"><div class="pi warn" id="pmodal-ico"></div><div><div class="pt" id="pmodal-title"></div><div class="pm" id="pmodal-msg"></div></div></div><div class="pf" id="pmodal-foot"></div></div>`;
@@ -394,6 +420,23 @@ function pConfirm(title,msg,{confirmText='Confirm',cancelText='Cancel',type='war
     foot.querySelector('#pm-ok').onclick=()=>close(true);
     foot.querySelector('#pm-cancel').onclick=()=>close(false);
     ov.onclick=e=>{if(e.target===ov)close(false);};
+    ov.classList.add('open');
+  });
+}
+function pChoice(title,msg,buttons,{type='warn'}={}){
+  ensureModal();
+  return new Promise(resolve=>{
+    document.getElementById('pmodal-ico').className='pi '+type;
+    document.getElementById('pmodal-ico').innerHTML=PICONS[type]||PICONS.warn;
+    document.getElementById('pmodal-title').textContent=title;
+    document.getElementById('pmodal-msg').innerHTML=msg;
+    const foot=document.getElementById('pmodal-foot');
+    foot.classList.add('stacked');
+    foot.innerHTML=buttons.map(b=>`<button class="pb ${b.primary?'primary':(b.plain?'plain':'')}" data-k="${b.key}">${esc(b.label)}</button>`).join('');
+    const ov=document.getElementById('pmodal-ov');
+    const close=v=>{ov.classList.remove('open');foot.classList.remove('stacked');resolve(v);};
+    foot.querySelectorAll('button').forEach(btn=>btn.onclick=()=>close(btn.dataset.k));
+    ov.onclick=e=>{if(e.target===ov)close(null);};
     ov.classList.add('open');
   });
 }
