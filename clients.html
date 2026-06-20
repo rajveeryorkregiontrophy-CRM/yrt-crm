@@ -66,7 +66,8 @@
   .c-name{font-weight:700;color:#fff;font-size:14px;}
   .c-loc{font-size:12px;color:var(--text-3);margin-top:1px;}
   .c-contact{font-size:13px;color:var(--text-2);}
-  .c-mono{font-family:var(--fm);font-size:12.5px;color:var(--text-2);}
+  .c-mono{font-family:var(--fm);font-size:12.5px;color:var(--text-2);white-space:nowrap;}
+  td .q-date{white-space:nowrap;}
   .stars{color:var(--star);font-size:13px;letter-spacing:1px;}
   .stars .off{color:var(--line-2);}
   .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--bg-4);color:var(--text-2);font-family:var(--fm);}
@@ -157,11 +158,28 @@ const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','N
 let CLIENTS=[],EDITING=null,CONTACTS=[];
 
 function stars(n){n=n||0;let s='';for(let i=1;i<=5;i++)s+=`<span class="${i<=n?'':'off'}">★</span>`;return `<span class="stars">${s}</span>`;}
+function money(n){return '$'+(Number(n)||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtD(d){if(!d)return '—';const x=new Date(d+'T00:00:00');return x.toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'});}
 
 async function load(){
   const {data,error}=await db.from('clients').select('*, contacts(*)').order('company_name');
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   CLIENTS=data||[];
+  // outstanding balance per client (from unpaid/partial invoices) + last invoice date
+  const {data:invs}=await db.from('invoices').select('client_id,balance_due,invoice_date');
+  // last activity per client (most recent quote/order/invoice date on the quotes table)
+  const {data:qs}=await db.from('quotes').select('client_id,quote_date');
+  const balByClient={}, lastByClient={};
+  (invs||[]).forEach(iv=>{
+    if(iv.client_id){
+      balByClient[iv.client_id]=(balByClient[iv.client_id]||0)+Number(iv.balance_due||0);
+      if(iv.invoice_date && (!lastByClient[iv.client_id] || iv.invoice_date>lastByClient[iv.client_id])) lastByClient[iv.client_id]=iv.invoice_date;
+    }
+  });
+  (qs||[]).forEach(q=>{
+    if(q.client_id && q.quote_date && (!lastByClient[q.client_id] || q.quote_date>lastByClient[q.client_id])) lastByClient[q.client_id]=q.quote_date;
+  });
+  CLIENTS.forEach(c=>{ c._balance=balByClient[c.id]||0; c._lastDate=lastByClient[c.id]||null; });
   document.getElementById('nav-clients').textContent=CLIENTS.length;
   render();
 }
@@ -179,16 +197,16 @@ function render(){
   const body=rows.map(c=>{
     const prim=(c.contacts||[]).find(x=>x.is_primary)||(c.contacts||[])[0]||{};
     const cn=((prim.first_name||'')+' '+(prim.last_name||'')).trim();
-    const n=(c.contacts||[]).length;
+    const bal=c._balance||0;
     return `<tr data-id="${c.id}">
       <td><div class="c-name">${esc(c.company_name)}</div><div class="c-loc">${esc([c.bill_city,c.bill_province].filter(Boolean).join(', ')||'—')}</div></td>
       <td><div class="c-contact">${esc(cn||'—')}</div><div class="c-loc">${esc(prim.designation||'')}</div></td>
       <td class="c-mono">${esc(prim.tel1||'—')}</td>
-      <td><span class="pill">${n} ${n===1?'person':'people'}</span></td>
-      <td>${stars(c.rating)}</td>
-      <td><span class="pill">${c.terms_days?c.terms_days+'d terms':'Prepaid'}</span></td>
+      <td class="c-mono">${esc(prim.email1||'—')}</td>
+      <td><span class="q-date">${fmtD(c._lastDate)}</span></td>
+      <td class="num"><span class="bal" style="color:${bal>0?'var(--unpaid,#e0883a)':'var(--text-3)'};font-family:var(--font-mono,monospace);font-weight:600;">${bal>0?money(bal):'—'}</span></td>
     </tr>`;}).join('');
-  document.getElementById('wrap').innerHTML=`<table><thead><tr><th>Company</th><th>Primary Contact</th><th>Telephone</th><th>Contacts</th><th>Rating</th><th>Terms</th></tr></thead><tbody>${body}</tbody></table>`;
+  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:22%;">Company</th><th style="width:16%;">Primary Contact</th><th style="width:120px;white-space:nowrap;">Telephone</th><th>Email</th><th style="width:130px;white-space:nowrap;">Last Transaction</th><th class="num" style="width:110px;">Balance Due</th></tr></thead><tbody>${body}</tbody></table>`;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='client.html?id='+encodeURIComponent(tr.dataset.id)));
 }
 function openDrawer(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
