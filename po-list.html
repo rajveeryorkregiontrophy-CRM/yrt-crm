@@ -240,7 +240,7 @@ async function load(){
   document.getElementById('n-sent').textContent=POS.filter(p=>p.status==='sent').length;
   const recEl=document.getElementById('n-receiving');if(recEl)recEl.textContent=POS.filter(p=>p.status==='sent').length;
   document.getElementById('n-all').textContent=POS.length;
-  document.getElementById('nav-po').textContent=POS.filter(p=>p.status==='open').length;
+  const _np=document.getElementById('nav-po');if(_np)_np.textContent=POS.filter(p=>p.status==='open').length;
   render();
 }
 

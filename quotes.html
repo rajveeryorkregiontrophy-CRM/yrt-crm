@@ -17,20 +17,19 @@
   *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
   body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
   ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
-  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
-  .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);}
   .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
   .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
   .brand .mark .amp{color:var(--brass-2);}
-  .brand .sub{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#aab0c0;margin-top:6px;font-weight:600;}
   .nav{padding:14px 12px;flex:1;overflow-y:auto;}
-  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:14px 10px 6px;font-weight:700;}
   .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
   .nav a:hover{background:var(--bg-3);color:#fff;}
   .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
   .nav a .ico{width:17px;height:17px;flex-shrink:0;}
   .nav a .badge{margin-left:auto;background:var(--bg-4);color:var(--text);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;font-family:var(--fm);}
   .nav a.active .badge{background:rgba(0,0,0,.25);color:#15171c;}
+  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:20px 10px 8px;font-weight:700;}
+  .nav-sep{height:1px;background:var(--line);margin:14px 14px;opacity:.7;}
+  .nav-label:first-child{padding-top:8px;}
   .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
   .logout-btn{margin-left:auto;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-3);width:32px;height:32px;border-radius:8px;cursor:pointer;display:grid;place-items:center;transition:.13s;}
   .logout-btn:hover{border-color:var(--danger);color:var(--danger);}
@@ -72,26 +71,61 @@
   .tab.active{background:var(--brass);color:#15171c;border-color:var(--brass);}
   .state{padding:44px;text-align:center;color:var(--text-3);}
   @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;transition:grid-template-columns .32s cubic-bezier(.4,0,.2,1);}
+  .app.collapsed{grid-template-columns:68px 1fr;}
+  .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);width:240px;transition:width .32s cubic-bezier(.4,0,.2,1);z-index:50;overflow:hidden;}
+  .app.collapsed .sidebar{width:68px;}
+  .app.collapsed .sidebar:hover{width:240px;box-shadow:10px 0 36px -8px rgba(0,0,0,.65);}
+  /* keep inner blocks at full width so text never squishes — the sidebar clips it */
+  .sidebar .brand,.sidebar .nav,.sidebar .sidebar-foot{width:240px;flex-shrink:0;}
+  /* labels/sub-text fade out only; layout width is fixed so nothing mushes */
+  .nav a span.lbl,.nav a .badge,.brand .sub,.brand .mark,.sidebar-foot .foot-text,.nav-label{transition:opacity .32s cubic-bezier(.4,0,.2,1);}
+  .app.collapsed .sidebar .brand .sub,
+  .app.collapsed .sidebar .brand .mark,
+  .app.collapsed .sidebar .nav-label,
+  .app.collapsed .sidebar .nav a span.lbl,
+  .app.collapsed .sidebar .nav a .badge,
+  .app.collapsed .sidebar .sidebar-foot .foot-text{opacity:0;pointer-events:none;}
+  .app.collapsed .sidebar:hover .brand .sub,
+  .app.collapsed .sidebar:hover .brand .mark,
+  .app.collapsed .sidebar:hover .nav-label,
+  .app.collapsed .sidebar:hover .nav a span.lbl,
+  .app.collapsed .sidebar:hover .nav a .badge,
+  .app.collapsed .sidebar:hover .sidebar-foot .foot-text{opacity:1;pointer-events:auto;}
+  /* compact "YRT" marks shown only while collapsed (and not hovered) */
+  .brand-mini{display:none;position:absolute;top:20px;left:0;width:68px;text-align:center;font-family:var(--fd);font-weight:900;font-size:15px;color:#fff;letter-spacing:.04em;}
+  .app.collapsed .sidebar .brand-mini{display:block;}
+  .app.collapsed .sidebar:hover .brand-mini{display:none;}
+  .app.collapsed .sidebar:not(:hover) .nav a span.lbl,
+  .app.collapsed .sidebar:not(:hover) .brand .mark,
+  .app.collapsed .sidebar:not(:hover) .sidebar-foot .foot-text{visibility:hidden;}
+  .brand{position:relative;}
+  .nav a{overflow:hidden;}
+  .app.collapsed .sidebar:not(:hover) .nav a{padding-left:14px;padding-right:14px;}
+  .app.collapsed .sidebar:not(:hover) .nav a.active{background:transparent;}
+  .app.collapsed .sidebar:not(:hover) .nav a.active .ico{color:#fff;}
+  .app.collapsed .sidebar:not(:hover) .brand{padding-left:0;padding-right:0;}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app collapsed">
   <aside class="sidebar">
-    <div class="brand"><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div><div class="sub">Operations</div></div>
+
+    <div class="brand"><div class="brand-mini">YRT</div><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div></div>
     <nav class="nav">
-      <div class="nav-label">Workspace</div>
-      <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Sales Timeline</a>
-      <a href="quotes.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Quotes &amp; Inquiries <span class="badge" id="nav-q">0</span></a>
-      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients</a>
-      <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Products</a>
-      <a href="suppliers.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9M3 5h18v16H3z"/></svg>Suppliers</a>
-      <a href="po-list.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg>Purchase Orders</a>
-      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
-      <div class="nav-label">Production</div>
-      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Production Lineup</a>
-      <a href="#"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Reports</a>
+      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Client Manager</span></a>
+      <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="lbl">Sales Timeline</span></a>
+      <a href="invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Sales Invoices</span></a>
+      <a href="production.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="lbl">Production Lineup</span></a>
+      <a href="reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><span class="lbl">Sales Reports</span></a>
+      <div class="nav-sep"></div>
+      <a href="suppliers.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9M3 5h18v16H3z"/></svg><span class="lbl">Suppliers</span></a>
+      <a href="po-list.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Purchase Timeline</span></a>
+      <a href="purchase-invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h20v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M2 7l3-4h14l3 4"/><path d="M9 13h6"/></svg><span class="lbl">Purchase Invoices</span></a>
+      <a href="purchase-reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg><span class="lbl">Purchase Reports</span></a>
+      <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="lbl">Products</span></a>
     </nav>
-    <div class="sidebar-foot"><div class="avatar">YRT</div><div><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div class="foot-text"><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
   </aside>
   <div class="main">
     <header class="topbar"><h1>Quotes &amp; Inquiries</h1>
@@ -135,7 +169,7 @@ let ALL=[],TAB='all';
 async function load(){
   const {data,error}=await db.from('quotes').select('*, clients(company_name), contacts(first_name,last_name)').in('record_type',['quote','inquiry']).order('quote_date',{ascending:false});
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
-  ALL=data||[];document.getElementById('nav-q').textContent=ALL.length;render();
+  ALL=data||[];const _nq=document.getElementById('nav-q');if(_nq)_nq.textContent=ALL.length;render();
 }
 function render(){
   const q=(document.getElementById('search').value||'').toLowerCase();

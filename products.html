@@ -194,7 +194,7 @@ async function load(){
   PRODUCTS=data||[];
   const {data:sups}=await db.from('suppliers').select('id,supplier_number,company_name,short_name').order('company_name');
   SUPPLIERS=sups||[];
-  document.getElementById('nav-products').textContent=PRODUCTS.length;
+  const _npr=document.getElementById('nav-products');if(_npr)_npr.textContent=PRODUCTS.length;
   renderCats();render();
 }
 function renderCats(){

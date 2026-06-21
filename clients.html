@@ -219,7 +219,7 @@ async function load(){
     if(q.client_id && q.quote_date && (!lastByClient[q.client_id] || q.quote_date>lastByClient[q.client_id])) lastByClient[q.client_id]=q.quote_date;
   });
   CLIENTS.forEach(c=>{ c._balance=balByClient[c.id]||0; c._lastDate=lastByClient[c.id]||null; });
-  document.getElementById('nav-clients').textContent=CLIENTS.length;
+  const _nc=document.getElementById('nav-clients');if(_nc)_nc.textContent=CLIENTS.length;
   render();
 }
 function render(){

@@ -186,7 +186,7 @@ async function load(){
   const {data,error}=await db.from('suppliers').select('*').order('company_name');
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   SUPPLIERS=data||[];
-  document.getElementById('nav-suppliers').textContent=SUPPLIERS.length;
+  const _ns=document.getElementById('nav-suppliers');if(_ns)_ns.textContent=SUPPLIERS.length;
   render();
 }
 

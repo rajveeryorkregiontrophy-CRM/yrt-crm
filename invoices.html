@@ -171,7 +171,7 @@ function invState(i){
 async function load(){
   const {data,error}=await db.from('invoices').select('*, clients(company_name)').order('invoice_date',{ascending:false});
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
-  ALL=data||[];document.getElementById('nav-inv').textContent=ALL.length;
+  ALL=data||[];const _ni=document.getElementById('nav-inv');if(_ni)_ni.textContent=ALL.length;
   const out=ALL.reduce((s,i)=>s+Number(i.balance_due||0),0);
   const paid=ALL.reduce((s,i)=>s+Number(i.amount_paid||0),0);
   const overdueAmt=ALL.filter(invOverdue).reduce((s,i)=>s+Number(i.balance_due||0),0);
