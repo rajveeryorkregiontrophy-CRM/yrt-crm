@@ -26,9 +26,10 @@
   .btn:hover{border-color:var(--brass);}
   .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;}
   .btn-brass:hover{filter:brightness(1.08);}
-  .wrap{max-width:1240px;margin:0 auto;padding:22px 24px 70px;}
+  .wrap{max-width:1400px;margin:0 auto;padding:18px 24px;height:calc(100vh - 58px);display:flex;flex-direction:column;overflow:hidden;}
+  body{overflow:hidden;}
   /* hero */
-  .hero{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:22px;margin-bottom:18px;display:flex;gap:22px;align-items:flex-start;}
+  .hero{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 20px;margin-bottom:14px;display:flex;gap:20px;align-items:center;flex-shrink:0;}
   .hero-badge{width:64px;height:64px;border-radius:14px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-family:var(--fd);font-weight:900;font-size:24px;flex-shrink:0;}
   .hero-main{flex:1;min-width:0;}
   .hero-name{font-family:var(--fd);font-size:24px;font-weight:800;color:#fff;letter-spacing:-.01em;}
@@ -37,22 +38,26 @@
   .stars{color:var(--star);letter-spacing:1px;}.stars .off{color:var(--line-2);}
   .blk{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:5px;background:rgba(255,77,77,.18);color:var(--danger);font-family:var(--fd);}
   /* stat cards */
-  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:18px;}
-  .stat{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:15px 16px;}
-  .stat .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;}
-  .stat .v{font-family:var(--fd);font-size:22px;font-weight:900;color:#fff;margin-top:6px;}
-  .stat .v small{font-size:13px;color:var(--text-2);}
-  .stat .s{font-size:11px;color:var(--text-3);margin-top:1px;}
-  /* layout */
-  .cols{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start;}
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px;flex-shrink:0;}
+  .stat{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:9px 14px;display:flex;flex-direction:column;justify-content:center;}
+  .stat .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#aab0c0;font-weight:700;}
+  .stat .v{font-family:var(--fd);font-size:19px;font-weight:900;color:#fff;margin-top:2px;line-height:1.1;}
+  .stat .v small{font-size:12px;color:var(--text-2);}
+  .stat .s{font-size:10.5px;color:var(--text-3);margin-top:0;}
+  /* layout — static page, only the tab body scrolls */
+  .cols{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:stretch;flex:1;min-height:0;}
   @media(max-width:980px){.cols{grid-template-columns:1fr;}.stats{grid-template-columns:repeat(2,1fr);}}
-  .card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);margin-bottom:18px;overflow:hidden;}
-  .card-h{padding:14px 18px;border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:10px;}
+  .card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+  .card-h{padding:12px 18px;border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:10px;flex-shrink:0;}
   .card-h h3{font-family:var(--fd);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#aab2c4;}
   .card-h .count{font-family:var(--fm);font-size:11px;color:var(--text-2);background:var(--bg-4);padding:2px 8px;border-radius:20px;}
   .card-h .add{margin-left:auto;font-size:12px;padding:5px 11px;border-radius:6px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;}
   .card-h .add:hover{border-color:var(--brass);color:var(--brass-2);}
-  /* history tabs */
+  /* the main tabbed panel fills the column; its body scrolls internally */
+  .panel-main{flex:1;min-height:0;}
+  .tab-body{flex:1;min-height:0;overflow-y:auto;}
+  .tab-body::-webkit-scrollbar{width:8px;}.tab-body::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--bg-2);}
+  /* detail tabs (Contacts / Inquiries / Sales Orders / Notes) */
   .htabs{display:flex;gap:4px;margin-left:auto;}
   .htab{font-size:11.5px;padding:6px 12px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:6px;}
   .htab:hover{border-color:var(--brass);color:var(--text);}
@@ -61,18 +66,16 @@
   .htab.on .tn{background:rgba(0,0,0,.18);color:#15171c;}
   .card-b{padding:6px 0;}
   /* contacts */
-  .contacts-scroll{max-height:280px;overflow-y:auto;}
-  .contacts-scroll::-webkit-scrollbar{width:8px;}.contacts-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--bg-2);}
-  .contact{display:flex;gap:12px;align-items:center;padding:9px 18px;border-bottom:1px solid var(--line);}
+  .contact{display:flex;gap:12px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);}
   .contact:last-child{border-bottom:none;}
   .c-av{width:34px;height:34px;border-radius:8px;background:var(--bg-4);color:var(--brass-2);display:grid;place-items:center;font-weight:800;font-family:var(--fd);font-size:13px;flex-shrink:0;}
   .c-info{flex:1;min-width:0;}
   .c-name{font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;}
   .c-prim{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:4px;background:var(--brass-2);color:#15171c;font-family:var(--fd);}
   .c-desig{font-size:12px;color:var(--text-3);}
-  .c-meta{text-align:right;font-size:12.5px;}
-  .c-meta .tel{font-family:var(--fm);color:var(--text-2);}
-  .c-meta .em{color:var(--text-3);font-size:12px;}
+  .c-meta{text-align:right;font-size:12.5px;display:flex;align-items:center;gap:14px;white-space:nowrap;}
+  .c-meta .em{color:var(--text-2);}
+  .c-meta .tel{font-family:var(--fm);color:var(--text-3);}
   /* history tables */
   table{width:100%;border-collapse:collapse;}
   thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#aab0c0;font-weight:700;padding:9px 18px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
@@ -91,6 +94,7 @@
   .info-row:last-child{border-bottom:none;}
   .info-row .l{color:var(--text-3);}.info-row .v{font-weight:600;text-align:right;}
   .info-row .v.mono{font-family:var(--fm);}
+  .notes-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#aab0c0;font-weight:700;margin-bottom:7px;}
   .notes{font-size:13px;color:var(--text-2);white-space:pre-wrap;line-height:1.5;}
   .notes.internal{color:var(--text-2);background:rgba(202,167,93,.07);border:1px solid rgba(202,167,93,.2);border-radius:8px;padding:11px;}
   .state{padding:30px 18px;text-align:center;color:var(--text-3);font-size:13px;}
@@ -216,34 +220,23 @@ function render(){
     </div>
 
     <div class="cols">
-      <div>
-        <div class="card">
-          <div class="card-h"><h3>Contacts</h3><span class="count">${CONTACTS.length}</span></div>
-          <div class="card-b contacts-scroll">${CONTACTS.length?CONTACTS.map(c=>{
-            const nm=((c.first_name||'')+' '+(c.last_name||'')).trim()||'—';
-            return `<div class="contact">
-              <div class="c-av">${esc(initials(nm))}</div>
-              <div class="c-info"><div class="c-name">${esc(nm)} ${c.is_primary?'<span class="c-prim">Primary</span>':''}</div><div class="c-desig">${esc(c.designation||'')}</div></div>
-              <div class="c-meta"><div class="tel">${esc(c.tel1||'—')}</div><div class="em">${esc(c.email1||'')}</div></div>
-            </div>`;}).join(''):'<div class="state">No contacts. Click “Edit Client” to add people.</div>'}
+      <div class="card panel-main">
+        <div class="card-h">
+          <div class="htabs" id="htabs" style="margin-left:0;">
+            <button class="htab on" data-tab="contacts">Contacts <span class="tn">${CONTACTS.length}</span></button>
+            <button class="htab" data-tab="inquiry">Inquiries <span class="tn">${INQ.length}</span></button>
+            <button class="htab" data-tab="quote">Quotations <span class="tn">${QUOTE.length}</span></button>
+            <button class="htab" data-tab="order">Sales Orders <span class="tn">${SALES.length}</span></button>
+            <button class="htab" data-tab="invoice">Invoices <span class="tn">${INVOICES.length}</span></button>
+            <button class="htab" data-tab="notes">Notes</button>
           </div>
         </div>
-
-        <div class="card">
-          <div class="card-h"><h3>History</h3>
-            <div class="htabs" id="htabs">
-              <button class="htab on" data-tab="inquiry">Inquiries <span class="tn">${INQ.length}</span></button>
-              <button class="htab" data-tab="quote">Quotations <span class="tn">${QUOTE.length}</span></button>
-              <button class="htab" data-tab="order">Sales Orders <span class="tn">${SALES.length}</span></button>
-              <button class="htab" data-tab="invoice">Invoices <span class="tn">${INVOICES.length}</span></button>
-            </div>
-          </div>
-          <div id="htab-body"></div>
-        </div>
+        <div id="htab-body" class="tab-body"></div>
       </div>
 
-      <div>
-        <div class="card"><div class="card-h"><h3>Account</h3></div><div class="card-b" style="padding:6px 18px;">
+      <div class="card panel-main">
+        <div class="card-h"><h3>Account</h3></div>
+        <div class="tab-body" style="padding:6px 18px;">
           <div class="info-row"><span class="l">Client Since</span><span class="v mono">${fmtD(firstDate)}</span></div>
           <div class="info-row"><span class="l">Last Transaction</span><span class="v mono">${fmtD(lastDate)}</span></div>
           <div class="info-row"><span class="l">Payment Terms</span><span class="v">${CLIENT.terms_days?CLIENT.terms_days+' days':'Prepaid'}</span></div>
@@ -251,16 +244,12 @@ function render(){
           <div class="info-row"><span class="l">Contact Cycle</span><span class="v">${CLIENT.contact_cycle_months?CLIENT.contact_cycle_months+' months':'—'}</span></div>
           <div class="info-row"><span class="l">Referred By</span><span class="v">${esc(CLIENT.referred_by||'—')}</span></div>
           <div class="info-row"><span class="l">Rating</span><span class="v">${stars(CLIENT.rating)}</span></div>
-        </div></div>
-
-        ${CLIENT.notes?`<div class="card"><div class="card-h"><h3>Notes</h3></div><div class="card-b" style="padding:16px 18px;"><div class="notes">${esc(CLIENT.notes)}</div></div></div>`:''}
-        ${CLIENT.internal_notes?`<div class="card"><div class="card-h"><h3>Internal Notes</h3></div><div class="card-b" style="padding:16px 18px;"><div class="notes internal">${esc(CLIENT.internal_notes)}</div></div></div>`:''}
+        </div>
       </div>
     </div>`;
 
-  // history tabs — default to first tab that has data
-  HTAB = INQ.length ? 'inquiry' : QUOTE.length ? 'quote' : SALES.length ? 'order' : INVOICES.length ? 'invoice' : 'inquiry';
-  document.querySelectorAll('#htabs .htab').forEach(x=>x.classList.toggle('on',x.dataset.tab===HTAB));
+  // detail tabs — default to Contacts
+  HTAB='contacts';
   document.querySelectorAll('#htabs .htab').forEach(t=>t.addEventListener('click',()=>{
     HTAB=t.dataset.tab;
     document.querySelectorAll('#htabs .htab').forEach(x=>x.classList.toggle('on',x.dataset.tab===HTAB));
@@ -273,7 +262,23 @@ function renderHistoryTab(){
   const body=document.getElementById('htab-body');if(!body)return;
   const orderRows=list=>list.length?`<table><thead><tr><th>ID</th><th>Subject</th><th>Date</th><th>Stage</th><th class="num">Total</th></tr></thead><tbody>${list.map(o=>`
     <tr data-order="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td>${esc(o.subject||'—')}</td><td>${fmtD(o.quote_date)}</td><td><span class="mini-st ms-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td class="num"><span class="money">${money(o.grand_total)}</span></td></tr>`).join('')}</tbody></table>`:null;
-  if(HTAB==='inquiry'){body.innerHTML=orderRows(INQ)||'<div class="state">No inquiries for this client.</div>';}
+  if(HTAB==='contacts'){
+    body.innerHTML=CONTACTS.length?CONTACTS.map(c=>{
+      const nm=((c.first_name||'')+' '+(c.last_name||'')).trim()||'—';
+      const em=c.email1?`<span class="em">${esc(c.email1)}</span>`:'';
+      const tel=c.tel1?`<span class="tel">${esc(c.tel1)}</span>`:'';
+      return `<div class="contact">
+        <div class="c-av">${esc(initials(nm))}</div>
+        <div class="c-info"><div class="c-name">${esc(nm)} ${c.is_primary?'<span class="c-prim">Primary</span>':''}</div><div class="c-desig">${esc(c.designation||'')}</div></div>
+        <div class="c-meta">${em}${tel}</div>
+      </div>`;}).join(''):'<div class="state">No contacts. Click “Edit Client” to add people.</div>';
+  }
+  else if(HTAB==='notes'){
+    const gen=CLIENT.notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">General Notes</div><div class="notes">${esc(CLIENT.notes)}</div></div>`:'';
+    const intl=CLIENT.internal_notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">Internal Notes</div><div class="notes internal">${esc(CLIENT.internal_notes)}</div></div>`:'';
+    body.innerHTML=(gen||intl)?(gen+intl):'<div class="state">No notes for this client. Click “Edit Client” to add notes.</div>';
+  }
+  else if(HTAB==='inquiry'){body.innerHTML=orderRows(INQ)||'<div class="state">No inquiries for this client.</div>';}
   else if(HTAB==='quote'){body.innerHTML=orderRows(QUOTE)||'<div class="state">No quotations for this client.</div>';}
   else if(HTAB==='order'){body.innerHTML=orderRows(SALES)||'<div class="state">No sales orders for this client.</div>';}
   else if(HTAB==='invoice'){
