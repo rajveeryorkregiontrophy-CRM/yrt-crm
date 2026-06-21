@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reports — YRT CRM</title>
+<title>Purchase Reports — YRT CRM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -111,89 +111,40 @@
       <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="lbl">Sales Timeline</span></a>
       <a href="invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Sales Invoices</span></a>
       <a href="production.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="lbl">Production Lineup</span></a>
-      <a href="reports.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><span class="lbl">Sales Reports</span></a>
+      <a href="reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><span class="lbl">Sales Reports</span></a>
       <div class="nav-sep"></div>
       <a href="suppliers.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9M3 5h18v16H3z"/></svg><span class="lbl">Suppliers</span></a>
       <a href="po-list.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Purchase Timeline</span></a>
       <a href="purchase-invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h20v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M2 7l3-4h14l3 4"/><path d="M9 13h6"/></svg><span class="lbl">Purchase Invoices</span></a>
-      <a href="purchase-reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg><span class="lbl">Purchase Reports</span></a>
+      <a href="purchase-reports.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg><span class="lbl">Purchase Reports</span></a>
       <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="lbl">Products</span></a>
     </nav>
     <div class="sidebar-foot"><div class="avatar">YRT</div><div class="foot-text"><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
   </aside>
   <div class="main">
-    <header class="topbar"><h1>Reports</h1></header>
-    <div class="content" id="content"><div class="state">Crunching numbers…</div></div>
+    <header class="topbar"><h1>Purchase Reports</h1></header>
+    <div class="content" id="content">
+      <div class="empty-module">
+        <div class="em-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        </div>
+        <div class="em-title">Purchase Reports</div>
+        <div class="em-sub">This module is coming soon. Spend analysis and supplier reporting will live here.</div>
+      </div>
+    </div>
   </div>
 </div>
+<style>
+  .empty-module{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 20px;color:var(--text-3);}
+  .em-icon{width:64px;height:64px;border-radius:16px;background:var(--bg-2);border:1px solid var(--line-2);display:grid;place-items:center;margin-bottom:20px;}
+  .em-icon svg{width:30px;height:30px;color:var(--text-3);}
+  .em-title{font-family:var(--fd);font-size:20px;font-weight:800;color:var(--text);margin-bottom:8px;}
+  .em-sub{font-size:13.5px;color:var(--text-3);max-width:380px;line-height:1.6;}
+</style>
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut } from './auth.js';
 await requireAuth();
-const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:0,maximumFractionDigits:0});
-const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
-const STAGE_COLOR={send_art:'var(--art)',approval_due:'var(--due)',approved:'var(--approved)',in_process:'var(--process)',invoice:'var(--invoice)'};
-const STAGE_LABEL={send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice'};
-async function load(){
-  const [{data:orders},{data:invoices},{data:clients}]=await Promise.all([
-    db.from('quotes').select('*, clients(company_name)').eq('record_type','order'),
-    db.from('invoices').select('*'),
-    db.from('clients').select('id,company_name')
-  ]);
-  render(orders||[],invoices||[],clients||[]);
-}
-function render(orders,invoices,clients){
-  const openVal=orders.filter(o=>o.active_status!=='completed').reduce((s,o)=>s+Number(o.grand_total||0),0);
-  const invoiced=invoices.reduce((s,i)=>s+Number(i.grand_total||0),0);
-  const collected=invoices.reduce((s,i)=>s+Number(i.amount_paid||0),0);
-  const outstanding=invoices.reduce((s,i)=>s+Number(i.balance_due||0),0);
-
-  // stage breakdown
-  const stageCounts={};orders.forEach(o=>{stageCounts[o.art_status]=(stageCounts[o.art_status]||0)+1;});
-  const totalOrders=orders.length||1;
-
-  // top clients by order value
-  const byClient={};orders.forEach(o=>{const n=o.clients?.company_name||'—';byClient[n]=(byClient[n]||0)+Number(o.grand_total||0);});
-  const topClients=Object.entries(byClient).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const maxClient=topClients.length?topClients[0][1]:1;
-
-  document.getElementById('content').innerHTML=`
-    <div class="kpis">
-      <div class="kpi"><div class="l">Open Order Value</div><div class="v"><small>$</small>${Math.round(openVal).toLocaleString('en-CA')}</div><div class="sub">${orders.length} active orders</div></div>
-      <div class="kpi"><div class="l">Total Invoiced</div><div class="v"><small>$</small>${Math.round(invoiced).toLocaleString('en-CA')}</div><div class="sub">${invoices.length} invoices</div></div>
-      <div class="kpi"><div class="l">Collected</div><div class="v"><small>$</small>${Math.round(collected).toLocaleString('en-CA')}</div><div class="sub">received payments</div></div>
-      <div class="kpi"><div class="l">Outstanding</div><div class="v"><small>$</small>${Math.round(outstanding).toLocaleString('en-CA')}</div><div class="sub">awaiting payment</div></div>
-    </div>
-    <div class="row">
-      <div class="panel"><div class="panel-head"><h2>Orders by Stage</h2></div><div class="panel-b">
-        ${Object.keys(STAGE_LABEL).map(k=>{const c=stageCounts[k]||0;const pct=Math.round(c/totalOrders*100);return `
-          <div class="bar-row"><div class="lbl">${STAGE_LABEL[k]}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(pct,4)}%;background:${STAGE_COLOR[k]}">${c}</div></div></div>`;}).join('')}
-      </div></div>
-      <div class="panel"><div class="panel-head"><h2>Top Clients by Order Value</h2></div><div class="panel-b">
-        ${topClients.length?topClients.map(([n,v])=>`
-          <div class="bar-row"><div class="lbl">${esc(n.length>16?n.slice(0,15)+'…':n)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(Math.round(v/maxClient*100),8)}%;background:linear-gradient(90deg,var(--brass-2),var(--brass))">${money(v)}</div></div></div>`).join(''):'<div class="state">No order data yet.</div>'}
-      </div></div>
-    </div>
-    <div class="row">
-      <div class="panel"><div class="panel-head"><h2>Payment Status</h2></div><div class="panel-b">
-        <div class="stat-list">
-          <div class="s-row"><span class="s-name">Paid invoices</span><span class="s-val">${invoices.filter(i=>i.paid_status==='paid').length}</span></div>
-          <div class="s-row"><span class="s-name">Partially paid</span><span class="s-val">${invoices.filter(i=>i.paid_status==='partial').length}</span></div>
-          <div class="s-row"><span class="s-name">Unpaid</span><span class="s-val">${invoices.filter(i=>i.paid_status==='unpaid').length}</span></div>
-          <div class="s-row"><span class="s-name">Collection rate</span><span class="s-val">${invoiced>0?Math.round(collected/invoiced*100):0}%</span></div>
-        </div>
-      </div></div>
-      <div class="panel"><div class="panel-head"><h2>At a Glance</h2></div><div class="panel-b">
-        <div class="stat-list">
-          <div class="s-row"><span class="s-name">Total clients</span><span class="s-val">${clients.length}</span></div>
-          <div class="s-row"><span class="s-name">Active orders</span><span class="s-val">${orders.length}</span></div>
-          <div class="s-row"><span class="s-name">Avg order value</span><span class="s-val">${money(orders.length?openVal/orders.length:0)}</span></div>
-          <div class="s-row"><span class="s-name">Jobs needing art</span><span class="s-val">${stageCounts['send_art']||0}</span></div>
-        </div>
-      </div></div>
-    </div>`;
-}
-const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
-load();
+document.getElementById('logout-btn')?.addEventListener('click',signOut);
 </script>
 </body>
 </html>
