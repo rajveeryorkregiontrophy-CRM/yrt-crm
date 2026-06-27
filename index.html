@@ -88,11 +88,13 @@
   .stage-id{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
   .client-cell .name{font-weight:700;color:#fff;}
   .client-cell .sub{font-size:12.5px;color:#aab0c0;margin-top:2px;font-weight:500;}
-  .subject-tag{font-size:12.5px;color:var(--text-2);}
+  .subject-tag{font-size:13px;color:var(--text-2);}
+  .tl-col{width:185px;}
   .money-cell{font-family:var(--fm);font-weight:700;font-size:13.5px;color:#fff;}
-  .q-date{font-family:var(--fm);font-size:12.5px;color:var(--text-2);}
+  .q-date{font-family:var(--fb);font-size:13px;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:7px;}
+  .pickup-dot{width:7px;height:7px;border-radius:50%;background:#ff4d4d;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,77,77,.18);}
 
-  .badge-st{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);}
+  .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
   .fs-pill{display:inline-block;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:7px;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;white-space:nowrap;}
   .fs-pill:hover{filter:brightness(1.15);}
   .fs-none{color:#5a6273;}
@@ -108,7 +110,6 @@
   .fsp-desc{flex:1;font-size:13px;color:var(--text);}
   .fsp-detail{display:block;font-size:11px;color:#e0883a;font-weight:600;margin-top:2px;}
   .fsp-empty{padding:20px;text-align:center;color:var(--text-3);}
-  .badge-st::before{content:'';width:7px;height:7px;border-radius:50%;background:rgba(0,0,0,.45);}
   .st-send_art{background:var(--art);color:var(--art-ink);}
   .st-approval_due{background:var(--due);color:var(--due-ink);}
   .st-approved{background:var(--approved);color:var(--approved-ink);}
@@ -377,16 +378,23 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:120px;">Timeline Date</th><th style="width:22%;">Client</th><th>Subject</th><th style="width:120px;">Stage</th><th style="width:150px;">Fulfillment</th><th style="width:175px;">Dates</th><th class="num" style="width:96px;">Total</th></tr></thead><tbody>${rows.map(o=>{
+    // Timeline (pickup/event dates) column shows ONLY on the "All" view — hidden
+    // once a specific stage filter is selected, to free space for that focused view.
+    const showTimeline = FILTER==='all';
+    const tlHead = showTimeline ? '<th class="tl-col">Timeline</th>' : '';
+    html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:118px;">Date</th><th style="width:20%;">Client</th><th>Subject</th><th style="width:150px;">Fulfillment</th><th style="width:128px;">Stage</th>${tlHead}</tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
-      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td>${fsCell}</td><td>${datesCell(o.pickup_date,o.event_date)}</td><td class="num money-cell">${money(o.grand_total)}</td></tr>`;}).join('')}</tbody></table>`;
+      const pickDot=o.pickup_date?'<span class="pickup-dot" title="Pickup date scheduled"></span>':'';
+      const tlCell = showTimeline ? `<td class="tl-col">${datesCell(o.pickup_date,o.event_date)}</td>` : '';
+      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${pickDot}${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td>${fsCell}</td><td><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td>${tlCell}</tr>`;}).join('')}</tbody></table>`;
   }else{
-    // simpler rows for inquiries / quotes
-    html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:120px;">Timeline Date</th><th style="width:30%;">Client</th><th>Subject</th><th class="num" style="width:120px;">Total</th></tr></thead><tbody>${rows.map(o=>{
+    // inquiries / quotes: no amount, no timeline column
+    html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:118px;">Date</th><th style="width:26%;">Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
-      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td class="num money-cell">${money(o.grand_total)}</td></tr>`;}).join('')}</tbody></table>`;
+      const pickDot=o.pickup_date?'<span class="pickup-dot" title="Pickup date scheduled"></span>':'';
+      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${pickDot}${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
   }
   document.getElementById('wrap').innerHTML=html;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.id)));
