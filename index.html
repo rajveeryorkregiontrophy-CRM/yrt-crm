@@ -91,8 +91,13 @@
   .subject-tag{font-size:13px;color:var(--text-2);}
   .tl-col{width:185px;}
   .money-cell{font-family:var(--fm);font-weight:700;font-size:13.5px;color:#fff;}
-  .q-date{font-family:var(--fb);font-size:13px;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:7px;}
-  .pickup-dot{width:7px;height:7px;border-radius:50%;background:#ff4d4d;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,77,77,.18);}
+  .q-date{font-family:var(--fb);font-size:13px;color:#fff;font-weight:700;}
+  /* Pickup Date pills — priority backgrounds (soft, professional) */
+  .pk-pill{display:inline-block;font-family:var(--fb);font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:7px;white-space:nowrap;border:1px solid transparent;}
+  .pk-far{background:rgba(255,255,255,.06);color:#e6e9f0;border-color:rgba(255,255,255,.12);}
+  .pk-soon{background:rgba(240,179,78,.16);color:#f0b34e;border-color:rgba(240,179,78,.34);}
+  .pk-urgent{background:rgba(255,77,77,.15);color:#ff6b6b;border-color:rgba(255,77,77,.36);}
+  .pk-none{color:#5a6273;}
 
   .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
   .fs-pill{display:inline-block;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:7px;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;white-space:nowrap;}
@@ -206,11 +211,6 @@
           <div class="filters" id="filters"></div>
         </div>
         <div id="wrap"><div class="skeleton"><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div></div></div>
-        <div class="legend" id="legend" style="display:none;">
-          <span><i style="background:var(--danger)"></i>Overdue</span><span><i style="background:var(--art)"></i>1 day</span>
-          <span><i style="background:var(--due)"></i>2 days</span><span><i style="background:#4a5160"></i>3 days</span>
-          <span><i style="background:var(--bg-4)"></i>4+ days</span><span style="margin-left:auto;color:var(--accent-2)"><i style="background:var(--accent-2)"></i>Event date</span>
-        </div>
       </section>
     </div>
   </div>
@@ -257,6 +257,19 @@ function datesCell(pickup,event){
   const n=daysUntil(pickup);let dd=n===null?'d4':n<0?'d0':n<=1?'d1':n===2?'d2':n===3?'d3':'d4';
   const chip=n===null?'':`<span class="dot-days ${dd}">${n<0?'!':n}</span>`;
   return `<div class="dates"><div class="date-line"><span class="tag">Pick</span><span class="d">${fmtDate(pickup)}</span>${chip}</div>${event?`<div class="date-line event"><span class="tag">Event</span><span class="d">${fmtDate(event)}</span></div>`:''}</div>`;
+}
+
+// Pickup Date cell with priority background:
+//  > 3 days away  -> soft white   (.pk-far)
+//  3 days or fewer but more than 2 (i.e. exactly 3) -> soft yellow (.pk-soon)
+//  2 days or fewer (incl. today / overdue) -> soft red (.pk-urgent)
+function pickupCell(pickup){
+  if(!pickup) return '<span class="pk-none">—</span>';
+  const n=daysUntil(pickup);
+  let cls='pk-far';
+  if(n<=2) cls='pk-urgent';
+  else if(n===3) cls='pk-soon';
+  return `<span class="pk-pill ${cls}">${fmtDate(pickup)}</span>`;
 }
 
 async function load(){
@@ -361,37 +374,37 @@ function render(){
   document.getElementById('new-label').textContent=TAB_NEW[TAB];
   // filters only for sales orders (stage pipeline)
   const filtersEl=document.getElementById('filters');
-  if(TAB==='order'){
-    filtersEl.innerHTML=['all','send_art','approval_due','approved','in_process','invoice'].map(f=>`<button class="chip ${FILTER===f?'active':''}" data-f="${f}">${f==='all'?'All':ST_LABEL[f]}</button>`).join('');
-    filtersEl.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{FILTER=c.dataset.f;render();}));
-  }else{filtersEl.innerHTML='';}
-  document.getElementById('legend').style.display=TAB==='order'?'flex':'none';
+  filtersEl.innerHTML='';   // stage filters removed — the All view is the only view
+  const legendEl=document.getElementById('legend');if(legendEl)legendEl.style.display='none';   // legend removed
 
   const q=(document.getElementById('search').value||'').toLowerCase();
   let rows=(DATA[TAB]||[]).filter(o=>{
-    if(TAB==='order'&&FILTER!=='all'&&o.art_status!==FILTER)return false;
     if(q){const hay=((o.clients?.company_name||'')+' '+(o.subject||'')+' '+o.stage_id+' '+(o.serviced_by||'')).toLowerCase();if(!hay.includes(q))return false;}
     return true;
   });
+  // Sales Orders sort by pickup date ascending (nearest upcoming pickup first; blanks last)
+  if(TAB==='order'){
+    rows.sort((a,b)=>{
+      const pa=a.pickup_date, pb=b.pickup_date;
+      if(pa&&pb) return pa<pb?-1:pa>pb?1:0;
+      if(pa&&!pb) return -1;
+      if(!pa&&pb) return 1;
+      return 0;
+    });
+  }
   document.getElementById('list-count').textContent=rows.length+(rows.length===1?' record':' records');
   if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">Nothing in ${TAB_TITLE[TAB]} right now.</div>`;return;}
 
   let html;
   if(TAB==='order'){
-    // Timeline (pickup/event dates) column shows ONLY on the "All" view — hidden
-    // once a specific stage filter is selected, to free space for that focused view.
-    const showTimeline = FILTER==='all';
-    const tlHead = showTimeline ? '<th class="tl-col">Timeline</th>' : '';
-    html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:118px;">Date</th><th style="width:20%;">Client</th><th>Subject</th><th style="width:150px;">Fulfillment</th><th style="width:128px;">Stage</th>${tlHead}</tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:60px;">ID</th><th style="width:110px;">Date</th><th style="width:23%;">Client</th><th>Subject</th><th style="width:135px;">Fulfillment</th><th style="width:120px;">Stage</th><th style="width:150px;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
-      const pickDot=o.pickup_date?'<span class="pickup-dot" title="Pickup date scheduled"></span>':'';
-      const tlCell = showTimeline ? `<td class="tl-col">${datesCell(o.pickup_date,o.event_date)}</td>` : '';
-      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${pickDot}${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td>${fsCell}</td><td><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td>${tlCell}</tr>`;}).join('')}</tbody></table>`;
+      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td>${fsCell}</td><td><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td>${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
-    // inquiries / quotes: no amount, no timeline column
-    html=`<table><thead><tr><th style="width:58px;">ID</th><th style="width:118px;">Date</th><th style="width:26%;">Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
+    // inquiries / quotes: balanced layout, no pickup / fulfillment / stage
+    html=`<table><thead><tr><th style="width:60px;">ID</th><th style="width:120px;">Date</th><th style="width:32%;">Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const pickDot=o.pickup_date?'<span class="pickup-dot" title="Pickup date scheduled"></span>':'';
       return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${pickDot}${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
