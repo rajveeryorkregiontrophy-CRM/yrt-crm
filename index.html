@@ -82,7 +82,7 @@
   table{width:100%;border-collapse:collapse;}
   thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;padding:11px 14px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
   thead th.num{text-align:right;}
-  tbody td{padding:14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody td{padding:18px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
   tbody tr{cursor:pointer;transition:background .1s;}tbody tr:hover{background:var(--bg-3);}
   tbody tr:last-child td{border-bottom:none;}
   .stage-id{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
@@ -374,11 +374,15 @@ function render(){
   document.getElementById('new-label').textContent=TAB_NEW[TAB];
   // filters only for sales orders (stage pipeline)
   const filtersEl=document.getElementById('filters');
-  filtersEl.innerHTML='';   // stage filters removed — the All view is the only view
-  const legendEl=document.getElementById('legend');if(legendEl)legendEl.style.display='none';   // legend removed
+  if(TAB==='order'){
+    filtersEl.innerHTML=['all','send_art','approval_due','approved','in_process','invoice'].map(f=>`<button class="chip ${FILTER===f?'active':''}" data-f="${f}">${f==='all'?'All':ST_LABEL[f]}</button>`).join('');
+    filtersEl.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{FILTER=c.dataset.f;render();}));
+  }else{filtersEl.innerHTML='';}
+  const legendEl=document.getElementById('legend');if(legendEl)legendEl.style.display='none';   // legend stays removed
 
   const q=(document.getElementById('search').value||'').toLowerCase();
   let rows=(DATA[TAB]||[]).filter(o=>{
+    if(TAB==='order'&&FILTER!=='all'&&o.art_status!==FILTER)return false;
     if(q){const hay=((o.clients?.company_name||'')+' '+(o.subject||'')+' '+o.stage_id+' '+(o.serviced_by||'')).toLowerCase();if(!hay.includes(q))return false;}
     return true;
   });
@@ -397,14 +401,14 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><thead><tr><th style="width:60px;">ID</th><th style="width:110px;">Date</th><th style="width:23%;">Client</th><th>Subject</th><th style="width:135px;">Fulfillment</th><th style="width:120px;">Stage</th><th style="width:150px;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:7%;">ID</th><th style="width:12%;">Date</th><th style="width:27%;">Client</th><th style="width:30%;">Subject</th><th style="width:13%;">Fulfillment</th><th style="width:11%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
-      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td>${fsCell}</td><td><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td>${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
+      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td>${fsCell}</td><td>${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
-    // inquiries / quotes: balanced layout, no pickup / fulfillment / stage
-    html=`<table><thead><tr><th style="width:60px;">ID</th><th style="width:120px;">Date</th><th style="width:32%;">Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
+    // inquiries / quotes: spread evenly across the full width
+    html=`<table><thead><tr><th style="width:8%;">ID</th><th style="width:15%;">Date</th><th style="width:40%;">Client</th><th style="width:37%;">Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const pickDot=o.pickup_date?'<span class="pickup-dot" title="Pickup date scheduled"></span>':'';
       return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${pickDot}${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
