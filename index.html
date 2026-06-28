@@ -445,7 +445,7 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><colgroup><col style="width:64px;"><col class="col-date" style="width:120px;"><col style="width:32%;"><col><col class="col-fulfil" style="width:130px;"><col style="width:130px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th><th class="col-fulfil">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><colgroup><col style="width:64px;"><col class="col-date" style="width:118px;"><col style="width:26%;"><col style="width:36%;"><col class="col-fulfil" style="width:130px;"><col style="width:128px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th><th class="col-fulfil">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
