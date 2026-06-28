@@ -145,7 +145,25 @@
   .legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--bg-3);}
   .legend span{font-size:11.5px;color:var(--text-3);display:inline-flex;align-items:center;gap:6px;}
   .legend i{width:9px;height:9px;border-radius:50%;display:inline-block;}
-  @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}.stage-tabs{flex-direction:column;}}
+  @media(max-width:880px){.app{grid-template-columns:1fr !important;}.sidebar{display:none !important;}.stage-tabs{flex-direction:column;}}
+  /* ── Narrow window: tighten table, hide non-essential columns ── */
+  @media(max-width:760px){
+    .content{padding:14px 14px;}
+    .panel-head{padding:13px 16px;flex-wrap:wrap;gap:8px;}
+    .filters{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    thead th,tbody td{padding:13px 10px;}
+    thead th:first-child,tbody td:first-child{padding-left:16px;}
+    thead th:last-child,tbody td:last-child{padding-right:16px;}
+    /* hide Fulfillment + the client sub-line on tight screens, give Subject room */
+    .col-fulfil{display:none;}
+    .client-cell .sub{display:none;}
+    .subject-tag{font-size:12.5px;}
+  }
+  @media(max-width:520px){
+    /* very tight: also fold the Date into the ID cell area by hiding the Date column */
+    .col-date{display:none;}
+    thead th,tbody td{padding:12px 8px;}
+  }
   .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;transition:grid-template-columns .32s cubic-bezier(.4,0,.2,1);}
   .app.collapsed{grid-template-columns:68px 1fr;}
   .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);width:240px;transition:width .32s cubic-bezier(.4,0,.2,1);z-index:50;overflow:hidden;}
@@ -411,17 +429,16 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><thead><tr><th style="width:7%;">ID</th><th style="width:11%;">Date</th><th style="width:25%;">Client</th><th style="width:30%;">Subject</th><th style="width:14%;">Fulfillment</th><th style="width:13%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:7%;">ID</th><th class="col-date" style="width:11%;">Date</th><th style="width:25%;">Client</th><th style="width:30%;">Subject</th><th class="col-fulfil" style="width:14%;">Fulfillment</th><th style="width:13%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
-      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td>${fsCell}</td><td>${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
+      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td class="col-fulfil">${fsCell}</td><td>${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     // inquiries / quotes: spread evenly across the full width
-    html=`<table><thead><tr><th style="width:8%;">ID</th><th style="width:14%;">Date</th><th style="width:33%;">Client</th><th style="width:45%;">Subject</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:8%;">ID</th><th class="col-date" style="width:14%;">Date</th><th style="width:33%;">Client</th><th style="width:45%;">Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
-      const pickDot=o.pickup_date?'<span class="pickup-dot" title="Pickup date scheduled"></span>':'';
-      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${pickDot}${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
+      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
   }
   document.getElementById('wrap').innerHTML=html;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.id)));
