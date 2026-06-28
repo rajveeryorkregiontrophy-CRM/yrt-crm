@@ -80,7 +80,7 @@
   .chip.active{background:var(--accent-2);color:#15171c;border-color:var(--accent-2);font-weight:700;}
 
   /* ── Sales Timeline table ─────────────────────────────── */
-  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  table{width:100%;border-collapse:collapse;}
   thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#8b94a6;font-weight:700;padding:14px 18px;border-bottom:1px solid var(--line-2);background:var(--bg-3);white-space:nowrap;}
   thead th:first-child{padding-left:26px;}
   thead th:last-child{padding-right:26px;}
@@ -429,16 +429,16 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><thead><tr><th style="width:7%;">ID</th><th class="col-date" style="width:11%;">Date</th><th style="width:25%;">Client</th><th style="width:30%;">Subject</th><th class="col-fulfil" style="width:14%;">Fulfillment</th><th style="width:13%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><colgroup><col style="width:64px;"><col class="col-date" style="width:120px;"><col style="width:32%;"><col><col class="col-fulfil" style="width:130px;"><col style="width:120px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th><th class="col-fulfil">Fulfillment</th><th>Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
       return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td class="col-fulfil">${fsCell}</td><td>${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     // inquiries / quotes: spread evenly across the full width
-    html=`<table><thead><tr><th style="width:8%;">ID</th><th class="col-date" style="width:14%;">Date</th><th style="width:33%;">Client</th><th style="width:45%;">Subject</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><colgroup><col style="width:80px;"><col style="width:150px;"><col style="width:32%;"><col></colgroup><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
-      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
+      return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
   }
   document.getElementById('wrap').innerHTML=html;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.id)));
