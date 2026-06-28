@@ -79,24 +79,30 @@
   .chip:hover{border-color:var(--accent);color:var(--text);}
   .chip.active{background:var(--accent-2);color:#15171c;border-color:var(--accent-2);font-weight:700;}
 
-  table{width:100%;border-collapse:collapse;}
-  thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;padding:11px 14px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;padding:13px 16px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
+  thead th:first-child{padding-left:24px;}
+  thead th:last-child{padding-right:24px;}
   thead th.num{text-align:right;}
-  tbody td{padding:18px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody td{padding:16px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody td.client-cell,tbody td .subject-tag{overflow:hidden;text-overflow:ellipsis;}
+  tbody td:first-child{padding-left:24px;}
+  tbody td:last-child{padding-right:24px;}
   tbody tr{cursor:pointer;transition:background .1s;}tbody tr:hover{background:var(--bg-3);}
   tbody tr:last-child td{border-bottom:none;}
   .stage-id{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
-  .client-cell .name{font-weight:700;color:#fff;}
-  .client-cell .sub{font-size:12.5px;color:#aab0c0;margin-top:2px;font-weight:500;}
-  .subject-tag{font-size:13px;color:var(--text-2);}
+  .client-cell .name{font-weight:700;color:#fff;font-size:13.5px;line-height:1.35;}
+  .client-cell .sub{font-size:12px;color:#aab0c0;margin-top:3px;font-weight:500;}
+  .subject-tag{font-size:13px;color:var(--text-2);line-height:1.4;display:block;}
   .tl-col{width:185px;}
   .money-cell{font-family:var(--fm);font-weight:700;font-size:13.5px;color:#fff;}
-  .q-date{font-family:var(--fb);font-size:13px;color:#fff;font-weight:700;}
-  /* Pickup Date pills — priority backgrounds (soft, professional) */
-  .pk-pill{display:inline-block;font-family:var(--fb);font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:7px;white-space:nowrap;border:1px solid transparent;}
-  .pk-far{background:rgba(255,255,255,.06);color:#e6e9f0;border-color:rgba(255,255,255,.12);}
-  .pk-soon{background:rgba(240,179,78,.16);color:#f0b34e;border-color:rgba(240,179,78,.34);}
-  .pk-urgent{background:rgba(255,77,77,.15);color:#ff6b6b;border-color:rgba(255,77,77,.36);}
+  .q-date{font-family:var(--fb);font-size:13px;color:#fff;font-weight:700;white-space:nowrap;}
+  /* Pickup Date pills — four distinct priority levels */
+  .pk-pill{display:inline-block;font-family:var(--fb);font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:7px;white-space:nowrap;border:1px solid transparent;letter-spacing:.01em;}
+  .pk-far{background:rgba(255,255,255,.05);color:#cfd4e0;border-color:rgba(255,255,255,.10);}
+  .pk-soon{background:rgba(240,201,78,.15);color:#f0c94e;border-color:rgba(240,201,78,.32);}
+  .pk-urgent{background:rgba(240,138,58,.16);color:#f0a04e;border-color:rgba(240,138,58,.36);}
+  .pk-overdue{background:rgba(255,77,77,.18);color:#ff5d5d;border-color:rgba(255,77,77,.5);font-weight:800;}
   .pk-none{color:#5a6273;}
 
   .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
@@ -260,14 +266,16 @@ function datesCell(pickup,event){
 }
 
 // Pickup Date cell with priority background:
-//  > 3 days away  -> soft white   (.pk-far)
-//  3 days or fewer but more than 2 (i.e. exactly 3) -> soft yellow (.pk-soon)
-//  2 days or fewer (incl. today / overdue) -> soft red (.pk-urgent)
+//  overdue (date already passed) -> strong red (.pk-overdue)
+//  due in 2 days or fewer (incl. today) -> orange/urgent (.pk-urgent)
+//  due in exactly 3 days -> yellow (.pk-soon)
+//  more than 3 days away -> soft neutral (.pk-far)
 function pickupCell(pickup){
   if(!pickup) return '<span class="pk-none">—</span>';
   const n=daysUntil(pickup);
   let cls='pk-far';
-  if(n<=2) cls='pk-urgent';
+  if(n<0) cls='pk-overdue';
+  else if(n<=2) cls='pk-urgent';
   else if(n===3) cls='pk-soon';
   return `<span class="pk-pill ${cls}">${fmtDate(pickup)}</span>`;
 }
@@ -401,7 +409,7 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><thead><tr><th style="width:7%;">ID</th><th style="width:12%;">Date</th><th style="width:27%;">Client</th><th style="width:30%;">Subject</th><th style="width:13%;">Fulfillment</th><th style="width:11%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:7%;">ID</th><th style="width:12%;">Date</th><th style="width:25%;">Client</th><th style="width:29%;">Subject</th><th style="width:13%;">Fulfillment</th><th style="width:14%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
