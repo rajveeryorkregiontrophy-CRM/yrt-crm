@@ -80,8 +80,8 @@
   .chip.active{background:var(--accent-2);color:#15171c;border-color:var(--accent-2);font-weight:700;}
 
   /* ── Sales Timeline table ─────────────────────────────── */
-  table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#8b94a6;font-weight:700;padding:14px 18px;border-bottom:1px solid var(--line-2);background:var(--bg-3);}
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#8b94a6;font-weight:700;padding:14px 18px;border-bottom:1px solid var(--line-2);background:var(--bg-3);white-space:nowrap;}
   thead th:first-child{padding-left:26px;}
   thead th:last-child{padding-right:26px;}
   thead th.num{text-align:right;}
@@ -99,12 +99,12 @@
   .tl-col{width:185px;}
   .money-cell{font-family:var(--fm);font-weight:700;font-size:13.5px;color:#fff;}
   .q-date{font-family:var(--fb);font-size:13px;color:#e8ebf1;font-weight:700;white-space:nowrap;}
-  /* Pickup Date pills — subtle, professional; four priority levels */
-  .pk-pill{display:inline-block;font-family:var(--fb);font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;white-space:nowrap;border:1px solid transparent;letter-spacing:.01em;}
-  .pk-far{background:rgba(255,255,255,.04);color:#c4cad6;border-color:rgba(255,255,255,.09);}
-  .pk-soon{background:rgba(225,190,90,.10);color:#e2c46a;border-color:rgba(225,190,90,.22);}
-  .pk-urgent{background:rgba(224,136,58,.11);color:#e8995a;border-color:rgba(224,136,58,.26);}
-  .pk-overdue{background:rgba(255,77,77,.12);color:#ff7070;border-color:rgba(255,77,77,.30);font-weight:800;}
+  /* Pickup Date — plain coloured text (no box); four priority levels */
+  .pk-pill{display:inline-block;font-family:var(--fb);font-size:13px;font-weight:700;white-space:nowrap;}
+  .pk-far{color:#c4cad6;}
+  .pk-soon{color:#e2c46a;}
+  .pk-urgent{color:#e8995a;}
+  .pk-overdue{color:#ff6b6b;font-weight:800;}
   .pk-none{color:#5a6273;}
 
   .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
@@ -411,14 +411,14 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><thead><tr><th style="width:7%;">ID</th><th style="width:12%;">Date</th><th style="width:25%;">Client</th><th style="width:29%;">Subject</th><th style="width:13%;">Fulfillment</th><th style="width:14%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:1%;">ID</th><th style="width:1%;">Date</th><th style="width:30%;">Client</th><th style="width:40%;">Subject</th><th style="width:1%;">Fulfillment</th><th style="width:1%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
       return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td>${fsCell}</td><td>${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     // inquiries / quotes: spread evenly across the full width
-    html=`<table><thead><tr><th style="width:8%;">ID</th><th style="width:15%;">Date</th><th style="width:40%;">Client</th><th style="width:37%;">Subject</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:1%;">ID</th><th style="width:1%;">Date</th><th style="width:45%;">Client</th><th style="width:55%;">Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const pickDot=o.pickup_date?'<span class="pickup-dot" title="Pickup date scheduled"></span>':'';
       return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${pickDot}${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
