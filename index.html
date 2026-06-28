@@ -71,7 +71,7 @@
   #wrap{flex:1;min-height:0;overflow-y:auto;}
   #wrap::-webkit-scrollbar{width:10px;}#wrap::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg-2);}
   #wrap thead th{position:sticky;top:0;z-index:5;}
-  .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
+  .panel-head{display:flex;align-items:center;gap:12px;padding:16px 26px;border-bottom:1px solid var(--line-2);}
   .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
   .panel-head .count{font-family:var(--fd);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);background:transparent;border:1px solid var(--line-2);padding:3px 9px;border-radius:5px;}
   .panel-head .filters{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;}
@@ -79,30 +79,32 @@
   .chip:hover{border-color:var(--accent);color:var(--text);}
   .chip.active{background:var(--accent-2);color:#15171c;border-color:var(--accent-2);font-weight:700;}
 
+  /* ── Sales Timeline table ─────────────────────────────── */
   table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;padding:13px 16px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
-  thead th:first-child{padding-left:24px;}
-  thead th:last-child{padding-right:24px;}
+  thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#8b94a6;font-weight:700;padding:14px 18px;border-bottom:1px solid var(--line-2);background:var(--bg-3);}
+  thead th:first-child{padding-left:26px;}
+  thead th:last-child{padding-right:26px;}
   thead th.num{text-align:right;}
-  tbody td{padding:16px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody td{padding:17px 18px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody td:first-child{padding-left:26px;}
+  tbody td:last-child{padding-right:26px;}
   tbody td.client-cell,tbody td .subject-tag{overflow:hidden;text-overflow:ellipsis;}
-  tbody td:first-child{padding-left:24px;}
-  tbody td:last-child{padding-right:24px;}
-  tbody tr{cursor:pointer;transition:background .1s;}tbody tr:hover{background:var(--bg-3);}
+  tbody tr{cursor:pointer;transition:background .12s ease;}
+  tbody tr:hover{background:var(--bg-3);}
   tbody tr:last-child td{border-bottom:none;}
-  .stage-id{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
-  .client-cell .name{font-weight:700;color:#fff;font-size:13.5px;line-height:1.35;}
-  .client-cell .sub{font-size:12px;color:#aab0c0;margin-top:3px;font-weight:500;}
-  .subject-tag{font-size:13px;color:var(--text-2);line-height:1.4;display:block;}
+  .stage-id{font-family:var(--fm);font-size:12px;font-weight:600;color:#9aa3b5;letter-spacing:.01em;}
+  .client-cell .name{font-weight:700;color:#f3f5f9;font-size:13.5px;line-height:1.35;}
+  .client-cell .sub{font-size:11.5px;color:#8b94a6;margin-top:3px;font-weight:500;}
+  .subject-tag{font-size:13px;color:#c4cad6;line-height:1.45;display:block;}
   .tl-col{width:185px;}
   .money-cell{font-family:var(--fm);font-weight:700;font-size:13.5px;color:#fff;}
-  .q-date{font-family:var(--fb);font-size:13px;color:#fff;font-weight:700;white-space:nowrap;}
-  /* Pickup Date pills — four distinct priority levels */
-  .pk-pill{display:inline-block;font-family:var(--fb);font-size:12px;font-weight:800;padding:6px 12px;border-radius:8px;white-space:nowrap;border:1px solid transparent;letter-spacing:.02em;text-transform:uppercase;}
-  .pk-far{background:rgba(122,132,150,.18);color:#cdd3df;border-color:rgba(122,132,150,.32);}
-  .pk-soon{background:rgba(240,201,78,.20);color:#f5d36a;border-color:rgba(240,201,78,.55);}
-  .pk-urgent{background:rgba(240,138,58,.22);color:#ff9d4d;border-color:rgba(240,138,58,.6);}
-  .pk-overdue{background:#ff4d4d;color:#fff;border-color:#ff4d4d;font-weight:900;box-shadow:0 0 0 1px rgba(255,77,77,.3);}
+  .q-date{font-family:var(--fb);font-size:13px;color:#e8ebf1;font-weight:700;white-space:nowrap;}
+  /* Pickup Date pills — subtle, professional; four priority levels */
+  .pk-pill{display:inline-block;font-family:var(--fb);font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;white-space:nowrap;border:1px solid transparent;letter-spacing:.01em;}
+  .pk-far{background:rgba(255,255,255,.04);color:#c4cad6;border-color:rgba(255,255,255,.09);}
+  .pk-soon{background:rgba(225,190,90,.10);color:#e2c46a;border-color:rgba(225,190,90,.22);}
+  .pk-urgent{background:rgba(224,136,58,.11);color:#e8995a;border-color:rgba(224,136,58,.26);}
+  .pk-overdue{background:rgba(255,77,77,.12);color:#ff7070;border-color:rgba(255,77,77,.30);font-weight:800;}
   .pk-none{color:#5a6273;}
 
   .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
@@ -202,7 +204,7 @@
   </aside>
   <div class="main">
     <header class="topbar">
-      <h1>Sales Timeline</h1><span class="date" id="today"></span><span class="date" style="border-left:none;padding-left:0;color:var(--accent-2);opacity:.7;">v2</span>
+      <h1>Sales Timeline</h1><span class="date" id="today"></span>
       <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="search" placeholder="Search this tab…"></div>
       <button class="btn-primary" id="new-record"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg><span id="new-label">New Order</span></button>
     </header>
