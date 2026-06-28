@@ -98,11 +98,11 @@
   .money-cell{font-family:var(--fm);font-weight:700;font-size:13.5px;color:#fff;}
   .q-date{font-family:var(--fb);font-size:13px;color:#fff;font-weight:700;white-space:nowrap;}
   /* Pickup Date pills — four distinct priority levels */
-  .pk-pill{display:inline-block;font-family:var(--fb);font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:7px;white-space:nowrap;border:1px solid transparent;letter-spacing:.01em;}
-  .pk-far{background:rgba(255,255,255,.05);color:#cfd4e0;border-color:rgba(255,255,255,.10);}
-  .pk-soon{background:rgba(240,201,78,.15);color:#f0c94e;border-color:rgba(240,201,78,.32);}
-  .pk-urgent{background:rgba(240,138,58,.16);color:#f0a04e;border-color:rgba(240,138,58,.36);}
-  .pk-overdue{background:rgba(255,77,77,.18);color:#ff5d5d;border-color:rgba(255,77,77,.5);font-weight:800;}
+  .pk-pill{display:inline-block;font-family:var(--fb);font-size:12px;font-weight:800;padding:6px 12px;border-radius:8px;white-space:nowrap;border:1px solid transparent;letter-spacing:.02em;text-transform:uppercase;}
+  .pk-far{background:rgba(122,132,150,.18);color:#cdd3df;border-color:rgba(122,132,150,.32);}
+  .pk-soon{background:rgba(240,201,78,.20);color:#f5d36a;border-color:rgba(240,201,78,.55);}
+  .pk-urgent{background:rgba(240,138,58,.22);color:#ff9d4d;border-color:rgba(240,138,58,.6);}
+  .pk-overdue{background:#ff4d4d;color:#fff;border-color:#ff4d4d;font-weight:900;box-shadow:0 0 0 1px rgba(255,77,77,.3);}
   .pk-none{color:#5a6273;}
 
   .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
@@ -202,7 +202,7 @@
   </aside>
   <div class="main">
     <header class="topbar">
-      <h1>Sales Timeline</h1><span class="date" id="today"></span>
+      <h1>Sales Timeline</h1><span class="date" id="today"></span><span class="date" style="border-left:none;padding-left:0;color:var(--accent-2);opacity:.7;">v2</span>
       <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="search" placeholder="Search this tab…"></div>
       <button class="btn-primary" id="new-record"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg><span id="new-label">New Order</span></button>
     </header>
