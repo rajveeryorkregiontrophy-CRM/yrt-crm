@@ -80,7 +80,7 @@
   .chip.active{background:var(--accent-2);color:#15171c;border-color:var(--accent-2);font-weight:700;}
 
   /* ── Sales Timeline table ─────────────────────────────── */
-  table{width:100%;border-collapse:collapse;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
   thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#8b94a6;font-weight:700;padding:14px 18px;border-bottom:1px solid var(--line-2);background:var(--bg-3);white-space:nowrap;}
   thead th:first-child{padding-left:26px;}
   thead th:last-child{padding-right:26px;}
@@ -130,7 +130,7 @@
   .st-invoice{background:var(--invoice);color:var(--invoice-ink);}
   .st-no_data{background:var(--nodata);color:#fff;}
 
-  .dates{display:flex;flex-direction:column;gap:6px;min-width:200px;}
+  .dates{display:flex;flex-direction:column;gap:6px;}
   .date-line{display:flex;align-items:center;gap:9px;font-size:12.5px;white-space:nowrap;}
   .date-line .tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;width:40px;color:#9aa2b2;font-family:var(--fd);flex-shrink:0;}
   .date-line .d{font-family:var(--fm);font-weight:600;color:var(--text);}
@@ -411,14 +411,14 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><thead><tr><th style="width:1%;">ID</th><th style="width:1%;">Date</th><th style="width:30%;">Client</th><th style="width:40%;">Subject</th><th style="width:1%;">Fulfillment</th><th style="width:1%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:7%;">ID</th><th style="width:11%;">Date</th><th style="width:25%;">Client</th><th style="width:30%;">Subject</th><th style="width:14%;">Fulfillment</th><th style="width:13%;">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
       return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td>${fsCell}</td><td>${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     // inquiries / quotes: spread evenly across the full width
-    html=`<table><thead><tr><th style="width:1%;">ID</th><th style="width:1%;">Date</th><th style="width:45%;">Client</th><th style="width:55%;">Subject</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><thead><tr><th style="width:8%;">ID</th><th style="width:14%;">Date</th><th style="width:33%;">Client</th><th style="width:45%;">Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const pickDot=o.pickup_date?'<span class="pickup-dot" title="Pickup date scheduled"></span>':'';
       return `<tr data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${pickDot}${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
