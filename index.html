@@ -125,6 +125,25 @@
   .pk-overdue{color:#ff6b6b;font-weight:800;}
   .pk-none{color:#5a6273;}
 
+  /* ── Inquiry / Quotation: professional card list ── */
+  .card-list{display:flex;flex-direction:column;padding:12px 18px 18px;gap:10px;}
+  .record-card{display:flex;align-items:stretch;background:var(--bg-3);border:1px solid var(--line-2);border-radius:10px;overflow:hidden;cursor:pointer;transition:.14s ease;position:relative;}
+  .record-card:hover{border-color:var(--text-3);background:#22252d;transform:translateY(-1px);}
+  .rc-rail{width:4px;flex-shrink:0;background:var(--line-2);}
+  .record-card.acc-inquiry .rc-rail{background:var(--due);}
+  .record-card.acc-quote .rc-rail{background:var(--process);}
+  .rc-body{flex:1;padding:16px 20px;min-width:0;}
+  .rc-meta{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--text-3);font-weight:600;letter-spacing:.02em;margin-bottom:8px;}
+  .rc-id{font-family:var(--fm);color:#aeb6c6;}
+  .rc-date{color:#cdd3df;}
+  .rc-contact{color:var(--text-3);}
+  .rc-dot{color:#4a5160;}
+  .rc-client{font-size:15px;font-weight:700;color:#f3f5f9;margin-bottom:6px;line-height:1.3;}
+  .rc-subject{font-size:13px;color:#c4cad6;line-height:1.5;}
+  .rc-action{display:flex;align-items:center;justify-content:center;padding:0 20px;color:var(--text-3);transition:.14s;}
+  .record-card:hover .rc-action{color:var(--accent-2);}
+  .rc-action svg{width:18px;height:18px;}
+
   .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
   .col-status .badge-st{min-width:0;width:100%;padding:6px 8px;font-size:10.5px;}
   .fs-pill{display:inline-block;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:7px;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;white-space:nowrap;}
@@ -448,19 +467,34 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><colgroup><col style="width:60px;"><col class="col-date" style="width:112px;"><col style="width:23%;"><col style="width:34%;"><col class="col-status" style="width:124px;"><col class="col-fulfil" style="width:120px;"><col style="width:116px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th><th class="col-status">Status</th><th class="col-fulfil th-gap">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    // Status column only appears on the "All" filter — otherwise the filter itself implies the stage.
+    const showStatus = FILTER==='all';
+    const statusColEl = showStatus ? '<col class="col-status" style="width:118px;">' : '';
+    const statusHead  = showStatus ? '<th class="col-status th-gap">Status</th>' : '';
+    html=`<table><colgroup><col style="width:60px;"><col class="col-date" style="width:112px;"><col style="width:24%;"><col style="width:36%;">${statusColEl}<col class="col-fulfil" style="width:120px;"><col style="width:116px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th>${statusHead}<th class="col-fulfil">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
-      return `<tr class="r-order" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td class="col-status"><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td class="col-fulfil td-gap">${fsCell}</td><td class="td-pickup">${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
+      const statusCell = showStatus ? `<td class="col-status td-gap"><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td>` : '';
+      return `<tr class="r-order" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td>${statusCell}<td class="col-fulfil">${fsCell}</td><td class="td-pickup">${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
-    // inquiries / quotes: spread evenly across the full width
-    html=`<table><colgroup><col style="width:7%;"><col style="width:13%;"><col style="width:35%;"><col style="width:45%;"></colgroup><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
+    // Inquiries / Quotations: card list (lighter, professional, less empty than a sparse table)
+    html=`<div class="card-list">${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
-      return `<tr class="r-${TAB}" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
+      const accentCls=`acc-${TAB}`;
+      return `<div class="record-card ${accentCls}" data-id="${o.id}">
+        <div class="rc-rail"></div>
+        <div class="rc-body">
+          <div class="rc-meta"><span class="rc-id">#${o.stage_id}</span><span class="rc-dot">·</span><span class="rc-date">${fmtShort(o.quote_date)}</span>${ct?`<span class="rc-dot">·</span><span class="rc-contact">${esc(ct)}</span>`:''}</div>
+          <div class="rc-client">${esc(o.clients?.company_name||'—')}</div>
+          <div class="rc-subject">${esc(o.subject||'—')}</div>
+        </div>
+        <div class="rc-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>`;
+    }).join('')}</div>`;
   }
   document.getElementById('wrap').innerHTML=html;
-  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.id)));
+  document.querySelectorAll('tbody tr[data-id], .record-card[data-id]').forEach(el=>el.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(el.dataset.id)));
   // fulfillment pill -> open status popup instead of navigating
   document.querySelectorAll('.fs-pill').forEach(p=>p.addEventListener('click',e=>{e.stopPropagation();openFulfillPopup(p.dataset.fs);}));
   const fx=document.getElementById('fsp-x');if(fx)fx.onclick=closeFulfillPopup;
