@@ -99,6 +99,8 @@
   tbody td:last-child{padding-right:24px;}
   /* pickup column (orders tab) aligns right */
   thead th.th-pickup,tbody td.td-pickup{text-align:right;}
+  /* gap between Fulfillment and Pickup Date */
+  thead th.th-gap,tbody td.td-gap{padding-right:40px;}
   /* left status rail */
   tbody td:first-child::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--line-2);}
   tbody tr.r-inquiry td:first-child::before{background:var(--due);}
@@ -249,7 +251,7 @@
         <button class="stage-tab t-order on" data-tab="order"><div class="st-top"><span class="st-dot"></span><div class="st-name">Sales Orders</div></div><div class="st-meta"><span class="st-count" id="c-order">–</span><span class="st-sub">in the shop</span></div></button>
       </div>
       <section class="panel">
-        <div class="panel-head"><h2 id="list-title">Sales Orders</h2><span class="count" id="list-count">—</span>
+        <div class="panel-head"><h2 id="list-title">Sales Orders</h2>
           <div class="filters" id="filters"></div>
         </div>
         <div id="wrap"><div class="skeleton"><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div></div></div>
@@ -440,19 +442,19 @@ function render(){
       return 0;
     });
   }
-  document.getElementById('list-count').textContent=rows.length+(rows.length===1?' record':' records');
+  const _lc=document.getElementById('list-count');if(_lc)_lc.textContent=rows.length+(rows.length===1?' record':' records');
   if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">Nothing in ${TAB_TITLE[TAB]} right now.</div>`;return;}
 
   let html;
   if(TAB==='order'){
-    html=`<table><colgroup><col style="width:64px;"><col class="col-date" style="width:118px;"><col style="width:26%;"><col style="width:36%;"><col class="col-fulfil" style="width:130px;"><col style="width:128px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th><th class="col-fulfil">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><colgroup><col style="width:64px;"><col class="col-date" style="width:118px;"><col style="width:26%;"><col style="width:42%;"><col class="col-fulfil" style="width:120px;"><col style="width:120px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th><th class="col-fulfil th-gap">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
-      return `<tr class="r-order" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td class="col-fulfil">${fsCell}</td><td class="td-pickup">${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
+      return `<tr class="r-order" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td class="col-fulfil td-gap">${fsCell}</td><td class="td-pickup">${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     // inquiries / quotes: spread evenly across the full width
-    html=`<table><colgroup><col style="width:80px;"><col style="width:150px;"><col style="width:32%;"><col></colgroup><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><colgroup><col style="width:9%;"><col style="width:17%;"><col style="width:34%;"><col style="width:40%;"></colgroup><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       return `<tr class="r-${TAB}" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
   }
