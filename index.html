@@ -126,6 +126,7 @@
   .pk-none{color:#5a6273;}
 
   .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
+  .col-status .badge-st{min-width:0;width:100%;padding:6px 8px;font-size:10.5px;}
   .fs-pill{display:inline-block;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:7px;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;white-space:nowrap;}
   .fs-pill:hover{filter:brightness(1.15);}
   .fs-none{color:#5a6273;}
@@ -172,8 +173,8 @@
     thead th,tbody td{padding:13px 10px;}
     thead th:first-child,tbody td:first-child{padding-left:16px;}
     thead th:last-child,tbody td:last-child{padding-right:16px;}
-    /* hide Fulfillment + the client sub-line on tight screens, give Subject room */
-    .col-fulfil{display:none;}
+    /* hide Fulfillment + Status + the client sub-line on tight screens, give Subject room */
+    .col-fulfil,.col-status{display:none;}
     .client-cell .sub{display:none;}
     .subject-tag{font-size:12.5px;}
   }
@@ -447,14 +448,14 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    html=`<table><colgroup><col style="width:64px;"><col class="col-date" style="width:118px;"><col style="width:26%;"><col style="width:42%;"><col class="col-fulfil" style="width:120px;"><col style="width:120px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th><th class="col-fulfil th-gap">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><colgroup><col style="width:60px;"><col class="col-date" style="width:112px;"><col style="width:23%;"><col style="width:34%;"><col class="col-status" style="width:124px;"><col class="col-fulfil" style="width:120px;"><col style="width:116px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th><th class="col-status">Status</th><th class="col-fulfil th-gap">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
-      return `<tr class="r-order" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td class="col-fulfil td-gap">${fsCell}</td><td class="td-pickup">${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
+      return `<tr class="r-order" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td><td class="col-status"><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td class="col-fulfil td-gap">${fsCell}</td><td class="td-pickup">${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
   }else{
     // inquiries / quotes: spread evenly across the full width
-    html=`<table><colgroup><col style="width:9%;"><col style="width:17%;"><col style="width:34%;"><col style="width:40%;"></colgroup><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<table><colgroup><col style="width:7%;"><col style="width:13%;"><col style="width:35%;"><col style="width:45%;"></colgroup><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Subject</th></tr></thead><tbody>${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       return `<tr class="r-${TAB}" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td></tr>`;}).join('')}</tbody></table>`;
   }
