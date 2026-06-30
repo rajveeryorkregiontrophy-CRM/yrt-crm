@@ -653,10 +653,9 @@ function openStagePicker(){
     m.querySelectorAll('.sp-opt').forEach(b=>b.disabled=true);
     btn.classList.add('sp-busy');
     const stage=btn.dataset.stage, art=btn.dataset.art;
-    const {data:cl}=await db.from('clients').select('id').order('company_name').limit(1);
     const payload={record_type:stage,art_status:art,sent_status:'not_sent',active_status:'active',
       quote_date:new Date().toISOString().slice(0,10),
-      subject:'New '+stage,serviced_by:'',client_id:cl&&cl[0]?cl[0].id:null};
+      subject:'',serviced_by:'',client_id:null};
     const {data,error}=await db.from('quotes').insert(payload).select().single();
     if(error){close();await smAlert('Could not create: '+error.message,'Error','danger');return;}
     location.href='order.html?id='+encodeURIComponent(data.id);
