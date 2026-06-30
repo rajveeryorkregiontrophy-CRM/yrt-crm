@@ -19,11 +19,10 @@
   a{color:inherit;text-decoration:none;}
   button{font-family:inherit;}
 
-  /* ── App shell (matches the rest of the CRM) ── */
+  /* App shell */
   .app{display:grid;grid-template-columns:68px 1fr;min-height:100vh;transition:grid-template-columns .32s cubic-bezier(.4,0,.2,1);}
-  .app:hover .sidebar{width:240px;}
   .app:hover{grid-template-columns:240px 1fr;}
-  .sidebar{background:var(--bg-2);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow:hidden;width:68px;transition:width .32s cubic-bezier(.4,0,.2,1);}
+  .sidebar{background:var(--bg-2);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow:hidden;}
   .brand{padding:18px 16px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
   .brand-mini{font-family:var(--fd);font-weight:900;font-size:13px;letter-spacing:.04em;color:#fff;background:var(--bg-3);border:1px solid var(--line-2);padding:6px 8px;border-radius:6px;flex-shrink:0;}
   .brand .mark{font-family:var(--fd);font-size:11.5px;font-weight:800;letter-spacing:.04em;line-height:1.3;color:#fff;white-space:nowrap;overflow:hidden;visibility:hidden;}
@@ -46,7 +45,7 @@
   .logout-btn svg{width:14px;height:14px;}
   @media(max-width:880px){.app{grid-template-columns:1fr !important;}.sidebar{display:none !important;}}
 
-  /* ── Main: full-bleed canvas ── */
+  /* Main */
   .main{display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden;}
   .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;flex-shrink:0;z-index:20;}
   .topbar h1{font-family:var(--fd);font-size:19px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;}
@@ -55,68 +54,88 @@
   .tb-btn{background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);padding:8px 13px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.13s;}
   .tb-btn:hover{background:var(--bg-4);color:#fff;border-color:var(--text-3);}
   .tb-btn svg{width:14px;height:14px;}
-  .tb-btn.primary{background:var(--accent-2);color:#15171c;border-color:var(--accent-2);font-weight:700;}
-  .tb-btn.primary:hover{filter:brightness(1.06);}
 
-  /* ── Canvas ── */
+  /* Group jump bar */
+  .groups-bar{display:flex;gap:6px;padding:10px 26px;background:var(--bg-2);border-bottom:1px solid var(--line);flex-shrink:0;align-items:center;}
+  .gb-label{font-family:var(--fd);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-right:6px;}
+  .gb-btn{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;background:transparent;border:1px solid var(--line-2);border-radius:7px;color:var(--text-2);cursor:pointer;font-size:11.5px;font-weight:600;transition:.13s;}
+  .gb-btn:hover{background:var(--bg-3);color:#fff;}
+  .gb-btn .gb-dot{width:8px;height:8px;border-radius:2px;}
+
+  /* Canvas */
   .canvas-wrap{flex:1;position:relative;overflow:hidden;background:
     radial-gradient(circle at 20px 20px, rgba(255,255,255,.025) 1px, transparent 1px),
     var(--bg);
     background-size:24px 24px;}
-  .canvas{position:absolute;top:0;left:0;width:4000px;height:3000px;transform-origin:0 0;}
+  .canvas{position:absolute;top:0;left:0;width:5000px;height:3400px;transform-origin:0 0;}
   #links{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
   #links path{fill:none;stroke-width:1.6;opacity:.55;transition:opacity .15s,stroke-width .15s;}
-  #links path.hl{opacity:1;stroke-width:2.4;filter:drop-shadow(0 0 4px currentColor);}
+  #links path.hl{opacity:1;stroke-width:2.6;filter:drop-shadow(0 0 5px currentColor);}
 
-  /* ── Table card ── */
+  /* Group regions (labeled containers behind tables) */
+  .group-region{position:absolute;border:1.5px dashed rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.012);cursor:pointer;transition:border-color .15s,background .15s;}
+  .group-region:hover{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.025);}
+  .group-region .gr-label{position:absolute;top:-13px;left:24px;background:var(--bg);padding:0 12px;font-family:var(--fd);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);display:flex;align-items:center;gap:8px;}
+  .group-region .gr-label .gl-dot{width:9px;height:9px;border-radius:2px;}
+  .group-region.g-client{box-shadow:inset 0 0 0 1px rgba(61,165,255,.06);}
+  .group-region.g-sales{box-shadow:inset 0 0 0 1px rgba(202,167,93,.06);}
+  .group-region.g-finance{box-shadow:inset 0 0 0 1px rgba(255,182,39,.06);}
+  .group-region.g-purchase{box-shadow:inset 0 0 0 1px rgba(168,124,245,.06);}
+  .group-region.g-product{box-shadow:inset 0 0 0 1px rgba(61,220,132,.06);}
+
+  /* Table card */
   .tbl{position:absolute;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;min-width:230px;box-shadow:0 6px 20px rgba(0,0,0,.35);user-select:none;}
-  .tbl.dragging{box-shadow:0 12px 32px rgba(0,0,0,.6);border-color:var(--accent);z-index:50;}
+  .tbl.dragging{box-shadow:0 12px 32px rgba(0,0,0,.7);border-color:var(--accent);z-index:50;}
   .tbl-head{padding:11px 14px 10px;border-bottom:1px solid var(--line-2);background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border-radius:10px 10px 0 0;cursor:move;display:flex;align-items:center;gap:10px;}
   .tbl-head .tname{font-family:var(--fm);font-size:13px;font-weight:700;color:#fff;letter-spacing:.01em;flex:1;}
   .tbl-head .tcount{font-size:10px;color:var(--text-3);font-weight:600;background:var(--bg-4);padding:2px 7px;border-radius:10px;}
   .tbl-head .tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:4px;}
-  .tbl-body{padding:4px 0;max-height:none;}
+  .tbl-body{padding:4px 0;}
   .fld{padding:6px 14px;font-size:11.5px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(50,58,72,.4);}
   .fld:last-child{border-bottom:none;}
+  .fld:hover{background:rgba(255,255,255,.025);}
   .fld .fname{flex:1;font-family:var(--fm);color:#dde0e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .fld .ftype{font-size:9.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;font-family:var(--fd);font-weight:700;}
   .fld.pk .fname{color:var(--accent);font-weight:700;}
   .fld.pk::before{content:'PK';font-size:8.5px;font-weight:900;background:var(--accent);color:#15171c;padding:1px 4px;border-radius:3px;font-family:var(--fd);}
   .fld.fk{cursor:pointer;}
   .fld.fk::before{content:'FK';font-size:8.5px;font-weight:900;background:var(--c1);color:#fff;padding:1px 4px;border-radius:3px;font-family:var(--fd);}
-  .fld.uniq::before{content:'U';font-size:8.5px;font-weight:900;background:var(--c4);color:#fff;padding:1px 5px;border-radius:3px;font-family:var(--fd);}
   .fld.seq .fname{color:var(--c2);}
   .fld.seq::after{content:'auto-seq';font-size:9px;color:var(--c2);font-weight:600;font-family:var(--fd);text-transform:uppercase;letter-spacing:.04em;}
 
-  /* table card group tint */
   .tbl.g-client .tbl-head{border-left:3px solid var(--c1);}
   .tbl.g-sales .tbl-head{border-left:3px solid var(--c3);}
   .tbl.g-purchase .tbl-head{border-left:3px solid var(--c4);}
   .tbl.g-product .tbl-head{border-left:3px solid var(--c2);}
   .tbl.g-finance .tbl-head{border-left:3px solid var(--c7);}
 
-  /* ── Legend ── */
-  .legend{position:absolute;left:20px;bottom:20px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:12px 16px;font-size:11.5px;display:flex;flex-direction:column;gap:8px;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  /* Floating UI */
+  .floater{background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  .legend{position:absolute;left:20px;bottom:20px;padding:12px 16px;font-size:11.5px;display:flex;flex-direction:column;gap:7px;z-index:30;}
   .legend .lh{font-family:var(--fd);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:2px;}
   .legend .lg{display:flex;align-items:center;gap:9px;}
   .legend .lswatch{width:22px;height:3px;border-radius:2px;flex-shrink:0;}
   .legend .ldot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
 
-  /* ── Minimap ── */
-  .minimap{position:absolute;right:20px;bottom:20px;width:220px;height:140px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;overflow:hidden;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.4);}
-  .minimap svg{width:100%;height:100%;}
-  .mm-rect{fill:var(--text-2);opacity:.5;}
-  .mm-view{fill:none;stroke:var(--accent);stroke-width:1.6;}
+  .minimap{position:absolute;right:20px;bottom:20px;width:240px;height:150px;border-radius:10px;overflow:hidden;z-index:30;}
+  .minimap svg{width:100%;height:100%;display:block;}
+  .mm-region{opacity:.15;}
+  .mm-region.g-client{fill:var(--c1);}
+  .mm-region.g-sales{fill:var(--c3);}
+  .mm-region.g-finance{fill:var(--c7);}
+  .mm-region.g-purchase{fill:var(--c4);}
+  .mm-region.g-product{fill:var(--c2);}
+  .mm-rect{fill:var(--text-2);opacity:.6;}
+  .mm-view{fill:none;stroke:var(--accent);stroke-width:2;}
 
-  /* ── Zoom controls ── */
-  .zoom-ctrl{position:absolute;right:20px;top:80px;display:flex;flex-direction:column;gap:4px;z-index:30;}
+  .zoom-ctrl{position:absolute;right:20px;top:20px;display:flex;flex-direction:column;gap:4px;z-index:30;}
   .zoom-ctrl button{width:32px;height:32px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);border-radius:7px;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;}
   .zoom-ctrl button:hover{background:var(--bg-3);}
   .zoom-pct{font-size:10.5px;color:var(--text-3);text-align:center;font-family:var(--fm);font-weight:600;padding:2px 0;}
 
-  /* ── Help/intro overlay ── */
-  .intro{position:absolute;top:80px;left:50%;transform:translateX(-50%);background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:14px 18px;font-size:12.5px;color:var(--text-2);display:flex;align-items:center;gap:14px;z-index:25;box-shadow:0 6px 20px rgba(0,0,0,.4);}
-  .intro .kbd{display:inline-block;background:var(--bg-3);border:1px solid var(--line-2);padding:2px 7px;border-radius:4px;font-family:var(--fm);font-size:11px;font-weight:700;color:#fff;}
+  /* Help banner */
+  .intro{position:absolute;top:20px;left:50%;transform:translateX(-50%);padding:12px 18px;font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:14px;z-index:25;}
+  .intro .kbd{display:inline-block;background:var(--bg-3);border:1px solid var(--line-2);padding:2px 7px;border-radius:4px;font-family:var(--fm);font-size:10.5px;font-weight:700;color:#fff;}
   .intro button{background:transparent;border:none;color:var(--text-3);cursor:pointer;padding:2px 6px;font-size:18px;}
   .intro button:hover{color:#fff;}
 </style>
@@ -146,22 +165,27 @@
   <div class="main">
     <header class="topbar">
       <h1>Database Map</h1>
-      <span class="sub">Live schema · drag tables · trace relationships</span>
+      <span class="sub">Schema reference · drag tables · trace relationships</span>
       <div class="toolbar">
-        <button class="tb-btn" id="btn-arrange" title="Auto-arrange tables"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Auto-arrange</button>
-        <button class="tb-btn" id="btn-fit" title="Fit to screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>Fit</button>
+        <button class="tb-btn" id="btn-fit" title="See whole schema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>Overview</button>
         <button class="tb-btn" id="btn-reset" title="Reset saved layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/></svg>Reset Layout</button>
       </div>
     </header>
 
+    <!-- Group jump bar (click to focus a region) -->
+    <div class="groups-bar" id="groups-bar">
+      <span class="gb-label">Jump to:</span>
+    </div>
+
     <div class="canvas-wrap" id="canvas-wrap">
-      <div class="intro" id="intro">
-        Drag tables by their <span class="kbd">title bar</span> · hover a field to highlight its relationships · <span class="kbd">space + drag</span> or middle-click drag to pan · scroll to zoom
+      <div class="intro" id="intro" style="display:none;">
+        <span>Hover a field to trace its relationships · drag tables by their title · double-click a group to focus · <span class="kbd">space + drag</span> to pan</span>
         <button id="intro-close">×</button>
       </div>
 
       <div class="canvas" id="canvas">
         <svg id="links"></svg>
+        <!-- Group regions rendered by JS, then tables -->
       </div>
 
       <div class="zoom-ctrl">
@@ -170,9 +194,9 @@
         <button id="z-out">−</button>
       </div>
 
-      <div class="minimap"><svg id="minimap" viewBox="0 0 4000 3000" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="minimap floater"><svg id="minimap" viewBox="0 0 5000 3400" preserveAspectRatio="xMidYMid meet"></svg></div>
 
-      <div class="legend">
+      <div class="legend floater">
         <div class="lh">Legend</div>
         <div class="lg"><span class="ldot" style="background:var(--c1);"></span>Foreign key (FK)</div>
         <div class="lg"><span class="ldot" style="background:var(--accent);"></span>Primary key (PK)</div>
@@ -187,10 +211,19 @@
 </div>
 
 <script>
-// ===== SCHEMA DEFINITION =====
-// Format: tables, each with fields, and FKs that point to {table, field}
+// ===== GROUPS (workflow lanes, left-to-right) =====
+// Each group has a position, size, label, color
+const GROUPS = {
+  client:   {label:'Clients & Contacts',   x:80,    y:140,  w:760,  h:1100, color:'var(--c1)',     dot:'#3da5ff'},
+  sales:    {label:'Sales Timeline',       x:900,   y:140,  w:1180, h:1320, color:'var(--c3)',     dot:'#caa75d'},
+  finance:  {label:'Invoices & Payments',  x:80,    y:1310, w:760,  h:760,  color:'var(--c7)',     dot:'#ffb627'},
+  purchase: {label:'Suppliers & Purchase', x:2140,  y:140,  w:1320, h:1320, color:'var(--c4)',     dot:'#a87cf5'},
+  product:  {label:'Catalog',              x:900,   y:1540, w:740,  h:530,  color:'var(--c2)',     dot:'#3ddc84'},
+};
+
+// ===== SCHEMA (each table belongs to a group) =====
 const SCHEMA = {
-  clients: { group:'g-client', x:60, y:60, fields:[
+  clients: { group:'client', x:140, y:200, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'company_name', t:'text', req:true},
     {n:'bill_address', t:'text'},
@@ -208,7 +241,7 @@ const SCHEMA = {
     {n:'created_at', t:'timestamp'},
     {n:'modified_at', t:'timestamp'},
   ]},
-  contacts: { group:'g-client', x:380, y:60, fields:[
+  contacts: { group:'client', x:480, y:200, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'client_id', t:'uuid', fk:{table:'clients',field:'id',onDelete:'cascade'}},
     {n:'first_name', t:'text'},
@@ -221,7 +254,7 @@ const SCHEMA = {
     {n:'is_primary', t:'bool'},
     {n:'notes', t:'text'},
   ]},
-  quotes: { group:'g-sales', x:700, y:60, label:'sales timeline', fields:[
+  quotes: { group:'sales', x:960, y:200, label:'sales timeline', fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'stage_id', t:'int', seq:true},
     {n:'client_id', t:'uuid', fk:{table:'clients',field:'id'}},
@@ -233,7 +266,7 @@ const SCHEMA = {
     {n:'po_number', t:'text'},
     {n:'serviced_by', t:'text'},
     {n:'record_type', t:'text', note:'inquiry / quote / order'},
-    {n:'art_status', t:'text', note:'stage of production'},
+    {n:'art_status', t:'text'},
     {n:'active_status', t:'text'},
     {n:'subtotal', t:'numeric'},
     {n:'hst', t:'numeric'},
@@ -241,7 +274,7 @@ const SCHEMA = {
     {n:'created_at', t:'timestamp'},
     {n:'modified_at', t:'timestamp'},
   ]},
-  quote_items: { group:'g-sales', x:1060, y:60, fields:[
+  quote_items: { group:'sales', x:1340, y:200, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'quote_id', t:'uuid', fk:{table:'quotes',field:'id',onDelete:'cascade'}},
     {n:'product_id', t:'uuid', fk:{table:'products',field:'id'}},
@@ -258,7 +291,7 @@ const SCHEMA = {
     {n:'po_id', t:'uuid', fk:{table:'purchase_orders',field:'id'}},
     {n:'fulfillment_status', t:'text'},
   ]},
-  quote_item_allocations: { group:'g-sales', x:1060, y:540, fields:[
+  quote_item_allocations: { group:'sales', x:1720, y:200, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'quote_item_id', t:'uuid', fk:{table:'quote_items',field:'id',onDelete:'cascade'}},
     {n:'supplier_id', t:'uuid', fk:{table:'suppliers',field:'id'}},
@@ -269,7 +302,7 @@ const SCHEMA = {
     {n:'status', t:'text'},
     {n:'created_at', t:'timestamp'},
   ]},
-  invoices: { group:'g-finance', x:700, y:580, fields:[
+  invoices: { group:'finance', x:140, y:1370, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'invoice_number', t:'int', seq:true},
     {n:'quote_id', t:'uuid', fk:{table:'quotes',field:'id'}},
@@ -285,7 +318,7 @@ const SCHEMA = {
     {n:'paid_status', t:'text'},
     {n:'created_at', t:'timestamp'},
   ]},
-  payments: { group:'g-finance', x:380, y:580, fields:[
+  payments: { group:'finance', x:480, y:1370, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'invoice_id', t:'uuid', fk:{table:'invoices',field:'id',onDelete:'cascade'}},
     {n:'pay_date', t:'date'},
@@ -294,7 +327,7 @@ const SCHEMA = {
     {n:'reference', t:'text'},
     {n:'created_at', t:'timestamp'},
   ]},
-  products: { group:'g-product', x:60, y:580, fields:[
+  products: { group:'product', x:960, y:1600, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'category_code', t:'text'},
     {n:'category_name', t:'text'},
@@ -306,7 +339,7 @@ const SCHEMA = {
     {n:'default_supplier_id', t:'uuid', fk:{table:'suppliers',field:'id'}},
     {n:'created_at', t:'timestamp'},
   ]},
-  suppliers: { group:'g-purchase', x:1420, y:60, fields:[
+  suppliers: { group:'purchase', x:2200, y:200, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'supplier_number', t:'int', seq:true},
     {n:'short_name', t:'text', req:true},
@@ -320,7 +353,7 @@ const SCHEMA = {
     {n:'terms_days', t:'int'},
     {n:'created_at', t:'timestamp'},
   ]},
-  purchase_orders: { group:'g-purchase', x:1420, y:580, fields:[
+  purchase_orders: { group:'purchase', x:2580, y:200, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'po_number', t:'int', seq:true},
     {n:'supplier_id', t:'uuid', fk:{table:'suppliers',field:'id'}},
@@ -333,7 +366,7 @@ const SCHEMA = {
     {n:'shipper', t:'text'},
     {n:'created_at', t:'timestamp'},
   ]},
-  po_items: { group:'g-purchase', x:1740, y:580, fields:[
+  po_items: { group:'purchase', x:2960, y:200, fields:[
     {n:'id', t:'uuid', pk:true},
     {n:'po_id', t:'uuid', fk:{table:'purchase_orders',field:'id',onDelete:'cascade'}},
     {n:'product_id', t:'uuid', fk:{table:'products',field:'id'}},
@@ -354,26 +387,40 @@ const SCHEMA = {
 const FIELD_TYPE_LABEL = {uuid:'UUID', int:'INT', text:'TEXT', date:'DATE', timestamp:'TS', numeric:'NUM', bool:'BOOL'};
 
 // ===== STATE =====
-const STORAGE_KEY = 'yrt-dbmap-positions-v1';
-let zoom = 1;
-let panX = 0, panY = 0;
+const STORAGE_KEY = 'yrt-dbmap-positions-v2';
+let zoom = 1, panX = 0, panY = 0;
 let positions = loadPositions();
+function loadPositions(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch{ return {}; } }
+function savePositions(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); }catch{} }
 
-function loadPositions(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch{ return {}; }
-}
-function savePositions(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); }catch{}
-}
-
-// ===== RENDER TABLES =====
 const canvas = document.getElementById('canvas');
 const linksSvg = document.getElementById('links');
+const wrap = document.getElementById('canvas-wrap');
 
+// ===== BUILD GROUP REGIONS =====
+function buildGroups(){
+  Object.entries(GROUPS).forEach(([gkey, g])=>{
+    const region = document.createElement('div');
+    region.className = `group-region g-${gkey}`;
+    region.dataset.group = gkey;
+    region.style.left = g.x + 'px';
+    region.style.top = g.y + 'px';
+    region.style.width = g.w + 'px';
+    region.style.height = g.h + 'px';
+    region.innerHTML = `<div class="gr-label"><span class="gl-dot" style="background:${g.dot};"></span>${g.label}</div>`;
+    region.addEventListener('dblclick', e=>{
+      if(e.target.closest('.tbl')) return;
+      focusGroup(gkey);
+    });
+    canvas.appendChild(region);
+  });
+}
+
+// ===== BUILD TABLES =====
 function buildTables(){
   Object.entries(SCHEMA).forEach(([name, def])=>{
     const card = document.createElement('div');
-    card.className = 'tbl ' + (def.group || '');
+    card.className = 'tbl g-' + def.group;
     card.dataset.table = name;
     const pos = positions[name] || {x:def.x, y:def.y};
     card.style.left = pos.x + 'px';
@@ -396,13 +443,10 @@ function buildTables(){
       if(f.pk) cls += ' pk';
       if(f.fk) cls += ' fk';
       if(f.seq) cls += ' seq';
-      if(f.uniq) cls += ' uniq';
       fld.className = cls;
       fld.dataset.field = f.n;
       fld.innerHTML = `<span class="fname">${f.n}</span><span class="ftype">${FIELD_TYPE_LABEL[f.t]||f.t}</span>`;
-      if(f.fk){
-        fld.title = `FK → ${f.fk.table}.${f.fk.field}${f.fk.onDelete?' (on delete: '+f.fk.onDelete+')':''}`;
-      }
+      if(f.fk) fld.title = `FK → ${f.fk.table}.${f.fk.field}${f.fk.onDelete?' (on delete: '+f.fk.onDelete+')':''}`;
       body.appendChild(fld);
     });
     card.appendChild(body);
@@ -413,6 +457,18 @@ function buildTables(){
   });
 }
 
+// ===== BUILD GROUPS BAR =====
+function buildGroupsBar(){
+  const bar = document.getElementById('groups-bar');
+  Object.entries(GROUPS).forEach(([gkey, g])=>{
+    const btn = document.createElement('button');
+    btn.className = 'gb-btn';
+    btn.innerHTML = `<span class="gb-dot" style="background:${g.dot};"></span>${g.label}`;
+    btn.addEventListener('click', ()=>focusGroup(gkey));
+    bar.appendChild(btn);
+  });
+}
+
 // ===== DRAG TABLES =====
 function enableDrag(card, handle, name){
   let dx=0, dy=0, sx=0, sy=0, dragging=false;
@@ -420,8 +476,6 @@ function enableDrag(card, handle, name){
     if(e.button!==0) return;
     dragging = true;
     card.classList.add('dragging');
-    const rect = card.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
     sx = e.clientX; sy = e.clientY;
     dx = parseFloat(card.style.left); dy = parseFloat(card.style.top);
     e.preventDefault();
@@ -430,10 +484,8 @@ function enableDrag(card, handle, name){
     if(!dragging) return;
     const moveX = (e.clientX - sx) / zoom;
     const moveY = (e.clientY - sy) / zoom;
-    const nx = Math.max(0, dx + moveX);
-    const ny = Math.max(0, dy + moveY);
-    card.style.left = nx + 'px';
-    card.style.top = ny + 'px';
+    card.style.left = Math.max(0, dx + moveX) + 'px';
+    card.style.top  = Math.max(0, dy + moveY) + 'px';
     drawLinks();
   });
   document.addEventListener('mouseup', ()=>{
@@ -446,7 +498,7 @@ function enableDrag(card, handle, name){
   });
 }
 
-// ===== DRAW RELATIONSHIP LINES =====
+// ===== DRAW LINKS =====
 function getFieldCenter(table, field){
   const card = canvas.querySelector(`.tbl[data-table="${table}"]`);
   if(!card) return null;
@@ -455,7 +507,6 @@ function getFieldCenter(table, field){
   const cr = card.getBoundingClientRect();
   const fr = f.getBoundingClientRect();
   const canvasRect = canvas.getBoundingClientRect();
-  // return canvas-space coords (account for zoom)
   return {
     left:  (cr.left - canvasRect.left)/zoom,
     right: (cr.right - canvasRect.left)/zoom,
@@ -475,12 +526,11 @@ function drawLinks(){
       const child = getFieldCenter(childName, f.n);
       const parent = getFieldCenter(f.fk.table, f.fk.field);
       if(!child || !parent) return;
-      // pick attachment sides: connect from child's nearest edge to parent's nearest edge
       const childIsRight = child.cardLeft > parent.cardLeft;
       const childX = childIsRight ? child.left : child.right;
       const parentX = childIsRight ? parent.right : parent.left;
       const dx = Math.abs(childX - parentX);
-      const cp = Math.min(160, dx * 0.45);
+      const cp = Math.min(180, dx * 0.45);
       const path = document.createElementNS('http://www.w3.org/2000/svg','path');
       const d = `M ${parentX} ${parent.y} C ${parentX + (childIsRight?cp:-cp)} ${parent.y}, ${childX + (childIsRight?-cp:cp)} ${child.y}, ${childX} ${child.y}`;
       path.setAttribute('d', d);
@@ -495,7 +545,7 @@ function drawLinks(){
   });
 }
 
-// ===== FIELD HOVER → HIGHLIGHT RELATED LINES =====
+// ===== HOVER HIGHLIGHT =====
 function enableFieldHover(card, tableName){
   card.querySelectorAll('.fld').forEach(fld=>{
     const fieldName = fld.dataset.field;
@@ -513,29 +563,24 @@ function enableFieldHover(card, tableName){
 }
 
 // ===== ZOOM + PAN =====
-const wrap = document.getElementById('canvas-wrap');
 function applyTransform(){
   canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
   document.getElementById('z-pct').textContent = Math.round(zoom*100) + '%';
   drawMinimap();
 }
 wrap.addEventListener('wheel', e=>{
-  if(e.ctrlKey || e.metaKey || true){ // always zoom on wheel
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.92 : 1.08;
-    const newZoom = Math.max(0.3, Math.min(2.0, zoom * delta));
-    // zoom toward cursor
-    const rect = wrap.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    panX = cx - (cx - panX) * (newZoom/zoom);
-    panY = cy - (cy - panY) * (newZoom/zoom);
-    zoom = newZoom;
-    applyTransform();
-  }
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.92 : 1.08;
+  const newZoom = Math.max(0.2, Math.min(2.0, zoom * delta));
+  const rect = wrap.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  panX = cx - (cx - panX) * (newZoom/zoom);
+  panY = cy - (cy - panY) * (newZoom/zoom);
+  zoom = newZoom;
+  applyTransform();
 }, {passive:false});
 
-// Pan: middle mouse drag, or space+drag
 let panning = false, panSX = 0, panSY = 0, panOX = 0, panOY = 0;
 let spaceDown = false;
 window.addEventListener('keydown', e=>{ if(e.code==='Space'){spaceDown=true; wrap.style.cursor='grab';}});
@@ -558,35 +603,41 @@ document.addEventListener('mouseup', ()=>{
 });
 
 document.getElementById('z-in').addEventListener('click', ()=>{ zoom = Math.min(2.0, zoom*1.15); applyTransform(); });
-document.getElementById('z-out').addEventListener('click', ()=>{ zoom = Math.max(0.3, zoom/1.15); applyTransform(); });
+document.getElementById('z-out').addEventListener('click', ()=>{ zoom = Math.max(0.2, zoom/1.15); applyTransform(); });
 
-// ===== FIT TO SCREEN =====
-function fitToScreen(){
-  // find bounding box of all cards
-  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-  canvas.querySelectorAll('.tbl').forEach(card=>{
-    const x=parseFloat(card.style.left), y=parseFloat(card.style.top);
-    minX=Math.min(minX,x); minY=Math.min(minY,y);
-    maxX=Math.max(maxX,x+card.offsetWidth); maxY=Math.max(maxY,y+card.offsetHeight);
-  });
-  const w=maxX-minX, h=maxY-minY;
+// ===== FIT / FOCUS =====
+function fitToBounds(minX, minY, maxX, maxY, padPx=80){
+  const w = maxX - minX, h = maxY - minY;
   const rect = wrap.getBoundingClientRect();
-  const pad = 80;
-  const sx = (rect.width-pad*2)/w;
-  const sy = (rect.height-pad*2)/h;
-  zoom = Math.min(sx, sy, 1);
-  panX = -minX*zoom + pad;
-  panY = -minY*zoom + pad;
+  const sx = (rect.width - padPx*2) / w;
+  const sy = (rect.height - padPx*2) / h;
+  zoom = Math.min(sx, sy, 1.2);
+  panX = -minX*zoom + (rect.width - w*zoom)/2;
+  panY = -minY*zoom + (rect.height - h*zoom)/2;
   applyTransform();
 }
-document.getElementById('btn-fit').addEventListener('click', fitToScreen);
 
-// ===== RESET LAYOUT =====
+function fitAll(){
+  // bounds of ALL tables + group regions
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  Object.values(GROUPS).forEach(g=>{
+    minX=Math.min(minX, g.x); minY=Math.min(minY, g.y);
+    maxX=Math.max(maxX, g.x+g.w); maxY=Math.max(maxY, g.y+g.h);
+  });
+  fitToBounds(minX, minY, maxX, maxY, 100);
+}
+
+function focusGroup(gkey){
+  const g = GROUPS[gkey];
+  if(!g) return;
+  fitToBounds(g.x-30, g.y-30, g.x+g.w+30, g.y+g.h+30, 60);
+}
+
+document.getElementById('btn-fit').addEventListener('click', fitAll);
 document.getElementById('btn-reset').addEventListener('click', ()=>{
   if(!confirm('Reset table positions to the default layout?')) return;
   positions = {};
   localStorage.removeItem(STORAGE_KEY);
-  // reset positions visually
   canvas.querySelectorAll('.tbl').forEach(card=>{
     const def = SCHEMA[card.dataset.table];
     card.style.left = def.x + 'px';
@@ -595,36 +646,20 @@ document.getElementById('btn-reset').addEventListener('click', ()=>{
   drawLinks(); drawMinimap();
 });
 
-// ===== AUTO-ARRANGE =====
-// Group-based layout — clusters tables by their group, lays them out in rows.
-document.getElementById('btn-arrange').addEventListener('click', ()=>{
-  const groups = {};
-  Object.entries(SCHEMA).forEach(([name,def])=>{
-    const g = def.group || 'other';
-    if(!groups[g]) groups[g] = [];
-    groups[g].push(name);
-  });
-  let y = 60;
-  Object.entries(groups).forEach(([g, tables])=>{
-    let x = 60;
-    let rowH = 0;
-    tables.forEach(t=>{
-      const card = canvas.querySelector(`.tbl[data-table="${t}"]`);
-      positions[t] = {x, y};
-      card.style.left = x + 'px';
-      card.style.top  = y + 'px';
-      x += card.offsetWidth + 60;
-      rowH = Math.max(rowH, card.offsetHeight);
-    });
-    y += rowH + 60;
-  });
-  savePositions(); drawLinks(); drawMinimap();
-});
-
 // ===== MINIMAP =====
 function drawMinimap(){
   const mm = document.getElementById('minimap');
   mm.innerHTML = '';
+  // group regions first (colored backgrounds)
+  Object.entries(GROUPS).forEach(([gkey,g])=>{
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x', g.x); r.setAttribute('y', g.y);
+    r.setAttribute('width', g.w); r.setAttribute('height', g.h);
+    r.setAttribute('class', `mm-region g-${gkey}`);
+    r.setAttribute('rx', '20');
+    mm.appendChild(r);
+  });
+  // then tables
   canvas.querySelectorAll('.tbl').forEach(card=>{
     const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
     r.setAttribute('x', parseFloat(card.style.left));
@@ -637,33 +672,32 @@ function drawMinimap(){
   });
   // viewport rect
   const wrapRect = wrap.getBoundingClientRect();
-  const vw = wrapRect.width / zoom;
-  const vh = wrapRect.height / zoom;
-  const vx = -panX / zoom;
-  const vy = -panY / zoom;
   const view = document.createElementNS('http://www.w3.org/2000/svg','rect');
-  view.setAttribute('x', vx); view.setAttribute('y', vy);
-  view.setAttribute('width', vw); view.setAttribute('height', vh);
+  view.setAttribute('x', -panX/zoom); view.setAttribute('y', -panY/zoom);
+  view.setAttribute('width', wrapRect.width/zoom); view.setAttribute('height', wrapRect.height/zoom);
   view.setAttribute('class', 'mm-view');
   mm.appendChild(view);
 }
 
-// ===== INTRO DISMISS =====
-document.getElementById('intro-close').addEventListener('click', ()=>{
-  document.getElementById('intro').style.display = 'none';
-  try{ localStorage.setItem('yrt-dbmap-intro-seen','1'); }catch{}
-});
-if(localStorage.getItem('yrt-dbmap-intro-seen')==='1'){
-  document.getElementById('intro').style.display = 'none';
+// ===== INTRO =====
+const introEl = document.getElementById('intro');
+if(localStorage.getItem('yrt-dbmap-intro-seen-v2') !== '1'){
+  introEl.style.display = 'flex';
 }
+document.getElementById('intro-close').addEventListener('click', ()=>{
+  introEl.style.display = 'none';
+  try{ localStorage.setItem('yrt-dbmap-intro-seen-v2','1'); }catch{}
+});
 
 // ===== INIT =====
+buildGroups();
 buildTables();
+buildGroupsBar();
 drawLinks();
 drawMinimap();
-applyTransform();
+// Default: fit-all (overview)
+setTimeout(fitAll, 50);
 
-// redraw on window resize
 window.addEventListener('resize', ()=>{ drawLinks(); drawMinimap(); });
 </script>
 </body>
