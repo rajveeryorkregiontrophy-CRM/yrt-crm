@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Database Map — YRT CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--line:#323a48;--line-2:#414a5c;
+        --text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
+        --accent:#caa75d;--accent-2:#caa75d;
+        --c1:#3da5ff;--c2:#3ddc84;--c3:#caa75d;--c4:#a87cf5;--c5:#ff6b6b;--c6:#3dd6c8;--c7:#ffb627;--c8:#e8995a;
+        --radius:12px;--radius-sm:9px;
+        --fd:'Archivo',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased;overflow:hidden;}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;}
+
+  /* ── App shell (matches the rest of the CRM) ── */
+  .app{display:grid;grid-template-columns:68px 1fr;min-height:100vh;transition:grid-template-columns .32s cubic-bezier(.4,0,.2,1);}
+  .app:hover .sidebar{width:240px;}
+  .app:hover{grid-template-columns:240px 1fr;}
+  .sidebar{background:var(--bg-2);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow:hidden;width:68px;transition:width .32s cubic-bezier(.4,0,.2,1);}
+  .brand{padding:18px 16px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .brand-mini{font-family:var(--fd);font-weight:900;font-size:13px;letter-spacing:.04em;color:#fff;background:var(--bg-3);border:1px solid var(--line-2);padding:6px 8px;border-radius:6px;flex-shrink:0;}
+  .brand .mark{font-family:var(--fd);font-size:11.5px;font-weight:800;letter-spacing:.04em;line-height:1.3;color:#fff;white-space:nowrap;overflow:hidden;visibility:hidden;}
+  .app:hover .brand .mark{visibility:visible;}
+  .brand .amp{color:var(--accent);}
+  .nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:9px 11px;border-radius:8px;color:var(--text-2);font-size:13.5px;font-weight:500;transition:.13s;white-space:nowrap;}
+  .nav a:hover{background:var(--bg-3);color:var(--text);}
+  .nav a.active{background:var(--bg-3);color:#fff;font-weight:700;box-shadow:inset 2px 0 0 var(--accent);}
+  .nav .ico{width:18px;height:18px;flex-shrink:0;}
+  .nav .lbl{visibility:hidden;}
+  .app:hover .nav .lbl{visibility:visible;}
+  .nav-sep{height:1px;background:var(--line);margin:14px 14px;opacity:.7;}
+  .sidebar-foot{padding:12px 14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .avatar{width:32px;height:32px;border-radius:8px;background:var(--bg-3);border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--fd);font-size:11px;font-weight:900;color:#fff;flex-shrink:0;}
+  .foot-text{flex:1;overflow:hidden;white-space:nowrap;visibility:hidden;}
+  .app:hover .foot-text{visibility:visible;}
+  .logout-btn{background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);padding:6px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .logout-btn:hover{background:var(--bg-4);color:var(--text);}
+  .logout-btn svg{width:14px;height:14px;}
+  @media(max-width:880px){.app{grid-template-columns:1fr !important;}.sidebar{display:none !important;}}
+
+  /* ── Main: full-bleed canvas ── */
+  .main{display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden;}
+  .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;flex-shrink:0;z-index:20;}
+  .topbar h1{font-family:var(--fd);font-size:19px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;}
+  .topbar .sub{font-size:11.5px;color:var(--text-3);padding-left:14px;border-left:1px solid var(--line-2);margin-left:6px;}
+  .toolbar{margin-left:auto;display:flex;gap:8px;align-items:center;}
+  .tb-btn{background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);padding:8px 13px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.13s;}
+  .tb-btn:hover{background:var(--bg-4);color:#fff;border-color:var(--text-3);}
+  .tb-btn svg{width:14px;height:14px;}
+  .tb-btn.primary{background:var(--accent-2);color:#15171c;border-color:var(--accent-2);font-weight:700;}
+  .tb-btn.primary:hover{filter:brightness(1.06);}
+
+  /* ── Canvas ── */
+  .canvas-wrap{flex:1;position:relative;overflow:hidden;background:
+    radial-gradient(circle at 20px 20px, rgba(255,255,255,.025) 1px, transparent 1px),
+    var(--bg);
+    background-size:24px 24px;}
+  .canvas{position:absolute;top:0;left:0;width:4000px;height:3000px;transform-origin:0 0;}
+  #links{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+  #links path{fill:none;stroke-width:1.6;opacity:.55;transition:opacity .15s,stroke-width .15s;}
+  #links path.hl{opacity:1;stroke-width:2.4;filter:drop-shadow(0 0 4px currentColor);}
+
+  /* ── Table card ── */
+  .tbl{position:absolute;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;min-width:230px;box-shadow:0 6px 20px rgba(0,0,0,.35);user-select:none;}
+  .tbl.dragging{box-shadow:0 12px 32px rgba(0,0,0,.6);border-color:var(--accent);z-index:50;}
+  .tbl-head{padding:11px 14px 10px;border-bottom:1px solid var(--line-2);background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border-radius:10px 10px 0 0;cursor:move;display:flex;align-items:center;gap:10px;}
+  .tbl-head .tname{font-family:var(--fm);font-size:13px;font-weight:700;color:#fff;letter-spacing:.01em;flex:1;}
+  .tbl-head .tcount{font-size:10px;color:var(--text-3);font-weight:600;background:var(--bg-4);padding:2px 7px;border-radius:10px;}
+  .tbl-head .tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:4px;}
+  .tbl-body{padding:4px 0;max-height:none;}
+  .fld{padding:6px 14px;font-size:11.5px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(50,58,72,.4);}
+  .fld:last-child{border-bottom:none;}
+  .fld .fname{flex:1;font-family:var(--fm);color:#dde0e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fld .ftype{font-size:9.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;font-family:var(--fd);font-weight:700;}
+  .fld.pk .fname{color:var(--accent);font-weight:700;}
+  .fld.pk::before{content:'PK';font-size:8.5px;font-weight:900;background:var(--accent);color:#15171c;padding:1px 4px;border-radius:3px;font-family:var(--fd);}
+  .fld.fk{cursor:pointer;}
+  .fld.fk::before{content:'FK';font-size:8.5px;font-weight:900;background:var(--c1);color:#fff;padding:1px 4px;border-radius:3px;font-family:var(--fd);}
+  .fld.uniq::before{content:'U';font-size:8.5px;font-weight:900;background:var(--c4);color:#fff;padding:1px 5px;border-radius:3px;font-family:var(--fd);}
+  .fld.seq .fname{color:var(--c2);}
+  .fld.seq::after{content:'auto-seq';font-size:9px;color:var(--c2);font-weight:600;font-family:var(--fd);text-transform:uppercase;letter-spacing:.04em;}
+
+  /* table card group tint */
+  .tbl.g-client .tbl-head{border-left:3px solid var(--c1);}
+  .tbl.g-sales .tbl-head{border-left:3px solid var(--c3);}
+  .tbl.g-purchase .tbl-head{border-left:3px solid var(--c4);}
+  .tbl.g-product .tbl-head{border-left:3px solid var(--c2);}
+  .tbl.g-finance .tbl-head{border-left:3px solid var(--c7);}
+
+  /* ── Legend ── */
+  .legend{position:absolute;left:20px;bottom:20px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:12px 16px;font-size:11.5px;display:flex;flex-direction:column;gap:8px;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  .legend .lh{font-family:var(--fd);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:2px;}
+  .legend .lg{display:flex;align-items:center;gap:9px;}
+  .legend .lswatch{width:22px;height:3px;border-radius:2px;flex-shrink:0;}
+  .legend .ldot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+
+  /* ── Minimap ── */
+  .minimap{position:absolute;right:20px;bottom:20px;width:220px;height:140px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;overflow:hidden;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  .minimap svg{width:100%;height:100%;}
+  .mm-rect{fill:var(--text-2);opacity:.5;}
+  .mm-view{fill:none;stroke:var(--accent);stroke-width:1.6;}
+
+  /* ── Zoom controls ── */
+  .zoom-ctrl{position:absolute;right:20px;top:80px;display:flex;flex-direction:column;gap:4px;z-index:30;}
+  .zoom-ctrl button{width:32px;height:32px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);border-radius:7px;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .zoom-ctrl button:hover{background:var(--bg-3);}
+  .zoom-pct{font-size:10.5px;color:var(--text-3);text-align:center;font-family:var(--fm);font-weight:600;padding:2px 0;}
+
+  /* ── Help/intro overlay ── */
+  .intro{position:absolute;top:80px;left:50%;transform:translateX(-50%);background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:14px 18px;font-size:12.5px;color:var(--text-2);display:flex;align-items:center;gap:14px;z-index:25;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  .intro .kbd{display:inline-block;background:var(--bg-3);border:1px solid var(--line-2);padding:2px 7px;border-radius:4px;font-family:var(--fm);font-size:11px;font-weight:700;color:#fff;}
+  .intro button{background:transparent;border:none;color:var(--text-3);cursor:pointer;padding:2px 6px;font-size:18px;}
+  .intro button:hover{color:#fff;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mini">YRT</div><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div></div>
+    <nav class="nav">
+      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Client Manager</span></a>
+      <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="lbl">Sales Timeline</span></a>
+      <a href="invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Sales Invoices</span></a>
+      <a href="production.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="lbl">Production Lineup</span></a>
+      <a href="reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><span class="lbl">Sales Reports</span></a>
+      <div class="nav-sep"></div>
+      <a href="suppliers.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9M3 5h18v16H3z"/></svg><span class="lbl">Suppliers</span></a>
+      <a href="po-list.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Purchase Timeline</span></a>
+      <a href="purchase-invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h20v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M2 7l3-4h14l3 4"/><path d="M9 13h6"/></svg><span class="lbl">Purchase Invoices</span></a>
+      <a href="purchase-reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg><span class="lbl">Purchase Reports</span></a>
+      <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="lbl">Products</span></a>
+      <div class="nav-sep"></div>
+      <a href="database-map.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg><span class="lbl">Database Map</span></a>
+    </nav>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div class="foot-text"><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <h1>Database Map</h1>
+      <span class="sub">Live schema · drag tables · trace relationships</span>
+      <div class="toolbar">
+        <button class="tb-btn" id="btn-arrange" title="Auto-arrange tables"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Auto-arrange</button>
+        <button class="tb-btn" id="btn-fit" title="Fit to screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>Fit</button>
+        <button class="tb-btn" id="btn-reset" title="Reset saved layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/></svg>Reset Layout</button>
+      </div>
+    </header>
+
+    <div class="canvas-wrap" id="canvas-wrap">
+      <div class="intro" id="intro">
+        Drag tables by their <span class="kbd">title bar</span> · hover a field to highlight its relationships · <span class="kbd">space + drag</span> or middle-click drag to pan · scroll to zoom
+        <button id="intro-close">×</button>
+      </div>
+
+      <div class="canvas" id="canvas">
+        <svg id="links"></svg>
+      </div>
+
+      <div class="zoom-ctrl">
+        <button id="z-in">+</button>
+        <div class="zoom-pct" id="z-pct">100%</div>
+        <button id="z-out">−</button>
+      </div>
+
+      <div class="minimap"><svg id="minimap" viewBox="0 0 4000 3000" preserveAspectRatio="xMidYMid meet"></svg></div>
+
+      <div class="legend">
+        <div class="lh">Legend</div>
+        <div class="lg"><span class="ldot" style="background:var(--c1);"></span>Foreign key (FK)</div>
+        <div class="lg"><span class="ldot" style="background:var(--accent);"></span>Primary key (PK)</div>
+        <div class="lg"><span class="ldot" style="background:var(--c2);"></span>Auto-numbering</div>
+        <div class="lh" style="margin-top:8px;">Relationships</div>
+        <div class="lg"><span class="lswatch" style="background:var(--c1);"></span>Cascade delete</div>
+        <div class="lg"><span class="lswatch" style="background:var(--c8);"></span>Set null on delete</div>
+        <div class="lg"><span class="lswatch" style="background:var(--text-3);"></span>Restrict</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== SCHEMA DEFINITION =====
+// Format: tables, each with fields, and FKs that point to {table, field}
+const SCHEMA = {
+  clients: { group:'g-client', x:60, y:60, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'company_name', t:'text', req:true},
+    {n:'bill_address', t:'text'},
+    {n:'bill_city', t:'text'},
+    {n:'bill_province', t:'text'},
+    {n:'ship_address', t:'text'},
+    {n:'shipment_mode', t:'text'},
+    {n:'terms_days', t:'int'},
+    {n:'serviced_by', t:'text'},
+    {n:'rating', t:'int'},
+    {n:'blacklisted', t:'bool'},
+    {n:'client_since', t:'date'},
+    {n:'last_transaction', t:'date'},
+    {n:'notes', t:'text'},
+    {n:'created_at', t:'timestamp'},
+    {n:'modified_at', t:'timestamp'},
+  ]},
+  contacts: { group:'g-client', x:380, y:60, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'client_id', t:'uuid', fk:{table:'clients',field:'id',onDelete:'cascade'}},
+    {n:'first_name', t:'text'},
+    {n:'last_name', t:'text'},
+    {n:'designation', t:'text'},
+    {n:'tel1', t:'text'},
+    {n:'tel2', t:'text'},
+    {n:'email1', t:'text'},
+    {n:'email2', t:'text'},
+    {n:'is_primary', t:'bool'},
+    {n:'notes', t:'text'},
+  ]},
+  quotes: { group:'g-sales', x:700, y:60, label:'sales timeline', fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'stage_id', t:'int', seq:true},
+    {n:'client_id', t:'uuid', fk:{table:'clients',field:'id'}},
+    {n:'contact_id', t:'uuid', fk:{table:'contacts',field:'id'}},
+    {n:'quote_date', t:'date'},
+    {n:'pickup_date', t:'date'},
+    {n:'event_date', t:'date'},
+    {n:'subject', t:'text'},
+    {n:'po_number', t:'text'},
+    {n:'serviced_by', t:'text'},
+    {n:'record_type', t:'text', note:'inquiry / quote / order'},
+    {n:'art_status', t:'text', note:'stage of production'},
+    {n:'active_status', t:'text'},
+    {n:'subtotal', t:'numeric'},
+    {n:'hst', t:'numeric'},
+    {n:'grand_total', t:'numeric'},
+    {n:'created_at', t:'timestamp'},
+    {n:'modified_at', t:'timestamp'},
+  ]},
+  quote_items: { group:'g-sales', x:1060, y:60, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'quote_id', t:'uuid', fk:{table:'quotes',field:'id',onDelete:'cascade'}},
+    {n:'product_id', t:'uuid', fk:{table:'products',field:'id'}},
+    {n:'supplier_id', t:'uuid', fk:{table:'suppliers',field:'id'}},
+    {n:'line_order', t:'int'},
+    {n:'style_number', t:'text'},
+    {n:'description', t:'text'},
+    {n:'quantity', t:'numeric'},
+    {n:'unit_price', t:'numeric'},
+    {n:'amount', t:'numeric'},
+    {n:'discount_pct', t:'numeric'},
+    {n:'net_amount', t:'numeric'},
+    {n:'in_po', t:'bool'},
+    {n:'po_id', t:'uuid', fk:{table:'purchase_orders',field:'id'}},
+    {n:'fulfillment_status', t:'text'},
+  ]},
+  quote_item_allocations: { group:'g-sales', x:1060, y:540, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'quote_item_id', t:'uuid', fk:{table:'quote_items',field:'id',onDelete:'cascade'}},
+    {n:'supplier_id', t:'uuid', fk:{table:'suppliers',field:'id'}},
+    {n:'quantity', t:'numeric'},
+    {n:'in_po', t:'bool'},
+    {n:'po_id', t:'uuid', fk:{table:'purchase_orders',field:'id'}},
+    {n:'po_item_id', t:'uuid', fk:{table:'po_items',field:'id'}},
+    {n:'status', t:'text'},
+    {n:'created_at', t:'timestamp'},
+  ]},
+  invoices: { group:'g-finance', x:700, y:580, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'invoice_number', t:'int', seq:true},
+    {n:'quote_id', t:'uuid', fk:{table:'quotes',field:'id'}},
+    {n:'client_id', t:'uuid', fk:{table:'clients',field:'id'}},
+    {n:'invoice_date', t:'date'},
+    {n:'due_date', t:'date'},
+    {n:'terms', t:'text'},
+    {n:'subtotal', t:'numeric'},
+    {n:'hst', t:'numeric'},
+    {n:'grand_total', t:'numeric'},
+    {n:'amount_paid', t:'numeric'},
+    {n:'balance_due', t:'numeric'},
+    {n:'paid_status', t:'text'},
+    {n:'created_at', t:'timestamp'},
+  ]},
+  payments: { group:'g-finance', x:380, y:580, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'invoice_id', t:'uuid', fk:{table:'invoices',field:'id',onDelete:'cascade'}},
+    {n:'pay_date', t:'date'},
+    {n:'amount', t:'numeric'},
+    {n:'method', t:'text'},
+    {n:'reference', t:'text'},
+    {n:'created_at', t:'timestamp'},
+  ]},
+  products: { group:'g-product', x:60, y:580, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'category_code', t:'text'},
+    {n:'category_name', t:'text'},
+    {n:'style_number', t:'text'},
+    {n:'name', t:'text', req:true},
+    {n:'description', t:'text'},
+    {n:'unit', t:'text'},
+    {n:'base_price', t:'numeric'},
+    {n:'default_supplier_id', t:'uuid', fk:{table:'suppliers',field:'id'}},
+    {n:'created_at', t:'timestamp'},
+  ]},
+  suppliers: { group:'g-purchase', x:1420, y:60, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'supplier_number', t:'int', seq:true},
+    {n:'short_name', t:'text', req:true},
+    {n:'company_name', t:'text'},
+    {n:'contact_name', t:'text'},
+    {n:'classification', t:'text'},
+    {n:'email', t:'text'},
+    {n:'tel', t:'text'},
+    {n:'address', t:'text'},
+    {n:'city', t:'text'},
+    {n:'terms_days', t:'int'},
+    {n:'created_at', t:'timestamp'},
+  ]},
+  purchase_orders: { group:'g-purchase', x:1420, y:580, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'po_number', t:'int', seq:true},
+    {n:'supplier_id', t:'uuid', fk:{table:'suppliers',field:'id'}},
+    {n:'quote_id', t:'uuid', fk:{table:'quotes',field:'id'}},
+    {n:'order_date', t:'date'},
+    {n:'in_hand_date', t:'date'},
+    {n:'dispatch_mode', t:'text'},
+    {n:'subject', t:'text'},
+    {n:'status', t:'text'},
+    {n:'shipper', t:'text'},
+    {n:'created_at', t:'timestamp'},
+  ]},
+  po_items: { group:'g-purchase', x:1740, y:580, fields:[
+    {n:'id', t:'uuid', pk:true},
+    {n:'po_id', t:'uuid', fk:{table:'purchase_orders',field:'id',onDelete:'cascade'}},
+    {n:'product_id', t:'uuid', fk:{table:'products',field:'id'}},
+    {n:'source_quote_item_id', t:'uuid', fk:{table:'quote_items',field:'id',onDelete:'set null'}},
+    {n:'source_allocation_id', t:'uuid', fk:{table:'quote_item_allocations',field:'id',onDelete:'set null'}},
+    {n:'line_order', t:'int'},
+    {n:'style_number', t:'text'},
+    {n:'description', t:'text'},
+    {n:'quantity', t:'numeric'},
+    {n:'rate', t:'numeric'},
+    {n:'amount', t:'numeric'},
+    {n:'status', t:'text'},
+    {n:'stock_received', t:'numeric'},
+    {n:'verified', t:'bool'},
+  ]},
+};
+
+const FIELD_TYPE_LABEL = {uuid:'UUID', int:'INT', text:'TEXT', date:'DATE', timestamp:'TS', numeric:'NUM', bool:'BOOL'};
+
+// ===== STATE =====
+const STORAGE_KEY = 'yrt-dbmap-positions-v1';
+let zoom = 1;
+let panX = 0, panY = 0;
+let positions = loadPositions();
+
+function loadPositions(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }catch{ return {}; }
+}
+function savePositions(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); }catch{}
+}
+
+// ===== RENDER TABLES =====
+const canvas = document.getElementById('canvas');
+const linksSvg = document.getElementById('links');
+
+function buildTables(){
+  Object.entries(SCHEMA).forEach(([name, def])=>{
+    const card = document.createElement('div');
+    card.className = 'tbl ' + (def.group || '');
+    card.dataset.table = name;
+    const pos = positions[name] || {x:def.x, y:def.y};
+    card.style.left = pos.x + 'px';
+    card.style.top  = pos.y + 'px';
+
+    const head = document.createElement('div');
+    head.className = 'tbl-head';
+    head.innerHTML = `
+      <span class="tname">${name}</span>
+      ${def.label?`<span class="tag" style="background:var(--accent);color:#15171c;">${def.label}</span>`:''}
+      <span class="tcount">${def.fields.length} fields</span>
+    `;
+    card.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'tbl-body';
+    def.fields.forEach(f=>{
+      const fld = document.createElement('div');
+      let cls = 'fld';
+      if(f.pk) cls += ' pk';
+      if(f.fk) cls += ' fk';
+      if(f.seq) cls += ' seq';
+      if(f.uniq) cls += ' uniq';
+      fld.className = cls;
+      fld.dataset.field = f.n;
+      fld.innerHTML = `<span class="fname">${f.n}</span><span class="ftype">${FIELD_TYPE_LABEL[f.t]||f.t}</span>`;
+      if(f.fk){
+        fld.title = `FK → ${f.fk.table}.${f.fk.field}${f.fk.onDelete?' (on delete: '+f.fk.onDelete+')':''}`;
+      }
+      body.appendChild(fld);
+    });
+    card.appendChild(body);
+
+    canvas.appendChild(card);
+    enableDrag(card, head, name);
+    enableFieldHover(card, name);
+  });
+}
+
+// ===== DRAG TABLES =====
+function enableDrag(card, handle, name){
+  let dx=0, dy=0, sx=0, sy=0, dragging=false;
+  handle.addEventListener('mousedown', e=>{
+    if(e.button!==0) return;
+    dragging = true;
+    card.classList.add('dragging');
+    const rect = card.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    sx = e.clientX; sy = e.clientY;
+    dx = parseFloat(card.style.left); dy = parseFloat(card.style.top);
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    const moveX = (e.clientX - sx) / zoom;
+    const moveY = (e.clientY - sy) / zoom;
+    const nx = Math.max(0, dx + moveX);
+    const ny = Math.max(0, dy + moveY);
+    card.style.left = nx + 'px';
+    card.style.top = ny + 'px';
+    drawLinks();
+  });
+  document.addEventListener('mouseup', ()=>{
+    if(!dragging) return;
+    dragging = false;
+    card.classList.remove('dragging');
+    positions[name] = {x:parseFloat(card.style.left), y:parseFloat(card.style.top)};
+    savePositions();
+    drawMinimap();
+  });
+}
+
+// ===== DRAW RELATIONSHIP LINES =====
+function getFieldCenter(table, field){
+  const card = canvas.querySelector(`.tbl[data-table="${table}"]`);
+  if(!card) return null;
+  const f = card.querySelector(`.fld[data-field="${field}"]`);
+  if(!f) return null;
+  const cr = card.getBoundingClientRect();
+  const fr = f.getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
+  // return canvas-space coords (account for zoom)
+  return {
+    left:  (cr.left - canvasRect.left)/zoom,
+    right: (cr.right - canvasRect.left)/zoom,
+    y:     (fr.top - canvasRect.top)/zoom + (fr.height/zoom)/2,
+    cardLeft: parseFloat(card.style.left),
+    cardRight: parseFloat(card.style.left)+card.offsetWidth,
+  };
+}
+
+function drawLinks(){
+  linksSvg.setAttribute('width', canvas.offsetWidth);
+  linksSvg.setAttribute('height', canvas.offsetHeight);
+  linksSvg.innerHTML = '';
+  Object.entries(SCHEMA).forEach(([childName, def])=>{
+    def.fields.forEach(f=>{
+      if(!f.fk) return;
+      const child = getFieldCenter(childName, f.n);
+      const parent = getFieldCenter(f.fk.table, f.fk.field);
+      if(!child || !parent) return;
+      // pick attachment sides: connect from child's nearest edge to parent's nearest edge
+      const childIsRight = child.cardLeft > parent.cardLeft;
+      const childX = childIsRight ? child.left : child.right;
+      const parentX = childIsRight ? parent.right : parent.left;
+      const dx = Math.abs(childX - parentX);
+      const cp = Math.min(160, dx * 0.45);
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      const d = `M ${parentX} ${parent.y} C ${parentX + (childIsRight?cp:-cp)} ${parent.y}, ${childX + (childIsRight?-cp:cp)} ${child.y}, ${childX} ${child.y}`;
+      path.setAttribute('d', d);
+      const color = f.fk.onDelete==='cascade' ? 'var(--c1)'
+                  : f.fk.onDelete==='set null' ? 'var(--c8)'
+                  : 'var(--text-3)';
+      path.setAttribute('stroke', color);
+      path.dataset.from = `${childName}.${f.n}`;
+      path.dataset.to = `${f.fk.table}.${f.fk.field}`;
+      linksSvg.appendChild(path);
+    });
+  });
+}
+
+// ===== FIELD HOVER → HIGHLIGHT RELATED LINES =====
+function enableFieldHover(card, tableName){
+  card.querySelectorAll('.fld').forEach(fld=>{
+    const fieldName = fld.dataset.field;
+    fld.addEventListener('mouseenter', ()=>{
+      linksSvg.querySelectorAll('path').forEach(p=>{
+        if(p.dataset.from === `${tableName}.${fieldName}` || p.dataset.to === `${tableName}.${fieldName}`){
+          p.classList.add('hl');
+        }
+      });
+    });
+    fld.addEventListener('mouseleave', ()=>{
+      linksSvg.querySelectorAll('path.hl').forEach(p=>p.classList.remove('hl'));
+    });
+  });
+}
+
+// ===== ZOOM + PAN =====
+const wrap = document.getElementById('canvas-wrap');
+function applyTransform(){
+  canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  document.getElementById('z-pct').textContent = Math.round(zoom*100) + '%';
+  drawMinimap();
+}
+wrap.addEventListener('wheel', e=>{
+  if(e.ctrlKey || e.metaKey || true){ // always zoom on wheel
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.92 : 1.08;
+    const newZoom = Math.max(0.3, Math.min(2.0, zoom * delta));
+    // zoom toward cursor
+    const rect = wrap.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    panX = cx - (cx - panX) * (newZoom/zoom);
+    panY = cy - (cy - panY) * (newZoom/zoom);
+    zoom = newZoom;
+    applyTransform();
+  }
+}, {passive:false});
+
+// Pan: middle mouse drag, or space+drag
+let panning = false, panSX = 0, panSY = 0, panOX = 0, panOY = 0;
+let spaceDown = false;
+window.addEventListener('keydown', e=>{ if(e.code==='Space'){spaceDown=true; wrap.style.cursor='grab';}});
+window.addEventListener('keyup', e=>{ if(e.code==='Space'){spaceDown=false; wrap.style.cursor='';}});
+wrap.addEventListener('mousedown', e=>{
+  if(e.target.closest('.tbl') || e.target.closest('.toolbar') || e.target.closest('.zoom-ctrl') || e.target.closest('.legend') || e.target.closest('.minimap') || e.target.closest('.intro')) return;
+  if(e.button===1 || spaceDown){
+    panning=true; panSX=e.clientX; panSY=e.clientY; panOX=panX; panOY=panY;
+    wrap.style.cursor='grabbing'; e.preventDefault();
+  }
+});
+document.addEventListener('mousemove', e=>{
+  if(!panning) return;
+  panX = panOX + (e.clientX - panSX);
+  panY = panOY + (e.clientY - panSY);
+  applyTransform();
+});
+document.addEventListener('mouseup', ()=>{
+  if(panning){ panning=false; wrap.style.cursor=spaceDown?'grab':''; }
+});
+
+document.getElementById('z-in').addEventListener('click', ()=>{ zoom = Math.min(2.0, zoom*1.15); applyTransform(); });
+document.getElementById('z-out').addEventListener('click', ()=>{ zoom = Math.max(0.3, zoom/1.15); applyTransform(); });
+
+// ===== FIT TO SCREEN =====
+function fitToScreen(){
+  // find bounding box of all cards
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  canvas.querySelectorAll('.tbl').forEach(card=>{
+    const x=parseFloat(card.style.left), y=parseFloat(card.style.top);
+    minX=Math.min(minX,x); minY=Math.min(minY,y);
+    maxX=Math.max(maxX,x+card.offsetWidth); maxY=Math.max(maxY,y+card.offsetHeight);
+  });
+  const w=maxX-minX, h=maxY-minY;
+  const rect = wrap.getBoundingClientRect();
+  const pad = 80;
+  const sx = (rect.width-pad*2)/w;
+  const sy = (rect.height-pad*2)/h;
+  zoom = Math.min(sx, sy, 1);
+  panX = -minX*zoom + pad;
+  panY = -minY*zoom + pad;
+  applyTransform();
+}
+document.getElementById('btn-fit').addEventListener('click', fitToScreen);
+
+// ===== RESET LAYOUT =====
+document.getElementById('btn-reset').addEventListener('click', ()=>{
+  if(!confirm('Reset table positions to the default layout?')) return;
+  positions = {};
+  localStorage.removeItem(STORAGE_KEY);
+  // reset positions visually
+  canvas.querySelectorAll('.tbl').forEach(card=>{
+    const def = SCHEMA[card.dataset.table];
+    card.style.left = def.x + 'px';
+    card.style.top  = def.y + 'px';
+  });
+  drawLinks(); drawMinimap();
+});
+
+// ===== AUTO-ARRANGE =====
+// Group-based layout — clusters tables by their group, lays them out in rows.
+document.getElementById('btn-arrange').addEventListener('click', ()=>{
+  const groups = {};
+  Object.entries(SCHEMA).forEach(([name,def])=>{
+    const g = def.group || 'other';
+    if(!groups[g]) groups[g] = [];
+    groups[g].push(name);
+  });
+  let y = 60;
+  Object.entries(groups).forEach(([g, tables])=>{
+    let x = 60;
+    let rowH = 0;
+    tables.forEach(t=>{
+      const card = canvas.querySelector(`.tbl[data-table="${t}"]`);
+      positions[t] = {x, y};
+      card.style.left = x + 'px';
+      card.style.top  = y + 'px';
+      x += card.offsetWidth + 60;
+      rowH = Math.max(rowH, card.offsetHeight);
+    });
+    y += rowH + 60;
+  });
+  savePositions(); drawLinks(); drawMinimap();
+});
+
+// ===== MINIMAP =====
+function drawMinimap(){
+  const mm = document.getElementById('minimap');
+  mm.innerHTML = '';
+  canvas.querySelectorAll('.tbl').forEach(card=>{
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x', parseFloat(card.style.left));
+    r.setAttribute('y', parseFloat(card.style.top));
+    r.setAttribute('width', card.offsetWidth);
+    r.setAttribute('height', card.offsetHeight);
+    r.setAttribute('class', 'mm-rect');
+    r.setAttribute('rx', '4');
+    mm.appendChild(r);
+  });
+  // viewport rect
+  const wrapRect = wrap.getBoundingClientRect();
+  const vw = wrapRect.width / zoom;
+  const vh = wrapRect.height / zoom;
+  const vx = -panX / zoom;
+  const vy = -panY / zoom;
+  const view = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  view.setAttribute('x', vx); view.setAttribute('y', vy);
+  view.setAttribute('width', vw); view.setAttribute('height', vh);
+  view.setAttribute('class', 'mm-view');
+  mm.appendChild(view);
+}
+
+// ===== INTRO DISMISS =====
+document.getElementById('intro-close').addEventListener('click', ()=>{
+  document.getElementById('intro').style.display = 'none';
+  try{ localStorage.setItem('yrt-dbmap-intro-seen','1'); }catch{}
+});
+if(localStorage.getItem('yrt-dbmap-intro-seen')==='1'){
+  document.getElementById('intro').style.display = 'none';
+}
+
+// ===== INIT =====
+buildTables();
+drawLinks();
+drawMinimap();
+applyTransform();
+
+// redraw on window resize
+window.addEventListener('resize', ()=>{ drawLinks(); drawMinimap(); });
+</script>
+</body>
+</html>
