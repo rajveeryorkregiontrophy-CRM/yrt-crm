@@ -324,7 +324,6 @@
   <div class="title">Sales Order <span class="id" id="t-id">#----</span></div>
   <div id="t-badge"></div>
   <div class="actions">
-    <button class="btn btn-danger" id="btn-delete">Delete</button>
     <button class="btn" id="btn-quote">Print Quotation</button>
     <button class="btn-brass btn" id="btn-invoice">Convert to Invoice</button>
   </div>
@@ -675,7 +674,7 @@ function render(){
   document.getElementById('btn-save').addEventListener('click',save);
   document.getElementById('btn-quote').addEventListener('click',printQuotation);
   document.getElementById('btn-invoice').addEventListener('click',convertToInvoice);
-  document.getElementById('btn-delete').addEventListener('click',deleteOrder);
+  const _bd=document.getElementById('btn-delete');if(_bd)_bd.addEventListener('click',deleteOrder);
 
   // meta footer
   document.getElementById('meta').innerHTML=
@@ -1540,14 +1539,15 @@ async function printQuotation(){
 }
 
 async function deleteOrder(){
-  const T={inquiry:'inquiry',quote:'quotation',order:'order'}[ORDER.record_type]||'record';
-  const ok=await confirmModal('Delete this '+T+'?','#'+ORDER.stage_id+' and its line items will be permanently removed. This cannot be undone.',{confirmText:'Delete',cancelText:'Keep it',danger:true});
-  if(!ok)return;
-  await db.from('quote_items').delete().eq('quote_id',ORDER_ID);
-  const {error}=await db.from('quotes').delete().eq('id',ORDER_ID);
-  if(error){await alertModal('Couldn’t delete',error.message,'danger');return;}
-  DIRTY=false;
-  location.href='index.html';
+  // Deletion is intentionally disabled. Records are permanent to keep the
+  // Sales Timeline serial-number sequence intact. To retire a record without
+  // losing its ID, clear its client (it will then be offered for reuse on
+  // the next New Record).
+  await alertModal(
+    'Records cannot be deleted',
+    'To keep the Sales Timeline serial numbers intact, records are permanent. If you want to retire this one without wasting its ID, clear its client — it will be offered for reuse next time you click New Record.',
+    'info'
+  );
 }
 
 async function convertToInvoice(){

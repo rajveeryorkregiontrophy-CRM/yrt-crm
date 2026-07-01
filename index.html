@@ -184,6 +184,19 @@
   .rc-action{display:flex;align-items:center;justify-content:center;padding:0 20px;color:var(--text-3);transition:.14s;}
   .record-card:hover .rc-action{color:var(--accent-2);}
   .rc-action svg{width:18px;height:18px;}
+  /* Sales Order cards: green rail + operational fields (Status/Fulfillment/Pickup) on the right */
+  .record-card.acc-order .rc-rail{background:var(--approved);}
+  .rc-ops{display:flex;align-items:center;gap:22px;padding:14px 22px;flex-shrink:0;border-left:1px solid var(--line-2);background:rgba(255,255,255,.012);}
+  .rc-op{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:110px;}
+  .rc-op-pickup{align-items:flex-end;text-align:right;min-width:100px;}
+  .rc-op-lbl{font-family:var(--fd);font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--text-3);}
+  .rc-op .fs-none{color:var(--text-3);font-size:13px;}
+  @media(max-width:880px){
+    .rc-ops{flex-direction:column;align-items:stretch;gap:10px;padding:12px 16px;border-left:none;border-top:1px solid var(--line-2);}
+    .record-card.acc-order{flex-direction:column;}
+    .rc-op-pickup{align-items:flex-start;text-align:left;}
+    .rc-action{display:none;}
+  }
 
   .badge-st{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);min-width:108px;text-align:center;}
   .col-status .badge-st{min-width:0;width:100%;padding:6px 8px;font-size:10.5px;}
@@ -510,16 +523,28 @@ function render(){
 
   let html;
   if(TAB==='order'){
-    // Status column only appears on the "All" filter — otherwise the filter itself implies the stage.
+    // Status field only shown on the "All" filter — when filtered, the filter itself implies the stage.
     const showStatus = FILTER==='all';
-    const statusColEl = showStatus ? '<col class="col-status" style="width:118px;">' : '';
-    const statusHead  = showStatus ? '<th class="col-status th-gap">Status</th>' : '';
-    html=`<table><colgroup><col style="width:60px;"><col class="col-date" style="width:112px;"><col style="width:24%;"><col style="width:36%;">${statusColEl}<col class="col-fulfil" style="width:120px;"><col style="width:116px;"></colgroup><thead><tr><th>ID</th><th class="col-date">Date</th><th>Client</th><th>Subject</th>${statusHead}<th class="col-fulfil">Fulfillment</th><th class="th-pickup">Pickup Date</th></tr></thead><tbody>${rows.map(o=>{
+    html=`<div class="card-list">${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
       const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
-      const statusCell = showStatus ? `<td class="col-status td-gap"><span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td>` : '';
-      return `<tr class="r-order" data-id="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td class="col-date"><span class="q-date">${fmtShort(o.quote_date)}</span></td><td class="client-cell"><div class="name">${esc(o.clients?.company_name||'—')}</div><div class="sub">${esc(ct||o.serviced_by||'')}</div></td><td><span class="subject-tag">${esc(o.subject||'—')}</span></td>${statusCell}<td class="col-fulfil">${fsCell}</td><td class="td-pickup">${pickupCell(o.pickup_date)}</td></tr>`;}).join('')}</tbody></table>`;
+      const statusCell = showStatus ? `<span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span>` : '';
+      return `<div class="record-card acc-order rc-order" data-id="${o.id}">
+        <div class="rc-rail"></div>
+        <div class="rc-body">
+          <div class="rc-meta"><span class="rc-id">#${o.stage_id}</span><span class="rc-dot">·</span><span class="rc-date">${fmtShort(o.quote_date)}</span>${ct?`<span class="rc-dot">·</span><span class="rc-contact">${esc(ct)}</span>`:''}</div>
+          <div class="rc-client">${esc(o.clients?.company_name||'—')}</div>
+          <div class="rc-subject">${esc(o.subject||'—')}</div>
+        </div>
+        <div class="rc-ops">
+          ${showStatus?`<div class="rc-op"><div class="rc-op-lbl">Status</div>${statusCell}</div>`:''}
+          <div class="rc-op"><div class="rc-op-lbl">Fulfillment</div>${fsCell}</div>
+          <div class="rc-op rc-op-pickup"><div class="rc-op-lbl">Pickup Date</div>${pickupCell(o.pickup_date)}</div>
+        </div>
+        <div class="rc-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>`;
+    }).join('')}</div>`;
   }else{
     // Inquiries / Quotations: card list (lighter, professional, less empty than a sparse table)
     html=`<div class="card-list">${rows.map(o=>{
