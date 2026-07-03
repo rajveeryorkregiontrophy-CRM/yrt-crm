@@ -188,20 +188,21 @@
   .record-card.acc-order .rc-rail{background:var(--approved);}
   .rc-ops{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:8px;padding:14px 22px 14px 24px;flex-shrink:0;min-width:170px;position:relative;}
   .rc-ops::before{content:'';position:absolute;left:0;top:14px;bottom:14px;width:1px;background:linear-gradient(180deg,transparent,var(--line-2) 20%,var(--line-2) 80%,transparent);}
-  .rc-op{display:flex;align-items:center;justify-content:flex-end;line-height:1;}
-  .rc-op-lbl{display:none;}   /* labels dropped — pills are self-explanatory */
+  .rc-op{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:4px;line-height:1;}
+  .rc-op-lbl{font-family:var(--fd);font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--text-3);line-height:1;}
   .rc-op-val{display:inline-flex;align-items:center;}
   /* pickup date is the visual anchor: bigger, bolder, at the top */
-  .rc-op-pickup{order:-1;margin-bottom:2px;}
+  .rc-op-pickup{order:-1;margin-bottom:4px;}
   .rc-op-pickup .pk-pill{font-size:14px;font-weight:800;letter-spacing:.005em;}
   /* status + fulfillment pills: refined, softer, matched sizing */
   .rc-op .badge-st{min-width:0;padding:4px 11px;font-size:10px;letter-spacing:.06em;border-radius:6px;box-shadow:none;font-weight:800;}
   .rc-op .fs-pill{font-size:10px;padding:4px 10px;border-radius:6px;letter-spacing:.06em;font-weight:800;}
   .rc-op .fs-none{color:#5a6273;font-size:11.5px;font-weight:600;}
   @media(max-width:880px){
-    .rc-ops{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:10px;padding:12px 16px;min-width:0;border-top:1px solid var(--line-2);}
+    .rc-ops{flex-direction:row;flex-wrap:wrap;align-items:flex-start;justify-content:flex-start;gap:16px;padding:12px 16px;min-width:0;border-top:1px solid var(--line-2);}
     .rc-ops::before{display:none;}
     .record-card.acc-order{flex-direction:column;}
+    .rc-op{align-items:flex-start;}
     .rc-op-pickup{order:0;margin-bottom:0;}
     .rc-action{display:none;}
   }
