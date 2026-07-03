@@ -184,29 +184,27 @@
   .rc-action{display:flex;align-items:center;justify-content:center;padding:0 20px;color:var(--text-3);transition:.14s;}
   .record-card:hover .rc-action{color:var(--accent-2);}
   .rc-action svg{width:18px;height:18px;}
-  /* Sales Order cards: green rail + ops field group (Pickup / Status / Fulfillment) on the right */
+  /* Sales Order cards: green rail + ops (Pickup / Status / Fulfillment) on the right */
   .record-card.acc-order .rc-rail{background:var(--approved);}
-  /* two-column field group: labels form a left edge, values a right edge, top-anchored to the meta line */
-  .rc-ops{display:grid;grid-template-columns:auto auto;align-content:start;align-items:center;column-gap:18px;row-gap:12px;padding:17px 24px 17px 26px;flex-shrink:0;width:216px;position:relative;}
-  /* divider reads as a real column rule between body and ops */
+  /* right-aligned field stack that mirrors the left body's top-down hierarchy */
+  .rc-ops{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:13px;padding:16px 24px 16px 26px;flex-shrink:0;width:184px;position:relative;}
   .rc-ops::before{content:'';position:absolute;left:0;top:16px;bottom:16px;width:1px;background:var(--line-2);}
-  /* each field contributes its label + value directly to the shared grid */
-  .rc-op{display:contents;}
-  .rc-op-lbl{font-family:var(--fd);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--text-3);white-space:nowrap;align-self:center;}
-  .rc-op-val{justify-self:end;display:inline-flex;align-items:center;min-height:20px;}
+  .rc-op{display:flex;flex-direction:column;align-items:flex-end;gap:5px;line-height:1;}
+  /* headings: bold, bright, corporate — not dull grey */
+  .rc-op-lbl{font-family:var(--fd);font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#d3d8e2;line-height:1;}
+  .rc-op-val{display:inline-flex;align-items:center;}
   /* pickup date is the visual anchor: larger value on the top row */
-  .rc-op-pickup .pk-pill{font-size:14.5px;font-weight:800;letter-spacing:.005em;}
-  /* status + fulfillment pills: refined, matched sizing */
-  .rc-op .badge-st{min-width:0;padding:4px 11px;font-size:10px;letter-spacing:.05em;border-radius:6px;box-shadow:none;font-weight:800;}
-  .rc-op .fs-pill{font-size:10px;padding:4px 10px;border-radius:6px;letter-spacing:.05em;font-weight:800;}
+  .rc-op-pickup .pk-pill{font-size:15px;font-weight:800;letter-spacing:.005em;}
+  /* status + fulfillment pills: matched sizing, tinted (not solid) */
+  .rc-op .badge-st{min-width:0;padding:4px 12px;font-size:10px;letter-spacing:.05em;border-radius:6px;box-shadow:none;font-weight:800;}
+  .rc-op .fs-pill{font-size:10px;padding:4px 11px;border-radius:6px;letter-spacing:.05em;font-weight:800;border:1px solid transparent;}
   .rc-op .fs-none{color:#5a6273;font-size:12px;font-weight:600;}
   @media(max-width:880px){
     /* narrow: card stacks, ops become a horizontal row of label-over-value fields under the body */
     .record-card.acc-order{flex-direction:column;}
-    .rc-ops{display:flex;flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:20px;width:100%;padding:13px 16px;border-top:1px solid var(--line-2);}
+    .rc-ops{flex-direction:row;flex-wrap:wrap;align-items:flex-start;justify-content:flex-start;gap:22px;width:100%;padding:13px 16px;border-top:1px solid var(--line-2);}
     .rc-ops::before{display:none;}
-    .rc-op{display:flex;flex-direction:column;align-items:flex-start;gap:5px;}
-    .rc-op-val{justify-self:auto;min-height:0;}
+    .rc-op{align-items:flex-start;}
     .rc-action{display:none;}
   }
 
@@ -227,12 +225,13 @@
   .fsp-desc{flex:1;font-size:13px;color:var(--text);}
   .fsp-detail{display:block;font-size:11px;color:#e0883a;font-weight:600;margin-top:2px;}
   .fsp-empty{padding:20px;text-align:center;color:var(--text-3);}
-  .st-send_art{background:var(--art);color:var(--art-ink);}
-  .st-approval_due{background:var(--due);color:var(--due-ink);}
-  .st-approved{background:var(--approved);color:var(--approved-ink);}
-  .st-in_process{background:var(--process);color:var(--process-ink);}
-  .st-invoice{background:var(--invoice);color:var(--invoice-ink);}
-  .st-no_data{background:var(--nodata);color:#fff;}
+  /* status pills: muted, tinted corporate chips (colored text + soft tint + hairline) */
+  .st-send_art{background:rgba(198,131,88,.13);color:#d29a72;border:1px solid rgba(198,131,88,.34);}
+  .st-approval_due{background:rgba(199,163,93,.13);color:#d3b26a;border:1px solid rgba(199,163,93,.34);}
+  .st-approved{background:rgba(104,166,128,.13);color:#7cbb95;border:1px solid rgba(104,166,128,.34);}
+  .st-in_process{background:rgba(106,152,196,.13);color:#82a6cf;border:1px solid rgba(106,152,196,.34);}
+  .st-invoice{background:rgba(150,127,192,.13);color:#a58ecd;border:1px solid rgba(150,127,192,.34);}
+  .st-no_data{background:rgba(144,152,168,.12);color:#a3abb9;border:1px solid rgba(144,152,168,.3);}
 
   .dates{display:flex;flex-direction:column;gap:6px;}
   .date-line{display:flex;align-items:center;gap:9px;font-size:12.5px;white-space:nowrap;}
@@ -466,14 +465,14 @@ function itemState(it){
 }
 
 const FS_META={
-  none:{label:'No Supplier',color:'#9098a8',bg:'rgba(144,152,168,.16)'},
-  placed:{label:'Not Ordered',color:'#e0883a',bg:'rgba(224,136,58,.16)'},
-  partial:{label:'Partly Ordered',color:'#f0b34e',bg:'rgba(240,179,78,.18)'},
-  in_po:{label:'Ordered',color:'#ff4d4d',bg:'rgba(255,77,77,.14)'},
-  issued:{label:'Issued',color:'#8a92a2',bg:'rgba(138,146,162,.18)'},
-  received:{label:'Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},
-  backordered:{label:'Back Ordered',color:'#b06bff',bg:'rgba(176,107,255,.16)'},
-  mixed:{label:'Mixed Status',color:'#3da5ff',bg:'rgba(61,165,255,.16)'}
+  none:{label:'No Supplier',color:'#a3abb9',bg:'rgba(144,152,168,.12)',bd:'rgba(144,152,168,.3)'},
+  placed:{label:'Not Ordered',color:'#c99a6a',bg:'rgba(198,140,82,.13)',bd:'rgba(198,140,82,.32)'},
+  partial:{label:'Partly Ordered',color:'#cfae63',bg:'rgba(199,167,88,.14)',bd:'rgba(199,167,88,.32)'},
+  in_po:{label:'Ordered',color:'#c67e7e',bg:'rgba(190,112,112,.13)',bd:'rgba(190,112,112,.34)'},
+  issued:{label:'Issued',color:'#9aa2b1',bg:'rgba(138,146,162,.14)',bd:'rgba(138,146,162,.3)'},
+  received:{label:'Received',color:'#7cbb95',bg:'rgba(104,166,128,.13)',bd:'rgba(104,166,128,.34)'},
+  backordered:{label:'Back Ordered',color:'#a58ecd',bg:'rgba(150,127,192,.13)',bd:'rgba(150,127,192,.34)'},
+  mixed:{label:'Mixed Status',color:'#82a6cf',bg:'rgba(106,152,196,.13)',bd:'rgba(106,152,196,.34)'}
 };
 function rollup(orderId){
   const items=FULFILL_BY_ORDER[orderId]||[];
@@ -496,7 +495,7 @@ function openFulfillPopup(orderId){
     const s=itemState(it);
     const m=FS_META[s]||FS_META.none;
     const detail=it._partial?`<span class="fsp-detail">${it._ordered} of ${it._need} ordered</span>`:'';
-    return `<div class="fsp-row"><div class="fsp-desc">${esc(it.description||it.style_number||'Item')}${detail}</div><span class="fs-pill" style="color:${m.color};background:${m.bg};">${m.label}</span></div>`;
+    return `<div class="fsp-row"><div class="fsp-desc">${esc(it.description||it.style_number||'Item')}${detail}</div><span class="fs-pill" style="color:${m.color};background:${m.bg};border:1px solid ${m.bd||'transparent'};">${m.label}</span></div>`;
   }).join('');
   document.getElementById('fsp-body').innerHTML=rows||'<div class="fsp-empty">No line items.</div>';
   ov.classList.add('open');
@@ -540,7 +539,7 @@ function render(){
     html=`<div class="card-list">${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const fs=rollup(o.id);
-      const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
+      const fsCell=fs?`<span class="fs-pill" data-fs="${o.id}" style="color:${FS_META[fs].color};background:${FS_META[fs].bg};border-color:${FS_META[fs].bd};">${FS_META[fs].label}</span>`:'<span class="fs-none">—</span>';
       const statusCell = showStatus ? `<span class="badge-st st-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span>` : '';
       return `<div class="record-card acc-order rc-order" data-id="${o.id}">
         <div class="rc-rail"></div>
