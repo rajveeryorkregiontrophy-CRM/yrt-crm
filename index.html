@@ -186,25 +186,32 @@
   .rc-action svg{width:18px;height:18px;}
   /* Sales Order cards: green rail + fixed-width aligned columns (Pickup / Status / Fulfillment) */
   .record-card.acc-order .rc-rail{background:var(--approved);}
-  /* fixed-width columns so every card's fields align into vertical columns down the list */
-  .rc-cols{display:flex;align-items:stretch;flex-shrink:0;}
-  .rc-col{display:flex;flex-direction:column;justify-content:center;gap:7px;padding:14px 18px;border-left:1px solid var(--line-2);}
-  .col-pickup{width:138px;}
-  .col-status{width:130px;}
+  /* fixed-width columns so every card's chips align into vertical columns down the list */
+  .rc-cols{display:flex;align-items:center;flex-shrink:0;}
+  .rc-col{position:relative;display:flex;align-items:center;justify-content:center;padding:18px 16px;}
+  /* inset divider: short, centered — doesn't cut through the empty body region */
+  .rc-col::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:1px;height:32px;background:var(--line-2);}
+  .col-pickup{width:132px;}
+  .col-status{width:132px;}
   .col-fulfil{width:150px;}
-  /* column headers: bold, legible, small caps — one on each card so the data is self-describing */
-  .rc-col-lbl{font-family:var(--fd);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#ccd2dd;line-height:1;}
-  .rc-col-val{display:inline-flex;align-items:center;min-height:22px;}
-  .col-pickup .pk-pill{font-size:14px;font-weight:800;letter-spacing:.005em;}
-  .col-status .badge-st{min-width:0;padding:5px 12px;font-size:10px;letter-spacing:.05em;border-radius:6px;box-shadow:none;font-weight:800;}
-  .col-fulfil .fs-pill{font-size:10px;padding:5px 11px;border-radius:6px;letter-spacing:.05em;font-weight:800;}
-  .col-fulfil .fs-none{color:#5a6273;font-size:12px;font-weight:600;}
+  /* unified chip: every value is the same equal-sized chip so the columns read as one clean row */
+  .col-pickup .pk-pill,
+  .col-status .badge-st,
+  .col-fulfil .fs-pill,
+  .col-fulfil .fs-none{
+    display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;
+    min-width:106px;height:28px;padding:0 12px;border-radius:7px;
+    font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.06em;
+    text-transform:uppercase;white-space:nowrap;border:1px solid transparent;
+  }
+  /* pickup as a chip: neutral surface, urgency colour carried by the text (keeps the signal) */
+  .col-pickup .pk-pill{background:var(--bg-4);border-color:var(--line-2);font-family:var(--fm);font-size:11.5px;font-weight:700;letter-spacing:0;text-transform:none;}
+  .col-fulfil .fs-none{background:var(--bg-4);border-color:var(--line-2);color:#7c8598;}
   @media(max-width:880px){
-    /* narrow: card stacks; columns become an even, labeled footer strip under the body */
-    .record-card.acc-order{flex-direction:column;}
-    .rc-cols{border-top:1px solid var(--line-2);}
-    .rc-col{flex:1;border-left:none;padding:12px 8px 12px 16px;align-items:flex-start;}
-    .rc-col + .rc-col{border-left:1px solid var(--line-2);}
+    /* narrow (Rajveer's ~620px): Status + Fulfillment hide per design language; Pickup stays as the anchor inline */
+    .record-card.acc-order .col-status,
+    .record-card.acc-order .col-fulfil{display:none;}
+    .col-pickup{width:auto;padding:16px 18px 16px 20px;}
     .rc-action{display:none;}
   }
 
@@ -548,9 +555,9 @@ function render(){
           <div class="rc-subject">${esc(o.subject||'—')}</div>
         </div>
         <div class="rc-cols">
-          <div class="rc-col col-pickup"><span class="rc-col-lbl">Pickup</span><span class="rc-col-val">${pickupCell(o.pickup_date)}</span></div>
-          ${showStatus?`<div class="rc-col col-status"><span class="rc-col-lbl">Status</span><span class="rc-col-val">${statusCell}</span></div>`:''}
-          <div class="rc-col col-fulfil"><span class="rc-col-lbl">Fulfillment</span><span class="rc-col-val">${fsCell}</span></div>
+          <div class="rc-col col-pickup">${pickupCell(o.pickup_date)}</div>
+          ${showStatus?`<div class="rc-col col-status">${statusCell}</div>`:''}
+          <div class="rc-col col-fulfil">${fsCell}</div>
         </div>
         <div class="rc-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>`;
