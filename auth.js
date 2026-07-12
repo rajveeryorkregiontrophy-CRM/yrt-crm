@@ -50,7 +50,12 @@ export async function requireAuth(){
     location.replace('index.html');
     return new Promise(()=>{});
   }
-  if(profile?.role !== 'management') document.documentElement.classList.add('role-process');
+  // Apply the role class BEFORE anything is allowed to paint. index.html keeps
+  // the whole app hidden until 'role-ready' lands, which is what stops a process
+  // user seeing a flash of the management layout (sidebar, Inquiries, Quotations).
+  const root = document.documentElement;
+  root.classList.add(profile?.role === 'management' ? 'role-management' : 'role-process');
+  root.classList.add('role-ready');
   hideAuthLoader();
   return data.session;
 }
@@ -76,7 +81,11 @@ export async function currentUser(){
 }
 
 export async function signOut(){
-  await supabase.auth.signOut();
+  _profile = null;
+  try{ await supabase.auth.signOut(); }catch(e){}
+  // Belt and braces: if signOut fails (offline, expired token), nuke the local
+  // session anyway so the user is never trapped on a page they can't leave.
+  try{ Object.keys(localStorage).filter(k=>k.startsWith('sb-')).forEach(k=>localStorage.removeItem(k)); }catch(e){}
   location.replace('login.html');
 }
 

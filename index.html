@@ -6,6 +6,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Module scripts are deferred, so the browser would paint the full management
+     layout before auth.js could apply the role. Keep everything hidden until the
+     role is resolved — this is what stops a process user glimpsing the sidebar,
+     Inquiries and Quotations on login. */
+  html:not(.role-ready) .app{visibility:hidden;}
+</style>
+<style>
   :root{
     --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
     --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
@@ -308,6 +315,14 @@
   .app.collapsed .sidebar:not(:hover) .nav a.active .ico{color:#fff;}
   .app.collapsed .sidebar:not(:hover) .brand{padding-left:0;padding-right:0;}
 
+  /* Sign out lives in the topbar too: the sidebar is hidden for process users
+     AND below 880px, so the sidebar button alone would strand people. */
+  .topbar-out{display:none;align-items:center;gap:7px;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border-radius:9px;cursor:pointer;transition:.13s;}
+  .topbar-out:hover{border-color:var(--danger);color:var(--danger);}
+  .topbar-out svg{width:15px;height:15px;}
+  html.role-process .topbar-out{display:inline-flex;}
+  @media(max-width:880px){ .topbar-out{display:inline-flex;} .topbar-out span{display:none;} }
+
   /* ── PROCESS ROLE: locked-down view. Sales Orders only. ── */
   html.role-process .sidebar{display:none !important;}
   html.role-process .app{grid-template-columns:1fr !important;}
@@ -350,6 +365,7 @@
     <header class="topbar">
       <h1>Sales Timeline</h1><span class="date" id="today"></span>
       <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="search" placeholder="Search this tab…"></div>
+      <button class="topbar-out" id="topbar-logout" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign out</span></button>
       <button class="btn-primary" id="new-record"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg><span id="new-label">New Record</span></button>
     </header>
     <div class="content">
@@ -743,6 +759,7 @@ function openStagePicker(){
   }));
 }
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
+const _tlo=document.getElementById('topbar-logout');if(_tlo)_tlo.addEventListener('click',()=>signOut());
 load();
 // live sync: refresh the fulfillment column whenever anything changes anywhere
 // Realtime: reload fulfillment state when PO/allocation changes; reload the full list when a quote row itself changes.
