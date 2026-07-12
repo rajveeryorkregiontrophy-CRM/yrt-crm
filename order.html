@@ -11,6 +11,12 @@
   /* Deferred module scripts would otherwise paint the full management view
      (prices, totals, client contact) before auth.js applies the role. */
   html:not(.role-ready) body{visibility:hidden;}
+  .statetog{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;background:var(--bg);}
+  .stog{background:transparent;border:none;color:var(--text-3);font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;cursor:pointer;transition:.13s;}
+  .stog:hover{color:var(--text);}
+  .stog.on[data-v="active"]{background:rgba(88,177,131,.16);color:#59b183;}
+  .stog.on[data-v="inactive"]{background:rgba(144,152,168,.14);color:#aab2c0;}
+  .stog-note{font-size:11.5px;color:var(--text-3);margin-top:7px;line-height:1.45;}
 </style>
 <style>
   :root{
@@ -459,6 +465,14 @@
               <div class="pip" data-s="invoice">Invoice</div>
             </div>
           </div>
+          <div class="seg" id="active-seg">
+            <label>Order State</label>
+            <div class="statetog" id="statetog">
+              <button type="button" class="stog" data-v="active">Active</button>
+              <button type="button" class="stog" data-v="inactive">Inactive</button>
+            </div>
+            <div class="stog-note" id="stog-note"></div>
+          </div>
           <div class="seg">
             <label>Pick-up Date</label>
             <input type="date" class="input" id="i-pickup">
@@ -472,15 +486,6 @@
             <select class="input" id="i-sent">
               <option value="not_sent">Not Sent</option>
               <option value="sent">Sent</option>
-            </select>
-          </div>
-          <div class="seg">
-            <label>Order State</label>
-            <select class="input" id="i-active">
-              <option value="active">Active</option>
-              <option value="on_hold">On Hold</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -692,7 +697,24 @@ function render(){
     ORDER.event_date=ev.value||null;markDirty();
   });
   const is=document.getElementById('i-sent');is.value=ORDER.sent_status||'not_sent';is.addEventListener('change',()=>{ORDER.sent_status=is.value;markDirty();});
-  const ia=document.getElementById('i-active');ia.value=ORDER.active_status||'active';ia.addEventListener('change',()=>{ORDER.active_status=ia.value;markDirty();});
+  // Order State: two options only. Anything legacy (on_hold/cancelled) reads as inactive.
+  // 'completed' is set automatically on invoice conversion and is left alone.
+  const _isInactive=v=>v && v!=='active' && v!=='completed';
+  if(_isInactive(ORDER.active_status)) ORDER.active_status='inactive';
+  if(!ORDER.active_status) ORDER.active_status='active';
+  function paintState(){
+    const inact = ORDER.active_status==='inactive';
+    document.querySelectorAll('.stog').forEach(b=>b.classList.toggle('on', b.dataset.v===(inact?'inactive':'active')));
+    const n=document.getElementById('stog-note');
+    if(n) n.textContent = inact
+      ? 'Set aside. Hidden from the Sales Orders list and from the production team, but offered back when a new order is raised for this client.'
+      : 'Live. Visible in the Sales Orders list and to the production team.';
+  }
+  document.querySelectorAll('.stog').forEach(b=>b.addEventListener('click',()=>{
+    if(ORDER.active_status==='completed') return;   // invoiced orders are closed
+    ORDER.active_status=b.dataset.v; paintState(); markDirty();
+  }));
+  paintState();
 
   document.getElementById('add-line').addEventListener('click',addLine);
   document.getElementById('btn-save').addEventListener('click',save);

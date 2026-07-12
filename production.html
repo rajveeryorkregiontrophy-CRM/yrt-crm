@@ -6,6 +6,34 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
+  html:not(.role-ready) body{visibility:hidden;}
+  /* ── Assignment: management assigns a job to one or more process people ── */
+  .job{position:relative;}
+  .job-assign{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px;padding-top:9px;border-top:1px solid rgba(65,74,92,.5);}
+  .as-chip{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:5px;background:rgba(88,177,131,.14);border:1px solid rgba(88,177,131,.32);color:#7cc79c;font-family:'Archivo',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+  .as-none{font-family:'Archivo',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6b7484;}
+  .as-btn{margin-left:auto;background:transparent;border:1px solid #414a5c;color:#9098a8;font-family:'Archivo',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;height:22px;padding:0 9px;border-radius:5px;cursor:pointer;transition:.13s;}
+  .as-btn:hover{border-color:#c4cad6;color:#eef0f4;}
+  /* assignment modal */
+  .am-ov{position:fixed;inset:0;background:rgba(8,10,14,.74);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:500;padding:20px;}
+  .am-ov.open{display:flex;}
+  .am{background:#16181d;border:1px solid #414a5c;border-radius:14px;width:100%;max-width:430px;overflow:hidden;}
+  .am-h{padding:20px 22px 16px;border-bottom:1px solid #323a48;}
+  .am-h h3{font-family:'Archivo',sans-serif;font-size:15px;font-weight:800;letter-spacing:.02em;color:#fff;}
+  .am-h .sub{font-size:12.5px;color:#9098a8;margin-top:4px;}
+  .am-b{padding:12px 14px;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;}
+  .am-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#1f2229;border:1px solid #414a5c;border-radius:9px;cursor:pointer;transition:.13s;}
+  .am-row:hover{border-color:#9098a8;}
+  .am-row.on{background:rgba(88,177,131,.1);border-color:rgba(88,177,131,.5);}
+  .am-box{width:17px;height:17px;border-radius:4px;border:1.5px solid #5a6273;flex-shrink:0;display:grid;place-items:center;color:#0f1115;font-size:11px;font-weight:900;}
+  .am-row.on .am-box{background:#59b183;border-color:#59b183;}
+  .am-nm{font-weight:600;color:#eef0f4;font-size:13.5px;}
+  .am-em{font-size:11px;color:#6b7484;margin-top:1px;}
+  .am-f{display:flex;gap:10px;padding:14px 20px 18px;justify-content:flex-end;border-top:1px solid #323a48;}
+  .am-btn{padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}
+  .am-btn.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}
+  .am-empty{padding:24px;text-align:center;color:#9098a8;font-size:13px;}
+
   :root{
     --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
     --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
@@ -140,12 +168,26 @@ const days=d=>{if(!d)return null;const x=new Date(d+'T00:00:00');return Math.rou
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const STAGES=[['send_art','Send Art','var(--art)'],['approval_due','Approval Due','var(--due)'],['approved','Approved','var(--approved)'],['in_process','In Process','var(--process)'],['invoice','Ready to Invoice','var(--invoice)']];
 const ST_LABEL={send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice'};
-let ALL=[],VIEW='stage';
+let ALL=[],VIEW='stage',STAFF=[],ASSIGN={},MGMT=false;
 async function load(){
-  const {data,error}=await db.from('quotes').select('*, clients(company_name)').eq('record_type','order').neq('active_status','completed').order('pickup_date',{ascending:true});
+  MGMT=isManagement();
+  // Only ACTIVE, non-invoiced orders belong in production.
+  const {data,error}=await db.from('quotes').select('*, clients(company_name)')
+    .eq('record_type','order').eq('active_status','active').order('pickup_date',{ascending:true});
   if(error){document.getElementById('content').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
-  ALL=data||[];render();
+  ALL=data||[];
+  const {data:staff}=await db.from('profiles').select('id,full_name,email,role').eq('role','process').order('full_name');
+  STAFF=staff||[];
+  await loadAssignments();
+  render();
 }
+
+async function loadAssignments(){
+  ASSIGN={};
+  const {data}=await db.from('order_assignments').select('quote_id,profile_id');
+  (data||[]).forEach(a=>{ (ASSIGN[a.quote_id]=ASSIGN[a.quote_id]||[]).push(a.profile_id); });
+}
+const staffName=id=>{const s=STAFF.find(x=>x.id===id);return s?(s.full_name||s.email):'Unknown';};
 function jobCard(o){
   const n=days(o.pickup_date);
   const dcls=n===null?'d-ok':n<0?'d-over':n<=2?'d-soon':'d-ok';
@@ -155,6 +197,12 @@ function jobCard(o){
     <div class="job-client">${esc(o.clients?.company_name||'—')}</div>
     <div class="job-subject">${esc(o.subject||'—')}</div>
     <div class="job-foot"><span class="pick">Pick: ${fmtD(o.pickup_date)}</span><span class="job-staff">${esc(o.serviced_by||'—')}</span></div>
+    <div class="job-assign">
+      ${(ASSIGN[o.id]||[]).length
+         ? (ASSIGN[o.id]).map(pid=>`<span class="as-chip">${esc(staffName(pid))}</span>`).join('')
+         : '<span class="as-none">Unassigned</span>'}
+      ${MGMT?`<button class="as-btn" data-assign="${o.id}">Assign</button>`:''}
+    </div>
   </div>`;
 }
 function render(){
@@ -179,10 +227,62 @@ function render(){
     }).join('');
   }
   document.querySelectorAll('.job[data-id]').forEach(j=>j.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(j.dataset.id)));
+  document.querySelectorAll('[data-assign]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openAssign(b.dataset.assign);}));
 }
 document.querySelectorAll('.seg-toggle .t').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.seg-toggle .t').forEach(x=>x.classList.remove('active'));t.classList.add('active');VIEW=t.dataset.v;render();}));
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
+
+// ── Assignment modal ──────────────────────────────────────────────
+let AM_ID=null, AM_SEL=new Set();
+function openAssign(quoteId){
+  if(!MGMT) return;
+  AM_ID=quoteId; AM_SEL=new Set(ASSIGN[quoteId]||[]);
+  const o=ALL.find(x=>x.id===quoteId);
+  document.getElementById('am-title').textContent='Assign #'+(o?o.stage_id:'')+' — '+(o?.clients?.company_name||'');
+  const b=document.getElementById('am-b');
+  if(!STAFF.length){
+    b.innerHTML='<div class="am-empty">No process users exist yet. Create them in Supabase, then run 06_assign_roles.sql.</div>';
+  }else{
+    b.innerHTML=STAFF.map(s=>`<div class="am-row ${AM_SEL.has(s.id)?'on':''}" data-p="${s.id}">
+      <span class="am-box">${AM_SEL.has(s.id)?'✓':''}</span>
+      <span><span class="am-nm">${esc(s.full_name||s.email)}</span><span class="am-em">${esc(s.email||'')}</span></span>
+    </div>`).join('');
+    b.querySelectorAll('.am-row').forEach(r=>r.addEventListener('click',()=>{
+      const id=r.dataset.p;
+      if(AM_SEL.has(id))AM_SEL.delete(id); else AM_SEL.add(id);
+      r.classList.toggle('on',AM_SEL.has(id));
+      r.querySelector('.am-box').textContent=AM_SEL.has(id)?'✓':'';
+    }));
+  }
+  document.getElementById('am-ov').classList.add('open');
+}
+function closeAssign(){document.getElementById('am-ov').classList.remove('open');AM_ID=null;}
+document.getElementById('am-cancel').addEventListener('click',closeAssign);
+document.getElementById('am-ov').addEventListener('click',e=>{if(e.target.id==='am-ov')closeAssign();});
+document.getElementById('am-save').addEventListener('click',async()=>{
+  if(!AM_ID)return;
+  const btn=document.getElementById('am-save'); btn.disabled=true; btn.textContent='Saving…';
+  // Replace the whole set for this order: delete then insert what's selected.
+  await db.from('order_assignments').delete().eq('quote_id',AM_ID);
+  if(AM_SEL.size){
+    const rows=[...AM_SEL].map(pid=>({quote_id:AM_ID,profile_id:pid}));
+    const {error}=await db.from('order_assignments').insert(rows);
+    if(error){alert('Could not save: '+error.message);}
+  }
+  btn.disabled=false; btn.textContent='Save';
+  closeAssign();
+  await loadAssignments();
+  render();
+});
+
 load();
 </script>
+<div class="am-ov" id="am-ov">
+  <div class="am">
+    <div class="am-h"><h3 id="am-title">Assign job</h3><div class="sub">Pick one person, or several to split the job between them.</div></div>
+    <div class="am-b" id="am-b"></div>
+    <div class="am-f"><button class="am-btn" id="am-cancel">Cancel</button><button class="am-btn primary" id="am-save">Save</button></div>
+  </div>
+</div>
 </body>
 </html>
