@@ -44,23 +44,21 @@
   .btn-primary{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;padding:10px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
   .btn-primary:hover{filter:brightness(1.08);}
   .content{padding:24px 26px 70px;max-width:1560px;width:100%;}
-  .cat-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
-  .sub-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;padding-left:2px;}
-  .sub-chip{font-size:11px;padding:5px 11px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--text-3);cursor:pointer;font-weight:600;font-family:var(--fd);letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;gap:7px;transition:.13s;}
-  .sub-chip:hover{background:var(--bg-3);color:var(--text);}
-  .sub-chip.active{background:var(--bg-4);border-color:var(--line-2);color:var(--text);}
-  .sub-chip .n{font-family:var(--fm);font-size:10px;color:var(--text-3);}
-  .sub-chip.active .n{color:var(--text-2);}
+  /* ── Filter toolbar: replaces the chip wall; scales to 10 categories / 70 types ── */
+  .toolbar{display:flex;align-items:flex-end;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+  .fg{display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .fg label{font-family:var(--fd);font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);}
+  .fsel{background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;padding:9px 12px;border-radius:8px;min-width:200px;cursor:pointer;transition:border-color .13s;}
+  .fsel:hover{border-color:var(--text-3);}
+  .fsel:focus{outline:none;border-color:var(--accent-2);}
+  .f-reset{margin-left:auto;align-self:flex-end;background:transparent;border:1px solid var(--line-2);color:var(--text-3);font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:10px 15px;border-radius:8px;cursor:pointer;transition:.13s;}
+  .f-reset:hover{border-color:var(--text-3);color:var(--text);}
+  .more-note{padding:10px 20px;font-size:12px;color:var(--text-3);border-bottom:1px solid var(--line);background:var(--bg-3);}
+  @media(max-width:760px){.toolbar{gap:10px;}.fsel{min-width:0;width:100%;}.fg{flex:1 1 100%;}.f-reset{margin-left:0;width:100%;}}
   .sup-name{font-size:12.5px;color:var(--text-2);font-weight:600;white-space:nowrap;}
-  .sub-lbl{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);align-self:center;margin-right:2px;}
-  .sub-select{background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);font-family:inherit;font-size:12px;font-weight:600;padding:6px 10px;border-radius:7px;min-width:230px;cursor:pointer;}
-  .sub-select:focus{outline:none;border-color:var(--text-3);}
+  .p-type{font-family:var(--fd);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);}
+  .p-nil{color:#5a6273;}
   .more-note{padding:10px 18px;font-size:12px;color:var(--text-3);border-bottom:1px solid var(--line);background:var(--bg-3);}
-  .cat-chip{font-size:12px;padding:7px 13px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
-  .cat-chip:hover{border-color:var(--text-3);color:var(--text);}
-  .cat-chip.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
-  .cat-chip .n{font-family:var(--fm);font-size:10.5px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.06);}
-  .cat-chip.active .n{background:rgba(0,0,0,.15);}
   .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
   .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
   .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
@@ -165,8 +163,12 @@
       <button class="btn-primary" id="new-product"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>New Product</button>
     </header>
     <div class="content">
-      <div class="cat-bar" id="cat-bar"></div>
-      <div class="sub-bar" id="sub-bar" style="display:none;"></div>
+      <div class="toolbar">
+        <div class="fg"><label>Category</label><select class="fsel" id="f-cat"></select></div>
+        <div class="fg"><label>Type</label><select class="fsel" id="f-sub"></select></div>
+        <div class="fg"><label>Supplier</label><select class="fsel" id="f-sup"></select></div>
+        <button class="f-reset" id="f-reset">Reset</button>
+      </div>
       <section class="panel">
         <div class="panel-head"><h2>Catalogue</h2><span class="count" id="count">—</span></div>
         <div id="wrap"><div class="state">Loading…</div></div>
@@ -200,7 +202,7 @@ function smConfirm(msg,title,opts){opts=opts||{};return new Promise(res=>{__ensu
 
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
-let PRODUCTS=[],EDITING=null,CAT='all',SUB='all',SUPPLIERS=[];
+let PRODUCTS=[],EDITING=null,CAT='all',SUB='all',SUP='all',SUPPLIERS=[];
 
 async function load(){
   // Supabase caps a select at 1000 rows — page through so the whole catalogue loads.
@@ -219,75 +221,71 @@ async function load(){
   const {data:sups}=await db.from('suppliers').select('id,supplier_number,company_name,short_name').order('company_name');
   SUPPLIERS=sups||[];
   const _npr=document.getElementById('nav-products');if(_npr)_npr.textContent=PRODUCTS.length;
-  renderCats();render();
+  renderFilters();render();
 }
 const supName=p=>p.suppliers?(p.suppliers.short_name||p.suppliers.company_name||''):'';
-function renderCats(){
-  // Primary tabs = top-level category (Awards, Trophies, …). Scales as new CSVs arrive.
-  const cats={};PRODUCTS.forEach(p=>{const k=p.category_name||'Uncategorized';cats[k]=(cats[k]||0)+1;});
-  const bar=document.getElementById('cat-bar');
-  let html=`<button class="cat-chip ${CAT==='all'?'active':''}" data-c="all">All <span class="n">${PRODUCTS.length}</span></button>`;
-  Object.entries(cats).sort().forEach(([name,n])=>{
-    html+=`<button class="cat-chip ${CAT===name?'active':''}" data-c="${esc(name)}"><span class="cat-dot" style="background:${catColor(name)}"></span>${esc(name)} <span class="n">${n}</span></button>`;
-  });
-  bar.innerHTML=html;
-  bar.querySelectorAll('.cat-chip').forEach(c=>c.addEventListener('click',()=>{CAT=c.dataset.c;SUB='all';renderCats();render();}));
+function renderFilters(){
+  const inCat=p=>CAT==='all'||(p.category_name||'Uncategorized')===CAT;
 
-  // Secondary row = subcategories within the selected category (ACRYLIC / CRYSTAL / GLASS)
-  const sbar=document.getElementById('sub-bar');
-  if(CAT==='all'){sbar.innerHTML='';sbar.style.display='none';return;}
-  const subs={};
-  PRODUCTS.filter(p=>(p.category_name||'Uncategorized')===CAT)
-          .forEach(p=>{const k=p.category_code||'—';subs[k]=(subs[k]||0)+1;});
-  const keys=Object.keys(subs);
-  if(keys.length<2){sbar.innerHTML='';sbar.style.display='none';return;}
-  sbar.style.display='flex';
-  const inCat=PRODUCTS.filter(p=>(p.category_name||'Uncategorized')===CAT).length;
-  keys.sort();
-  // Families like Resins (70 types) and Medals (65) would be an unusable wall of chips —
-  // switch to a select once there are more than 8.
-  if(keys.length>8){
-    sbar.innerHTML=`<label class="sub-lbl">Type</label>
-      <select class="sub-select" id="sub-select">
-        <option value="all"${SUB==='all'?' selected':''}>All Types (${inCat})</option>
-        ${keys.map(k=>`<option value="${esc(k)}"${SUB===k?' selected':''}>${esc(k)} (${subs[k]})</option>`).join('')}
-      </select>`;
-    sbar.querySelector('#sub-select').addEventListener('change',e=>{SUB=e.target.value;render();});
-    return;
-  }
-  let sh=`<button class="sub-chip ${SUB==='all'?'active':''}" data-s="all">All Types <span class="n">${inCat}</span></button>`;
-  keys.forEach(k=>{sh+=`<button class="sub-chip ${SUB===k?'active':''}" data-s="${esc(k)}">${esc(k)} <span class="n">${subs[k]}</span></button>`;});
-  sbar.innerHTML=sh;
-  sbar.querySelectorAll('.sub-chip').forEach(c=>c.addEventListener('click',()=>{SUB=c.dataset.s;renderCats();render();}));
+  // Category
+  const cats={};PRODUCTS.forEach(p=>{const k=p.category_name||'Uncategorized';cats[k]=(cats[k]||0)+1;});
+  const fc=document.getElementById('f-cat');
+  fc.innerHTML=`<option value="all">All Categories (${PRODUCTS.length.toLocaleString()})</option>`+
+    Object.keys(cats).sort().map(k=>`<option value="${esc(k)}"${CAT===k?' selected':''}>${esc(k)} (${cats[k].toLocaleString()})</option>`).join('');
+
+  // Type — scoped to the chosen category
+  const subs={};PRODUCTS.filter(inCat).forEach(p=>{const k=p.category_code||'—';subs[k]=(subs[k]||0)+1;});
+  const fs=document.getElementById('f-sub');
+  const subTotal=PRODUCTS.filter(inCat).length;
+  fs.innerHTML=`<option value="all">All Types (${subTotal.toLocaleString()})</option>`+
+    Object.keys(subs).sort().map(k=>`<option value="${esc(k)}"${SUB===k?' selected':''}>${esc(k)} (${subs[k].toLocaleString()})</option>`).join('');
+  fs.disabled=Object.keys(subs).length<2;
+
+  // Supplier
+  const sups={};PRODUCTS.forEach(p=>{const k=supName(p)||'—';sups[k]=(sups[k]||0)+1;});
+  const fu=document.getElementById('f-sup');
+  fu.innerHTML=`<option value="all">All Suppliers</option>`+
+    Object.keys(sups).sort().map(k=>`<option value="${esc(k)}"${SUP===k?' selected':''}>${esc(k)} (${sups[k].toLocaleString()})</option>`).join('');
 }
+
 function render(){
-  const q=(document.getElementById('search').value||'').toLowerCase();
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const terms=q?q.split(/\s+/):[];
   let rows=PRODUCTS.filter(p=>{
     if(CAT!=='all'&&(p.category_name||'Uncategorized')!==CAT)return false;
     if(SUB!=='all'&&(p.category_code||'—')!==SUB)return false;
-    if(q){const hay=((p.name||'')+' '+(p.style_number||'')+' '+(p.category_name||'')+' '+(p.category_code||'')+' '+supName(p)).toLowerCase();if(!hay.includes(q))return false;}
+    if(SUP!=='all'&&(supName(p)||'—')!==SUP)return false;
+    if(terms.length){
+      const hay=((p.name||'')+' '+(p.style_number||'')+' '+(p.category_name||'')+' '+(p.category_code||'')+' '+supName(p)).toLowerCase();
+      if(!terms.every(t=>hay.includes(t)))return false;
+    }
     return true;
   });
-  document.getElementById('count').textContent=rows.length+(rows.length===1?' item':' items');
-  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No products found. Click “New Product” to add one.</div>`;return;}
-  // The catalogue is 8,000+ items — rendering every row at once locks the page up.
-  // Show the first 300 and let the search / filters narrow it down.
-  const CAP=300, total=rows.length, capped=total>CAP;
+  const total=rows.length;
+  document.getElementById('count').textContent=total.toLocaleString()+(total===1?' item':' items');
+  if(!total){document.getElementById('wrap').innerHTML=`<div class="state">No products match these filters.</div>`;return;}
+
+  // 8,000+ rows can't all go in the DOM — show the first 300 and let the filters narrow it.
+  const CAP=300, capped=total>CAP;
   if(capped) rows=rows.slice(0,CAP);
-  const moreNote=capped?`<div class="more-note">Showing ${CAP} of ${total.toLocaleString()} — use the search or filters to narrow it down.</div>`:'';
-  document.getElementById('wrap').innerHTML=moreNote+`<table><thead><tr><th style="width:150px;">Category</th><th style="width:110px;">Type</th><th style="width:130px;">Style #</th><th>Product</th><th style="width:120px;">Supplier</th><th class="num" style="width:120px;">Base Price</th></tr></thead><tbody>${rows.map(p=>`
+  const note=capped?`<div class="more-note">Showing the first ${CAP} of ${total.toLocaleString()} — narrow it with the search or filters above.</div>`:'';
+
+  document.getElementById('wrap').innerHTML=note+`<table><thead><tr>
+      <th style="width:130px;">Style #</th>
+      <th>Product</th>
+      <th style="width:170px;">Type</th>
+      <th style="width:90px;">Supplier</th>
+      <th class="num" style="width:110px;">Base Price</th>
+    </tr></thead><tbody>${rows.map(p=>`
     <tr data-id="${p.id}">
-      <td><span class="cat-name"><span class="cat-dot" style="background:${catColor(p.category_name||p.category_code)}"></span>${esc(p.category_name||'—')}</span></td>
-      <td><span class="cat-code">${esc(p.category_code||'—')}</span></td>
       <td><span class="p-style">${esc(p.style_number||'—')}</span></td>
       <td><div class="p-name">${esc(p.name)}</div></td>
+      <td><span class="p-type">${esc(p.category_code||'—')}</span></td>
       <td><span class="sup-name">${esc(supName(p)||'—')}</span></td>
-      <td class="num"><span class="p-price">${money(p.base_price)}</span></td>
+      <td class="num"><span class="p-price">${p.base_price==null?'<span class="p-nil">—</span>':money(p.base_price)}</span></td>
     </tr>`).join('')}</tbody></table>`;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>edit(tr.dataset.id)));
 }
-const CAT_COLORS=['#3da5ff','#3ddc84','#ffb627','#b06bff','#ff6b35','#ff4d8f','#4ddbd0','#a0b0c8'];
-function catColor(key){let h=0;const s=String(key||'');for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return CAT_COLORS[h%CAT_COLORS.length];}
 function openD(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
 function closeD(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.getElementById('d-msg').textContent='';}
 function form(p){
@@ -331,6 +329,10 @@ document.getElementById('overlay').addEventListener('click',closeD);
 document.getElementById('d-save').addEventListener('click',save);
 document.getElementById('d-del').addEventListener('click',del);
 document.getElementById('search').addEventListener('input',render);
+document.getElementById('f-cat').addEventListener('change',e=>{CAT=e.target.value;SUB='all';renderFilters();render();});
+document.getElementById('f-sub').addEventListener('change',e=>{SUB=e.target.value;render();});
+document.getElementById('f-sup').addEventListener('change',e=>{SUP=e.target.value;render();});
+document.getElementById('f-reset').addEventListener('click',()=>{CAT='all';SUB='all';SUP='all';document.getElementById('search').value='';renderFilters();render();});
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
 load();
 </script>
