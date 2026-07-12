@@ -159,8 +159,9 @@
   </div>
 </div>
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, isManagement } from './auth.js';
 await requireAuth();
+if(!isManagement()){ location.replace('index.html'); throw new Error('forbidden'); }
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const today=new Date();today.setHours(0,0,0,0);
 const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return DOW[x.getDay()]+' '+x.getDate()+' '+MON[x.getMonth()];};
