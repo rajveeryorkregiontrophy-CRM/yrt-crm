@@ -177,7 +177,8 @@ async function load(){
     .eq('record_type','order').eq('active_status','active').order('pickup_date',{ascending:true});
   if(error){document.getElementById('content').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   ALL=data||[];
-  const {data:staff}=await db.from('profiles').select('id,full_name,email,role').eq('role','process').order('full_name');
+  const {data:staff,error:sErr}=await db.rpc('process_staff');
+  if(sErr) console.error('[production] could not load staff', sErr);
   STAFF=staff||[];
   await loadAssignments();
   render();

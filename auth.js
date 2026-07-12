@@ -24,16 +24,33 @@ export const supabase = createClient(
 const PROCESS_PAGES = ['index.html','order.html','login.html',''];
 
 let _profile = null;
+
+// Resolve the signed-in user's role.
+//
+// This goes through the me() SECURITY DEFINER function, NOT a select on profiles.
+// Reading the table directly can fail if RLS or a missing grant gets in the way —
+// and the old fallback then silently demoted management to 'process', which is
+// exactly why Rajveer was being shown the production view. me() runs as the owner
+// and cannot be blocked, so the role is always the truth.
 export async function getProfile(){
   if(_profile) return _profile;
   const { data:{ user } } = await supabase.auth.getUser();
   if(!user) return null;
-  const { data } = await supabase.from('profiles').select('id,email,full_name,role').eq('id',user.id).single();
-  _profile = data || { id:user.id, email:user.email, full_name:user.email, role:'process' };
+
+  const { data, error } = await supabase.rpc('me');
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if(error || !row || !row.role){
+    // Do NOT guess a role. A wrong guess either exposes data or locks someone out.
+    console.error('[auth] Could not resolve role for', user.email, error);
+    throw new Error('Could not determine your role. Run 08_fix_role_resolution.sql, then reload.');
+  }
+
+  _profile = { id:row.id, email:row.email, full_name:row.full_name, role:row.role };
   return _profile;
 }
 export function isManagement(){ return _profile?.role === 'management'; }
-export function roleOf(){ return _profile?.role || 'process'; }
+export function roleOf(){ return _profile?.role || null; }
 
 // Block the page until we confirm a valid session AND that this role may see it.
 export async function requireAuth(){
