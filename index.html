@@ -307,6 +307,21 @@
   .app.collapsed .sidebar:not(:hover) .nav a.active{background:transparent;}
   .app.collapsed .sidebar:not(:hover) .nav a.active .ico{color:#fff;}
   .app.collapsed .sidebar:not(:hover) .brand{padding-left:0;padding-right:0;}
+
+  /* ── PROCESS ROLE: locked-down view. Sales Orders only. ── */
+  html.role-process .sidebar{display:none !important;}
+  html.role-process .app{grid-template-columns:1fr !important;}
+  html.role-process .stage-tabs{display:none !important;}
+  html.role-process #new-record{display:none !important;}
+  html.role-process .panel-head .filters{display:flex;}
+  html.role-process .rc-assign{display:inline-flex;}
+  .rc-assign{display:none;align-items:center;gap:6px;font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8b93a4;}
+  .rc-assign .who{color:#cdd3df;}
+  .rc-assign.unassigned .who{color:#7c8598;}
+  .who-bar{display:none;align-items:center;gap:10px;padding:11px 16px;background:var(--bg-3);border:1px solid var(--line-2);border-radius:10px;margin-bottom:14px;}
+  html.role-process .who-bar{display:flex;}
+  .who-bar .wb-badge{font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0f1115;background:var(--approved);padding:4px 9px;border-radius:5px;}
+  .who-bar .wb-txt{font-size:12.5px;color:var(--text-2);font-weight:600;}
 </style>
 </head>
 <body>
@@ -338,6 +353,7 @@
       <button class="btn-primary" id="new-record"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg><span id="new-label">New Record</span></button>
     </header>
     <div class="content">
+      <div class="who-bar"><span class="wb-badge">Production</span><span class="wb-txt" id="wb-txt"></span></div>
       <div class="stage-tabs" id="stage-tabs">
         <button class="stage-tab t-inquiry" data-tab="inquiry"><div class="st-top"><span class="st-dot"></span><div class="st-name">Inquiries</div></div><div class="st-meta"><span class="st-count" id="c-inquiry">–</span><span class="st-sub">open leads</span></div></button>
         <button class="stage-tab t-quote" data-tab="quote"><div class="st-top"><span class="st-dot"></span><div class="st-name">Quotations</div></div><div class="st-meta"><span class="st-count" id="c-quote">–</span><span class="st-sub">quoted, awaiting</span></div></button>
@@ -359,8 +375,10 @@
   </div>
 </div>
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, isManagement, getProfile } from './auth.js';
 await requireAuth();
+const PROFILE = await getProfile();
+const MGMT = isManagement();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
 function __ensureModal(){
@@ -412,6 +430,7 @@ function pickupCell(pickup){
 }
 
 async function load(){
+  if(!MGMT){ return loadProcess(); }
   const {data,error}=await db.from('quotes').select('*, clients(company_name), contacts(first_name,last_name)').in('record_type',['inquiry','quote','order']).order('quote_date',{ascending:false});
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   DATA={inquiry:[],quote:[],order:[]};
@@ -421,6 +440,25 @@ async function load(){
   document.getElementById('c-order').textContent=DATA.order.length;
   // load fulfillment statuses for all sales-order line items (for the dashboard rollup)
   await loadFulfillment();
+  render();
+}
+
+// PROCESS ROLE: the only data they can reach. Server-side this returns just
+// active, non-invoiced Sales Orders with no money columns (see 05_roles_and_rls.sql).
+async function loadProcess(){
+  TAB='order'; FILTER='all';
+  const {data,error}=await db.rpc('process_orders');
+  if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
+  DATA={inquiry:[],quote:[],order:(data||[]).map(r=>({
+    id:r.id, stage_id:r.stage_id, subject:r.subject, pickup_date:r.pickup_date,
+    event_date:r.event_date, art_status:r.art_status, quote_date:null,
+    clients:{company_name:r.client_name}, contacts:null,
+    _assigned:r.assigned_to, _mine:(r.assigned_ids||[]).includes(PROFILE?.id)
+  }))};
+  const mine=DATA.order.filter(o=>o._mine).length;
+  const wb=document.getElementById('wb-txt');
+  if(wb) wb.textContent=(PROFILE?.full_name||'')+' — '+mine+' assigned to you, '+DATA.order.length+' active in the shop';
+  document.getElementById('list-title').textContent='Sales Orders';
   render();
 }
 
@@ -557,7 +595,7 @@ function render(){
         <div class="rc-cols">
           <div class="rc-col col-pickup">${pickupCell(o.pickup_date)}</div>
           ${showStatus?`<div class="rc-col col-status">${statusCell}</div>`:''}
-          <div class="rc-col col-fulfil">${fsCell}</div>
+          <div class="rc-col col-fulfil">${MGMT?fsCell:`<span class="rc-assign ${o._mine?'':'unassigned'}">${o._mine?'You':`<span class="who">${esc(o._assigned||'Unassigned')}</span>`}</span>`}</div>
         </div>
         <div class="rc-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>`;
@@ -594,6 +632,7 @@ document.querySelectorAll('.stage-tab').forEach(t=>t.addEventListener('click',()
 document.getElementById('search').addEventListener('input',render);
 
 document.getElementById('new-record').addEventListener('click', async ()=>{
+  if(!MGMT) return;
   const btn=document.getElementById('new-record');
   btn.disabled=true; btn.style.opacity=.6;
   try{
@@ -707,7 +746,8 @@ const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('cli
 load();
 // live sync: refresh the fulfillment column whenever anything changes anywhere
 // Realtime: reload fulfillment state when PO/allocation changes; reload the full list when a quote row itself changes.
-subscribeFulfillment(async()=>{ await loadFulfillment(); render(); });
+if(MGMT){ subscribeFulfillment(async()=>{ await loadFulfillment(); render(); }); }
+else { subscribeFulfillment(async()=>{ await loadProcess(); }, {tables:['quotes','order_assignments']}); }
 subscribeFulfillment(async()=>{ await load(); }, { tables:['quotes'] });
 // Fallback: if the user comes back from another tab (e.g. the order detail), refresh once.
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') load(); });

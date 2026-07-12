@@ -11,7 +11,31 @@ export const supabase = createClient(
   'sb_publishable_ZpLMMKMw_SaImF-dWAS1vg_yyMUOW_f'
 );
 
-// Block the page until we confirm a valid session. If none, bounce to login.
+// ============================================================
+// ROLES
+//   'management' — full access (Rajveer + one other)
+//   'process'    — Sales Orders only. Locked out of every other page.
+//
+// This is the UI half of the gate. The REAL enforcement is Row Level Security
+// in Postgres (05_roles_and_rls.sql): a process user querying Supabase directly
+// gets zero rows from every business table. This just makes the app behave
+// correctly instead of showing them empty screens.
+// ============================================================
+const PROCESS_PAGES = ['index.html','order.html','login.html',''];
+
+let _profile = null;
+export async function getProfile(){
+  if(_profile) return _profile;
+  const { data:{ user } } = await supabase.auth.getUser();
+  if(!user) return null;
+  const { data } = await supabase.from('profiles').select('id,email,full_name,role').eq('id',user.id).single();
+  _profile = data || { id:user.id, email:user.email, full_name:user.email, role:'process' };
+  return _profile;
+}
+export function isManagement(){ return _profile?.role === 'management'; }
+export function roleOf(){ return _profile?.role || 'process'; }
+
+// Block the page until we confirm a valid session AND that this role may see it.
 export async function requireAuth(){
   showAuthLoader();
   const { data } = await supabase.auth.getSession();
@@ -19,6 +43,14 @@ export async function requireAuth(){
     location.replace('login.html');
     return new Promise(()=>{});
   }
+  const profile = await getProfile();
+  const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  if(profile?.role !== 'management' && !PROCESS_PAGES.includes(page)){
+    // Process user tried to reach a page they're not allowed on (typed the URL, etc.)
+    location.replace('index.html');
+    return new Promise(()=>{});
+  }
+  if(profile?.role !== 'management') document.documentElement.classList.add('role-process');
   hideAuthLoader();
   return data.session;
 }
