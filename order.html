@@ -578,7 +578,7 @@ async function load(){
   const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
   LINES=items||[];
   // resolve supplier display info for any line that has a supplier_id
-  LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.company_name||s.short_name||''; l._supplier_number=s.supplier_number; } } });
+  LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.short_name||s.company_name||''; l._supplier_number=s.supplier_number; } } });
   await loadAllocations();
   render();
 }
@@ -596,7 +596,7 @@ async function loadAllocations(){
     const s=SUPPLIERS.find(x=>x.id===a.supplier_id);
     (byItem[a.quote_item_id]=byItem[a.quote_item_id]||[]).push({
       id:a.id, supplier_id:a.supplier_id, quantity:a.quantity, in_po:a.in_po, po_id:a.po_id, status:a.status, _direct:false,
-      _supplier_name:s?(s.company_name||s.short_name||''):'', _supplier_number:s?s.supplier_number:null
+      _supplier_name:s?(s.short_name||s.company_name||''):'', _supplier_number:s?s.supplier_number:null
     });
   });
   (directPis||[]).forEach(p=>{
@@ -605,7 +605,7 @@ async function loadAllocations(){
     const s=SUPPLIERS.find(x=>x.id===supId);
     (byItem[p.source_quote_item_id]=byItem[p.source_quote_item_id]||[]).push({
       id:'pi:'+p.id, _poItemId:p.id, supplier_id:supId, quantity:p.quantity, in_po:true, po_id:p.po_id, status:p.status, _direct:true,
-      _supplier_name:s?(s.company_name||s.short_name||''):'', _supplier_number:s?s.supplier_number:null
+      _supplier_name:s?(s.short_name||s.company_name||''):'', _supplier_number:s?s.supplier_number:null
     });
   });
   LINES.forEach(l=>{ l._allocations = (byItem[l.id]&&byItem[l.id].length) ? byItem[l.id] : null; });
@@ -878,7 +878,7 @@ function wireCombo(inp,kind){
           const sup=SUPPLIERS.find(s=>s.id===m.default_supplier_id);
           if(sup){
             LINES[i].supplier_id=sup.id;
-            LINES[i]._supplier_name=sup.company_name||sup.short_name||'';
+            LINES[i]._supplier_name=sup.short_name||sup.company_name||'';
             LINES[i]._supplier_number=sup.supplier_number;
             // default supplier qty to the order qty if not yet set
             if(LINES[i].supplier_quantity==null||LINES[i].supplier_quantity==='') LINES[i].supplier_quantity=parseFloat(LINES[i].quantity)||0;
@@ -901,7 +901,7 @@ function wireCombo(inp,kind){
       if(prod && prod.default_supplier_id && !LINES[i].supplier_id && !(LINES[i]._allocations&&LINES[i]._allocations.length)){
         const sup=SUPPLIERS.find(s=>s.id===prod.default_supplier_id);
         if(sup){
-          LINES[i].supplier_id=sup.id;LINES[i]._supplier_name=sup.company_name||sup.short_name||'';LINES[i]._supplier_number=sup.supplier_number;
+          LINES[i].supplier_id=sup.id;LINES[i]._supplier_name=sup.short_name||sup.company_name||'';LINES[i]._supplier_number=sup.supplier_number;
           if(LINES[i].supplier_quantity==null||LINES[i].supplier_quantity==='') LINES[i].supplier_quantity=parseFloat(LINES[i].quantity)||0;
           renderLines();
         }
@@ -921,16 +921,16 @@ function wireSupplierCombo(inp){
     const q=inp.value.toLowerCase().trim();
     const matches=SUPPLIERS.filter(s=>{
       if(!q)return true;
-      return (s.company_name||s.short_name||'').toLowerCase().includes(q)||String(s.supplier_number||'').includes(q);
+      return (s.short_name||s.company_name||'').toLowerCase().includes(q)||String(s.supplier_number||'').includes(q);
     }).slice(0,8);
     if(!matches.length){close();return;}
     positionMenu(inp,menu);
-    menu.innerHTML=matches.map((m,idx)=>`<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.company_name||m.short_name||'')}</span><span class="cb-side">#${esc(String(m.supplier_number||''))}</span></div>`).join('');
+    menu.innerHTML=matches.map((m,idx)=>`<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.short_name||m.company_name||'')}</span><span class="cb-side">#${esc(String(m.supplier_number||''))}</span></div>`).join('');
     menu.classList.add('open');
     menu.querySelectorAll('.cb-opt').forEach(opt=>opt.addEventListener('mousedown',e=>{
       e.preventDefault();const m=matches[+opt.dataset.idx];
       LINES[i].supplier_id=m.id;
-      LINES[i]._supplier_name=m.company_name||m.short_name||'';
+      LINES[i]._supplier_name=m.short_name||m.company_name||'';
       LINES[i]._supplier_number=m.supplier_number;
       inp.value=LINES[i]._supplier_name;
       close();renderLines();markDirty();
@@ -1540,7 +1540,7 @@ function resolvePOChoices(choices){
 async function reloadLines(){
   const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
   LINES=items||[];
-  LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.company_name||s.short_name||''; l._supplier_number=s.supplier_number; } } });
+  LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.short_name||s.company_name||''; l._supplier_number=s.supplier_number; } } });
   await loadAllocations();
   renderLines();recalc();
 }

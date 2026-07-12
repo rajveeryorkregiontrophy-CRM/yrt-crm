@@ -52,6 +52,10 @@
   .sub-chip .n{font-family:var(--fm);font-size:10px;color:var(--text-3);}
   .sub-chip.active .n{color:var(--text-2);}
   .sup-name{font-size:12.5px;color:var(--text-2);font-weight:600;white-space:nowrap;}
+  .sub-lbl{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);align-self:center;margin-right:2px;}
+  .sub-select{background:var(--bg-2);border:1px solid var(--line-2);color:var(--text);font-family:inherit;font-size:12px;font-weight:600;padding:6px 10px;border-radius:7px;min-width:230px;cursor:pointer;}
+  .sub-select:focus{outline:none;border-color:var(--text-3);}
+  .more-note{padding:10px 18px;font-size:12px;color:var(--text-3);border-bottom:1px solid var(--line);background:var(--bg-3);}
   .cat-chip{font-size:12px;padding:7px 13px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
   .cat-chip:hover{border-color:var(--text-3);color:var(--text);}
   .cat-chip.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
@@ -238,8 +242,21 @@ function renderCats(){
   const keys=Object.keys(subs);
   if(keys.length<2){sbar.innerHTML='';sbar.style.display='none';return;}
   sbar.style.display='flex';
-  let sh=`<button class="sub-chip ${SUB==='all'?'active':''}" data-s="all">All Types <span class="n">${PRODUCTS.filter(p=>(p.category_name||'Uncategorized')===CAT).length}</span></button>`;
-  keys.sort().forEach(k=>{sh+=`<button class="sub-chip ${SUB===k?'active':''}" data-s="${esc(k)}">${esc(k)} <span class="n">${subs[k]}</span></button>`;});
+  const inCat=PRODUCTS.filter(p=>(p.category_name||'Uncategorized')===CAT).length;
+  keys.sort();
+  // Families like Resins (70 types) and Medals (65) would be an unusable wall of chips —
+  // switch to a select once there are more than 8.
+  if(keys.length>8){
+    sbar.innerHTML=`<label class="sub-lbl">Type</label>
+      <select class="sub-select" id="sub-select">
+        <option value="all"${SUB==='all'?' selected':''}>All Types (${inCat})</option>
+        ${keys.map(k=>`<option value="${esc(k)}"${SUB===k?' selected':''}>${esc(k)} (${subs[k]})</option>`).join('')}
+      </select>`;
+    sbar.querySelector('#sub-select').addEventListener('change',e=>{SUB=e.target.value;render();});
+    return;
+  }
+  let sh=`<button class="sub-chip ${SUB==='all'?'active':''}" data-s="all">All Types <span class="n">${inCat}</span></button>`;
+  keys.forEach(k=>{sh+=`<button class="sub-chip ${SUB===k?'active':''}" data-s="${esc(k)}">${esc(k)} <span class="n">${subs[k]}</span></button>`;});
   sbar.innerHTML=sh;
   sbar.querySelectorAll('.sub-chip').forEach(c=>c.addEventListener('click',()=>{SUB=c.dataset.s;renderCats();render();}));
 }
@@ -253,7 +270,12 @@ function render(){
   });
   document.getElementById('count').textContent=rows.length+(rows.length===1?' item':' items');
   if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No products found. Click “New Product” to add one.</div>`;return;}
-  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:150px;">Category</th><th style="width:110px;">Type</th><th style="width:130px;">Style #</th><th>Product</th><th style="width:120px;">Supplier</th><th class="num" style="width:120px;">Base Price</th></tr></thead><tbody>${rows.map(p=>`
+  // The catalogue is 8,000+ items — rendering every row at once locks the page up.
+  // Show the first 300 and let the search / filters narrow it down.
+  const CAP=300, total=rows.length, capped=total>CAP;
+  if(capped) rows=rows.slice(0,CAP);
+  const moreNote=capped?`<div class="more-note">Showing ${CAP} of ${total.toLocaleString()} — use the search or filters to narrow it down.</div>`:'';
+  document.getElementById('wrap').innerHTML=moreNote+`<table><thead><tr><th style="width:150px;">Category</th><th style="width:110px;">Type</th><th style="width:130px;">Style #</th><th>Product</th><th style="width:120px;">Supplier</th><th class="num" style="width:120px;">Base Price</th></tr></thead><tbody>${rows.map(p=>`
     <tr data-id="${p.id}">
       <td><span class="cat-name"><span class="cat-dot" style="background:${catColor(p.category_name||p.category_code)}"></span>${esc(p.category_name||'—')}</span></td>
       <td><span class="cat-code">${esc(p.category_code||'—')}</span></td>
