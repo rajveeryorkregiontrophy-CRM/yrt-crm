@@ -44,7 +44,14 @@
   .btn-primary{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;padding:10px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
   .btn-primary:hover{filter:brightness(1.08);}
   .content{padding:24px 26px 70px;max-width:1560px;width:100%;}
-  .cat-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .cat-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .sub-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;padding-left:2px;}
+  .sub-chip{font-size:11px;padding:5px 11px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--text-3);cursor:pointer;font-weight:600;font-family:var(--fd);letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;gap:7px;transition:.13s;}
+  .sub-chip:hover{background:var(--bg-3);color:var(--text);}
+  .sub-chip.active{background:var(--bg-4);border-color:var(--line-2);color:var(--text);}
+  .sub-chip .n{font-family:var(--fm);font-size:10px;color:var(--text-3);}
+  .sub-chip.active .n{color:var(--text-2);}
+  .sup-tag{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:5px;background:rgba(144,152,168,.1);border:1px solid rgba(144,152,168,.24);font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#aab2c0;white-space:nowrap;}
   .cat-chip{font-size:12px;padding:7px 13px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
   .cat-chip:hover{border-color:var(--text-3);color:var(--text);}
   .cat-chip.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
@@ -155,6 +162,7 @@
     </header>
     <div class="content">
       <div class="cat-bar" id="cat-bar"></div>
+      <div class="sub-bar" id="sub-bar" style="display:none;"></div>
       <section class="panel">
         <div class="panel-head"><h2>Catalogue</h2><span class="count" id="count">—</span></div>
         <div id="wrap"><div class="state">Loading…</div></div>
@@ -188,40 +196,70 @@ function smConfirm(msg,title,opts){opts=opts||{};return new Promise(res=>{__ensu
 
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
-let PRODUCTS=[],EDITING=null,CAT='all',SUPPLIERS=[];
+let PRODUCTS=[],EDITING=null,CAT='all',SUB='all',SUPPLIERS=[];
 
 async function load(){
-  const {data,error}=await db.from('products').select('*').order('category_code').order('name');
-  if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
-  PRODUCTS=data||[];
+  // Supabase caps a select at 1000 rows — page through so the whole catalogue loads.
+  let all=[],from=0;const PAGE=1000;
+  while(true){
+    const {data,error}=await db.from('products')
+      .select('*, suppliers:default_supplier_id(short_name,company_name)')
+      .order('category_name').order('category_code').order('name')
+      .range(from,from+PAGE-1);
+    if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
+    all=all.concat(data||[]);
+    if(!data||data.length<PAGE)break;
+    from+=PAGE;
+  }
+  PRODUCTS=all;
   const {data:sups}=await db.from('suppliers').select('id,supplier_number,company_name,short_name').order('company_name');
   SUPPLIERS=sups||[];
   const _npr=document.getElementById('nav-products');if(_npr)_npr.textContent=PRODUCTS.length;
   renderCats();render();
 }
+const supName=p=>p.suppliers?(p.suppliers.short_name||p.suppliers.company_name||''):'';
 function renderCats(){
-  const cats={};PRODUCTS.forEach(p=>{const k=(p.category_code||'')+'|'+(p.category_name||'Uncategorized');cats[k]=(cats[k]||0)+1;});
+  // Primary tabs = top-level category (Awards, Trophies, …). Scales as new CSVs arrive.
+  const cats={};PRODUCTS.forEach(p=>{const k=p.category_name||'Uncategorized';cats[k]=(cats[k]||0)+1;});
   const bar=document.getElementById('cat-bar');
   let html=`<button class="cat-chip ${CAT==='all'?'active':''}" data-c="all">All <span class="n">${PRODUCTS.length}</span></button>`;
-  Object.entries(cats).sort().forEach(([k,n])=>{const[code,name]=k.split('|');html+=`<button class="cat-chip ${CAT===k?'active':''}" data-c="${esc(k)}"><span class="cat-dot" style="background:${catColor(name)}"></span>${esc(name)} <span class="n">${n}</span></button>`;});
+  Object.entries(cats).sort().forEach(([name,n])=>{
+    html+=`<button class="cat-chip ${CAT===name?'active':''}" data-c="${esc(name)}"><span class="cat-dot" style="background:${catColor(name)}"></span>${esc(name)} <span class="n">${n}</span></button>`;
+  });
   bar.innerHTML=html;
-  bar.querySelectorAll('.cat-chip').forEach(c=>c.addEventListener('click',()=>{CAT=c.dataset.c;renderCats();render();}));
+  bar.querySelectorAll('.cat-chip').forEach(c=>c.addEventListener('click',()=>{CAT=c.dataset.c;SUB='all';renderCats();render();}));
+
+  // Secondary row = subcategories within the selected category (ACRYLIC / CRYSTAL / GLASS)
+  const sbar=document.getElementById('sub-bar');
+  if(CAT==='all'){sbar.innerHTML='';sbar.style.display='none';return;}
+  const subs={};
+  PRODUCTS.filter(p=>(p.category_name||'Uncategorized')===CAT)
+          .forEach(p=>{const k=p.category_code||'—';subs[k]=(subs[k]||0)+1;});
+  const keys=Object.keys(subs);
+  if(keys.length<2){sbar.innerHTML='';sbar.style.display='none';return;}
+  sbar.style.display='flex';
+  let sh=`<button class="sub-chip ${SUB==='all'?'active':''}" data-s="all">All Types <span class="n">${PRODUCTS.filter(p=>(p.category_name||'Uncategorized')===CAT).length}</span></button>`;
+  keys.sort().forEach(k=>{sh+=`<button class="sub-chip ${SUB===k?'active':''}" data-s="${esc(k)}">${esc(k)} <span class="n">${subs[k]}</span></button>`;});
+  sbar.innerHTML=sh;
+  sbar.querySelectorAll('.sub-chip').forEach(c=>c.addEventListener('click',()=>{SUB=c.dataset.s;renderCats();render();}));
 }
 function render(){
   const q=(document.getElementById('search').value||'').toLowerCase();
   let rows=PRODUCTS.filter(p=>{
-    if(CAT!=='all'){const k=(p.category_code||'')+'|'+(p.category_name||'Uncategorized');if(k!==CAT)return false;}
-    if(q){const hay=((p.name||'')+' '+(p.style_number||'')+' '+(p.category_name||'')+' '+(p.category_code||'')).toLowerCase();if(!hay.includes(q))return false;}
+    if(CAT!=='all'&&(p.category_name||'Uncategorized')!==CAT)return false;
+    if(SUB!=='all'&&(p.category_code||'—')!==SUB)return false;
+    if(q){const hay=((p.name||'')+' '+(p.style_number||'')+' '+(p.category_name||'')+' '+(p.category_code||'')+' '+supName(p)).toLowerCase();if(!hay.includes(q))return false;}
     return true;
   });
   document.getElementById('count').textContent=rows.length+(rows.length===1?' item':' items');
   if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No products found. Click “New Product” to add one.</div>`;return;}
-  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:70px;">Code</th><th style="width:160px;">Category</th><th style="width:120px;">Style #</th><th>Product</th><th class="num" style="width:120px;">Base Price</th></tr></thead><tbody>${rows.map(p=>`
+  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:150px;">Category</th><th style="width:110px;">Type</th><th style="width:130px;">Style #</th><th>Product</th><th style="width:120px;">Supplier</th><th class="num" style="width:120px;">Base Price</th></tr></thead><tbody>${rows.map(p=>`
     <tr data-id="${p.id}">
-      <td><span class="cat-code">${esc(p.category_code||'—')}</span></td>
       <td><span class="cat-name"><span class="cat-dot" style="background:${catColor(p.category_name||p.category_code)}"></span>${esc(p.category_name||'—')}</span></td>
+      <td><span class="cat-code">${esc(p.category_code||'—')}</span></td>
       <td><span class="p-style">${esc(p.style_number||'—')}</span></td>
-      <td><div class="p-name">${esc(p.name)}</div>${p.description?`<div class="p-desc">${esc(p.description)}</div>`:''}</td>
+      <td><div class="p-name">${esc(p.name)}</div></td>
+      <td>${supName(p)?`<span class="sup-tag">${esc(supName(p))}</span>`:'<span class="p-desc">—</span>'}</td>
       <td class="num"><span class="p-price">${money(p.base_price)}</span></td>
     </tr>`).join('')}</tbody></table>`;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>edit(tr.dataset.id)));
