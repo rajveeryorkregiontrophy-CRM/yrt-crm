@@ -51,7 +51,7 @@
   .sub-chip.active{background:var(--bg-4);border-color:var(--line-2);color:var(--text);}
   .sub-chip .n{font-family:var(--fm);font-size:10px;color:var(--text-3);}
   .sub-chip.active .n{color:var(--text-2);}
-  .sup-tag{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:5px;background:rgba(144,152,168,.1);border:1px solid rgba(144,152,168,.24);font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#aab2c0;white-space:nowrap;}
+  .sup-name{font-size:12.5px;color:var(--text-2);font-weight:600;white-space:nowrap;}
   .cat-chip{font-size:12px;padding:7px 13px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
   .cat-chip:hover{border-color:var(--text-3);color:var(--text);}
   .cat-chip.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
@@ -259,7 +259,7 @@ function render(){
       <td><span class="cat-code">${esc(p.category_code||'—')}</span></td>
       <td><span class="p-style">${esc(p.style_number||'—')}</span></td>
       <td><div class="p-name">${esc(p.name)}</div></td>
-      <td>${supName(p)?`<span class="sup-tag">${esc(supName(p))}</span>`:'<span class="p-desc">—</span>'}</td>
+      <td><span class="sup-name">${esc(supName(p)||'—')}</span></td>
       <td class="num"><span class="p-price">${money(p.base_price)}</span></td>
     </tr>`).join('')}</tbody></table>`;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>edit(tr.dataset.id)));

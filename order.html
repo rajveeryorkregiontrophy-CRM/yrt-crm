@@ -74,13 +74,22 @@
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:6px 7px;border-radius:5px;font-size:13px;font-family:inherit;color:var(--ink);}
   .li-desc{resize:none;overflow:hidden;line-height:1.4;min-height:30px;white-space:pre-wrap;word-break:break-word;}
   .cb-cell{position:relative;}
-  .cb-menu{display:none;position:fixed;min-width:240px;max-width:340px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:9000;overflow:hidden;max-height:260px;overflow-y:auto;}
+  .cb-menu{display:none;position:fixed;min-width:240px;max-width:420px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:9000;overflow:hidden;max-height:260px;overflow-y:auto;}
   .cb-menu.open{display:block;}
   .cb-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--line);}
   .cb-opt:last-child{border-bottom:none;}
   .cb-opt:hover{background:var(--bg-3);}
   .cb-opt .cb-main{font-weight:600;color:var(--text);font-size:13px;}
   .cb-opt .cb-side{font-family:var(--fm);font-size:11px;color:var(--text-3);white-space:nowrap;}
+  /* product search results (description combobox) — corporate, two-line, minimal */
+  .cb-opt-p{display:block;padding:10px 13px;}
+  .cbp-top{display:flex;align-items:baseline;justify-content:space-between;gap:14px;}
+  .cbp-name{font-weight:600;color:var(--text);font-size:13px;line-height:1.35;}
+  .cbp-price{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--text-2);white-space:nowrap;}
+  .cbp-sub{display:flex;align-items:center;gap:7px;margin-top:4px;font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);}
+  .cbp-sku{font-family:var(--fm);letter-spacing:0;text-transform:none;font-size:11px;color:#aab2c0;}
+  .cbp-dot{color:#4a5160;}
+  .cb-desc{resize:none;}
   .disc-cell{white-space:nowrap;}
   .li-disc{background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:5px 6px;font-size:12px;font-family:inherit;cursor:pointer;}
   .li-disc:focus{outline:none;border-color:var(--brass);}
@@ -552,7 +561,17 @@ async function load(){
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load this order.<br>${error?.message||''}</div>`;return;}
   ORDER=data;
   // load catalogues first (needed to resolve line-item displays)
-  const {data:prods}=await db.from('products').select('category_code,category_name,style_number,name,unit,base_price,default_supplier_id').order('category_name').order('name');
+  // Supabase caps a select at 1000 rows — page through so the whole catalogue is searchable.
+  let _allProds=[],_pFrom=0;const _PPAGE=1000;
+  while(true){
+    const {data:_pg}=await db.from('products')
+      .select('category_code,category_name,style_number,name,unit,base_price,default_supplier_id')
+      .order('category_name').order('name').range(_pFrom,_pFrom+_PPAGE-1);
+    _allProds=_allProds.concat(_pg||[]);
+    if(!_pg||_pg.length<_PPAGE)break;
+    _pFrom+=_PPAGE;
+  }
+  const prods=_allProds;
   PRODUCTS=prods||[];
   const {data:sups}=await db.from('suppliers').select('id,supplier_number,company_name,short_name').order('company_name');
   SUPPLIERS=sups||[];
@@ -717,7 +736,7 @@ function renderLines(){
     tr.innerHTML=`
       <td class="cb-cell"><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Category" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
       <td class="cb-cell"><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Style #" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
-      <td><textarea class="li-input li-desc" rows="1" data-i="${i}" data-k="description" placeholder="Description">${esc(ln.description||'')}</textarea></td>
+      <td class="cb-cell"><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search a product, or type freely…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
       <td class="cb-cell sup-col ${fulfillClass(ln)}">
         ${(ln._allocations&&ln._allocations.length)
           ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
@@ -736,7 +755,7 @@ function renderLines(){
     tb.appendChild(tr);
   });
   // plain inputs (description, qty, unit, price)
-  tb.querySelectorAll('.li-input:not(.cb-cat):not(.cb-style)').forEach(inp=>{
+  tb.querySelectorAll('.li-input:not(.cb-cat):not(.cb-style):not(.cb-desc)').forEach(inp=>{
     inp.addEventListener('input',()=>{
       const i=+inp.dataset.i,k=inp.dataset.k;let v=inp.value;
       if(k==='quantity'||k==='unit_price'||k==='supplier_quantity')v=parseFloat(v)||0;
@@ -760,6 +779,7 @@ function renderLines(){
   // comboboxes
   tb.querySelectorAll('.cb-cat').forEach(inp=>wireCombo(inp,'cat'));
   tb.querySelectorAll('.cb-style').forEach(inp=>wireCombo(inp,'style'));
+  tb.querySelectorAll('.cb-desc').forEach(inp=>wireCombo(inp,'desc'));
   tb.querySelectorAll('.cb-sup').forEach(inp=>wireSupplierCombo(inp));
   tb.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>deleteLine(+b.dataset.del)));
   tb.querySelectorAll('.alloc-btn,[data-alloc].alloc-summary').forEach(b=>b.addEventListener('click',()=>openSplit(+b.dataset.alloc)));
@@ -804,6 +824,16 @@ function wireCombo(inp,kind){
         if(!q||label.toLowerCase().includes(q)||(p.category_code||'').toLowerCase().includes(q))matches.push({label,code:p.category_code,name:p.category_name});
       });
       matches=matches.slice(0,8);
+    }else if(kind==='desc'){
+      // Product search. The products.description column is boilerplate (2 distinct values
+      // across the whole catalogue), so we search NAME + STYLE — what actually identifies a product.
+      // Needs 2+ chars so the description can still be typed freely without a menu popping up.
+      if(q.length<2){close();return;}
+      const terms=q.split(/\s+/).filter(Boolean);
+      matches=PRODUCTS.filter(p=>{
+        const hay=((p.name||'')+' '+(p.style_number||'')+' '+(p.category_code||'')).toLowerCase();
+        return terms.every(t=>hay.includes(t));
+      }).slice(0,10);
     }else{
       // styles within the line's chosen category (if any), else all
       const cat=(LINES[i].category_name||'').toLowerCase();
@@ -817,6 +847,14 @@ function wireCombo(inp,kind){
     positionMenu(inp,menu);
     menu.innerHTML=matches.map((m,idx)=>{
       if(kind==='cat')return `<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.label)}</span>${m.code?`<span class="cb-side">${esc(m.code)}</span>`:''}</div>`;
+      if(kind==='desc'){
+        const sup=m.default_supplier_id?SUPPLIERS.find(s=>s.id===m.default_supplier_id):null;
+        const supTxt=sup?(sup.short_name||sup.company_name||''):'';
+        return `<div class="cb-opt cb-opt-p" data-idx="${idx}">
+          <div class="cbp-top"><span class="cbp-name">${esc(m.name||'')}</span><span class="cbp-price">${m.base_price!=null?'$'+Number(m.base_price).toFixed(2):''}</span></div>
+          <div class="cbp-sub"><span class="cbp-sku">${esc(m.style_number||'—')}</span>${m.category_code?`<span class="cbp-dot">·</span><span>${esc(m.category_code)}</span>`:''}${supTxt?`<span class="cbp-dot">·</span><span>${esc(supTxt)}</span>`:''}</div>
+        </div>`;
+      }
       return `<div class="cb-opt" data-idx="${idx}"><span class="cb-main">${esc(m.style_number||'—')}</span><span class="cb-side">${esc(m.name||'')}</span></div>`;
     }).join('');
     menu.classList.add('open');
@@ -846,14 +884,15 @@ function wireCombo(inp,kind){
             if(LINES[i].supplier_quantity==null||LINES[i].supplier_quantity==='') LINES[i].supplier_quantity=parseFloat(LINES[i].quantity)||0;
           }
         }
-        inp.value=m.style_number||'';
+        inp.value=(kind==='desc')?(m.name||''):(m.style_number||'');
       }
       close();renderLines();recalc();markDirty();
     }));
   };
   inp.addEventListener('focus',open);
   inp.addEventListener('input',()=>{
-    LINES[i][inp.dataset.k==='category'?'category_name':'style_number']=inp.value;
+    if(inp.dataset.k==='description'){ LINES[i].description=inp.value; }
+    else { LINES[i][inp.dataset.k==='category'?'category_name':'style_number']=inp.value; }
     if(inp.dataset.k==='category')LINES[i].category_code=null; // typed custom; clear code unless a pick sets it
     // #6 — if they typed an exact style code, auto-fill supplier from that product's default
     if(inp.dataset.k==='style' && ORDER.record_type==='order'){
