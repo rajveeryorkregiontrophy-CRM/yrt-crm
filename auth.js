@@ -21,7 +21,16 @@ export const supabase = createClient(
 // gets zero rows from every business table. This just makes the app behave
 // correctly instead of showing them empty screens.
 // ============================================================
-const PROCESS_PAGES = ['index.html','order.html','login.html',''];
+// Cloudflare Pages serves these WITHOUT the .html extension — the live URL is
+// /order?id=... not /order.html?id=... So compare on the bare page name, or the
+// gate never matches and every process user gets bounced back to the timeline.
+const PROCESS_PAGES = ['index','order','login',''];
+
+function currentPage(){
+  let last = (location.pathname.split('/').pop() || '').toLowerCase();
+  last = last.split('?')[0].split('#')[0];   // belt and braces
+  return last.replace(/\.html$/,'');        // 'order.html' and 'order' both -> 'order'
+}
 
 let _profile = null;
 
@@ -61,7 +70,7 @@ export async function requireAuth(){
     return new Promise(()=>{});
   }
   const profile = await getProfile();
-  const page = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const page = currentPage();
   if(profile?.role !== 'management' && !PROCESS_PAGES.includes(page)){
     // Process user tried to reach a page they're not allowed on (typed the URL, etc.)
     location.replace('index.html');
