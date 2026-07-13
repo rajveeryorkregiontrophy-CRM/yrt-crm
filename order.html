@@ -29,6 +29,11 @@
   .ro-bar{display:none;align-items:center;gap:10px;padding:11px 16px;background:rgba(88,177,131,.08);border:1px solid rgba(88,177,131,.28);border-radius:10px;margin-bottom:14px;}
   html.role-process .ro-bar{display:flex;}
   .ro-bar .rb-b{font-family:var(--font-display,'Archivo');font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0f1115;background:#59b183;padding:4px 9px;border-radius:5px;}
+  .presence-bar{display:flex;align-items:center;gap:10px;padding:11px 16px;background:rgba(232,153,90,.1);border:1px solid rgba(232,153,90,.35);border-radius:10px;margin-bottom:14px;}
+  .presence-bar .pb-dot{width:8px;height:8px;border-radius:50%;background:#e8995a;flex-shrink:0;animation:pb-pulse 1.6s ease-in-out infinite;}
+  .presence-bar .pb-t{font-size:12.5px;color:#d9cdbf;}
+  .presence-bar .pb-t strong{color:#f0b078;}
+  @keyframes pb-pulse{0%,100%{opacity:.45}50%{opacity:1}}
   .ro-bar .rb-t{font-size:12.5px;color:var(--text-2,#c4cad6);font-weight:600;}
   /* Order State: two equal halves, text centred in each. */
   .statetog{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;background:var(--bg);}
@@ -525,6 +530,7 @@ import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment
 await requireAuth();
 const PROFILE = await getProfile();
 const MGMT = isManagement();
+let LOADED_AT = null;   // quotes.modified_at as it was when this page loaded
 
 const HST_RATE = 0.13;
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -632,6 +638,7 @@ async function load(){
     .eq('id',ORDER_ID).single();
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load this order.<br>${error?.message||''}</div>`;return;}
   ORDER=data;
+  LOADED_AT = data.modified_at || null;   // optimistic lock: the version we loaded
   // load catalogues first (needed to resolve line-item displays)
   // Supabase caps a select at 1000 rows — page through so the whole catalogue is searchable.
   let _allProds=[],_pFrom=0;const _PPAGE=1000;
@@ -1318,6 +1325,55 @@ function updateSummary(){
 
 async function save(silent){
   if(!MGMT) return;   // process users are read-only; RLS blocks the write server-side too.
+
+  // ── Optimistic lock ───────────────────────────────────────────────
+  // Atomically stamp the record, but ONLY if nobody has saved it since we
+  // loaded. If they have, this raises and we stop before overwriting them.
+  if(ORDER_ID && LOADED_AT !== undefined){
+    const {data:newTs, error:lockErr} = await db.rpc('claim_save',{p_id:ORDER_ID, p_expected:LOADED_AT});
+    if(lockErr){
+      const msg = lockErr.message || '';
+      if(/CONFLICT/i.test(msg)){
+        await smAlert(msg.replace(/^.*CONFLICT:\s*/,''), 'Someone else changed this order', 'warn');
+        location.re
+// ── Presence: who else is in this record right now ────────────────
+let PRESENCE_TIMER=null;
+async function startPresence(){
+  if(!ORDER_ID || !MGMT) return;
+  const beat=async()=>{
+    try{
+      await db.rpc('touch_presence',{p_quote:ORDER_ID});
+      const {data}=await db.rpc('who_is_editing',{p_quote:ORDER_ID});
+      showPresence((data||[]).map(x=>x.full_name));
+    }catch(e){ /* presence is advisory; never block the page on it */ }
+  };
+  await beat();
+  PRESENCE_TIMER=setInterval(beat, 30000);   // rows go stale after 90s
+}
+function showPresence(names){
+  let bar=document.getElementById('presence-bar');
+  if(!names.length){ if(bar) bar.remove(); return; }
+  if(!bar){
+    bar=document.createElement('div'); bar.id='presence-bar'; bar.className='presence-bar';
+    const w=document.getElementById('wrap'); if(w) w.prepend(bar); else return;
+  }
+  const who=names.join(' and ');
+  bar.innerHTML='<span class="pb-dot"></span><span class="pb-t"><strong>'+esc(who)+'</strong> '
+    +(names.length>1?'are':'is')+' editing this order right now. Save last and you may be asked to reload.</span>';
+}
+window.addEventListener('beforeunload',()=>{
+  if(PRESENCE_TIMER) clearInterval(PRESENCE_TIMER);
+  if(ORDER_ID && MGMT){ try{ db.rpc('clear_presence',{p_quote:ORDER_ID}); }catch(e){} }
+});
+
+load().then(startPresence);
+        return;
+      }
+      await smAlert(msg || 'Could not save.', 'Save failed', 'danger');
+      return;
+    }
+    LOADED_AT = newTs;   // we now own the latest version
+  }
   // #8 — when a supplier is assigned, supplier quantity is mandatory (0 = In Stock is allowed)
   if(ORDER.record_type==='order'){
     const missing=LINES.filter(l=>l.supplier_id && !(l._allocations&&l._allocations.length) && (l.supplier_quantity==null||l.supplier_quantity===''));

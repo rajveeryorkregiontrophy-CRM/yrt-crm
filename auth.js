@@ -59,6 +59,49 @@ export async function getProfile(){
   return _profile;
 }
 export function isManagement(){ return _profile?.role === 'management'; }
+
+// ── Session swap protection ──────────────────────────────────────────────
+// Supabase keeps the session in localStorage, which every tab in a browser
+// profile SHARES. If someone signs in as another user in a second tab, that
+// token overwrites this one — and this page would carry on rendering with the
+// old role while the token underneath belongs to somebody else. That is how a
+// management page ends up showing a process view (and vice versa).
+//
+// So: watch the session. If the signed-in user changes, reload immediately and
+// re-resolve the role from scratch. Never render one user's page against
+// another user's token.
+//
+// (To genuinely use two accounts at once, use a normal window for one and an
+//  Incognito window for the other — they have separate localStorage.)
+let _watchedUserId = null;
+function watchSession(){
+  supabase.auth.onAuthStateChange((event, session) => {
+    const uid = session?.user?.id || null;
+    if(_watchedUserId && uid !== _watchedUserId){
+      _profile = null;                 // drop the cached role
+      location.reload();               // re-resolve as whoever is actually signed in
+      return;
+    }
+    if(event === 'SIGNED_OUT'){
+      _profile = null;
+      location.replace('login.html');
+    }
+  });
+
+  // onAuthStateChange doesn't always fire across tabs. The dangerous moment is
+  // when you come BACK to a stale tab and click something — so re-check who is
+  // signed in whenever this tab regains focus.
+  document.addEventListener('visibilitychange', async ()=>{
+    if(document.visibilityState !== 'visible') return;
+    const { data } = await supabase.auth.getSession();
+    const uid = data?.session?.user?.id || null;
+    if(!uid){ _profile = null; location.replace('login.html'); return; }
+    if(_watchedUserId && uid !== _watchedUserId){
+      _profile = null;
+      location.reload();
+    }
+  });
+}
 export function roleOf(){ return _profile?.role || null; }
 
 // Block the page until we confirm a valid session AND that this role may see it.
@@ -82,6 +125,11 @@ export async function requireAuth(){
   const root = document.documentElement;
   root.classList.add(profile?.role === 'management' ? 'role-management' : 'role-process');
   root.classList.add('role-ready');
+
+  // Remember whose token this page was rendered against, then watch for a swap.
+  _watchedUserId = data.session?.user?.id || null;
+  watchSession();
+
   hideAuthLoader();
   return data.session;
 }
