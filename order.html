@@ -596,7 +596,11 @@ async function loadProcess(){
   const {data:rows,error}=await db.rpc('process_order',{p_id:ORDER_ID});
   const o=(rows||[])[0];
   if(error||!o){
-    document.getElementById('wrap').innerHTML='<div class="state">This order isn\'t available to you.<br><a href="index.html">Back to Sales Orders</a></div>';
+    // Either it isn't assigned to them, or it's inactive/invoiced. Say so plainly
+    // and send them back, rather than leaving a blank screen.
+    await smAlert('This order is not assigned to you, so you cannot open it. Ask Rajveer or Karan to assign it to you.',
+                  'Not assigned to you','warn');
+    location.replace('index.html');
     return;
   }
   const {data:items}=await db.rpc('process_order_items',{p_id:ORDER_ID});

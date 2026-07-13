@@ -315,6 +315,7 @@
   .app.collapsed .sidebar:not(:hover) .nav a.active .ico{color:#fff;}
   .app.collapsed .sidebar:not(:hover) .brand{padding-left:0;padding-right:0;}
 
+  .who-pill{background:rgba(61,220,132,.13) !important;border-color:rgba(61,220,132,.4) !important;color:#5fe3a1 !important;font-family:var(--fd);font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:11px !important;}
   .chip-inactive{border:1px dashed var(--line-2);color:#8b93a4;}
   .chip-inactive.active{background:rgba(144,152,168,.18);border-style:solid;color:var(--text);}
   .chip-n{font-family:var(--fm);font-size:10px;opacity:.75;margin-left:3px;}
@@ -366,7 +367,7 @@
       <div class="nav-sep"></div>
       <a href="database-map.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg><span class="lbl">Database Map</span></a>
     </nav>
-    <div class="sidebar-foot"><div class="avatar">YRT</div><div class="foot-text"><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div class="foot-text"><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);" id="who-foot">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
   </aside>
   <div class="main">
     <header class="topbar">
@@ -402,6 +403,18 @@ import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment
 await requireAuth();
 const PROFILE = await getProfile();
 const MGMT = isManagement();
+// Show the signed-in person everywhere it matters.
+(function showWho(){
+  const name = PROFILE?.full_name || PROFILE?.email || '';
+  if(!name) return;
+  if(MGMT){
+    const f=document.getElementById('who-foot');
+    if(f) f.textContent = name;                    // sidebar foot, under "YRT CRM"
+  }else{
+    const d=document.getElementById('today');
+    if(d){ d.textContent = name; d.classList.add('who-pill'); }   // topbar, replaces the date
+  }
+})();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
 function __ensureModal(){
@@ -648,7 +661,22 @@ function render(){
     }).join('')}</div>`;
   }
   document.getElementById('wrap').innerHTML=html;
-  document.querySelectorAll('tbody tr[data-id], .record-card[data-id]').forEach(el=>el.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(el.dataset.id)));
+  document.querySelectorAll('tbody tr[data-id], .record-card[data-id]').forEach(el=>el.addEventListener('click',async()=>{
+    const id=el.dataset.id;
+    if(!MGMT){
+      // A process user may only open orders assigned to them. The database
+      // enforces this too (11_assigned_only.sql) — this is just the friendly half.
+      const rec=(DATA.order||[]).find(o=>o.id===id);
+      if(rec && !rec._mine){
+        await smAlert(
+          'This order is assigned to '+(rec._assigned&&rec._assigned!=='Unassigned'?rec._assigned:'nobody yet')+
+          '. You can only open orders assigned to you.',
+          'Not assigned to you','warn');
+        return;
+      }
+    }
+    location.href='order.html?id='+encodeURIComponent(id);
+  }));
   // fulfillment pill -> open status popup instead of navigating
   document.querySelectorAll('.fs-pill').forEach(p=>p.addEventListener('click',e=>{e.stopPropagation();openFulfillPopup(p.dataset.fs);}));
   const fx=document.getElementById('fsp-x');if(fx)fx.onclick=closeFulfillPopup;
