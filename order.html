@@ -30,12 +30,13 @@
   html.role-process .ro-bar{display:flex;}
   .ro-bar .rb-b{font-family:var(--font-display,'Archivo');font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0f1115;background:#59b183;padding:4px 9px;border-radius:5px;}
   .ro-bar .rb-t{font-size:12.5px;color:var(--text-2,#c4cad6);font-weight:600;}
-  .statetog{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;background:var(--bg);}
-  .stog{background:transparent;border:none;color:var(--text-3);font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;cursor:pointer;transition:.13s;}
+  /* Order State: two equal halves, text centred in each. */
+  .statetog{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;background:var(--bg);}
+  .stog{display:flex;align-items:center;justify-content:center;text-align:center;background:transparent;border:none;height:38px;padding:0;color:var(--text-3);font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:.13s;}
+  .stog + .stog{border-left:1px solid var(--line-2);}
   .stog:hover{color:var(--text);}
-  .stog.on[data-v="active"]{background:rgba(88,177,131,.16);color:#59b183;}
-  .stog.on[data-v="inactive"]{background:rgba(144,152,168,.14);color:#aab2c0;}
-  .stog-note{font-size:11.5px;color:var(--text-3);margin-top:7px;line-height:1.45;}
+  .stog.on[data-v="active"]{background:rgba(61,220,132,.16);color:#5fe3a1;}
+  .stog.on[data-v="inactive"]{background:rgba(144,152,168,.16);color:#aab2c0;}
 </style>
 <style>
   :root{
@@ -490,7 +491,6 @@
               <button type="button" class="stog" data-v="active">Active</button>
               <button type="button" class="stog" data-v="inactive">Inactive</button>
             </div>
-            <div class="stog-note" id="stog-note"></div>
           </div>
           <div class="seg">
             <label>Pick-up Date</label>
@@ -767,10 +767,6 @@ function render(){
   function paintState(){
     const inact = ORDER.active_status==='inactive';
     document.querySelectorAll('.stog').forEach(b=>b.classList.toggle('on', b.dataset.v===(inact?'inactive':'active')));
-    const n=document.getElementById('stog-note');
-    if(n) n.textContent = inact
-      ? 'Set aside. Hidden from the Sales Orders list and from the production team, but offered back when a new order is raised for this client.'
-      : 'Live. Visible in the Sales Orders list and to the production team.';
   }
   document.querySelectorAll('.stog').forEach(b=>b.addEventListener('click',()=>{
     if(ORDER.active_status==='completed') return;   // invoiced orders are closed
