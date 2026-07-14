@@ -29,6 +29,21 @@
   .ro-bar{display:none;align-items:center;gap:10px;padding:11px 16px;background:rgba(88,177,131,.08);border:1px solid rgba(88,177,131,.28);border-radius:10px;margin-bottom:14px;}
   html.role-process .ro-bar{display:flex;}
   .ro-bar .rb-b{font-family:var(--font-display,'Archivo');font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0f1115;background:#59b183;padding:4px 9px;border-radius:5px;}
+  .inact-ov{position:fixed;inset:0;background:rgba(8,10,14,.74);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:9500;padding:20px;}
+  .inact-card{background:#16181d;border:1px solid #414a5c;border-radius:14px;width:100%;max-width:480px;overflow:hidden;}
+  .inact-h{padding:20px 22px 16px;border-bottom:1px solid #323a48;}
+  .inact-t{font-family:'Archivo',sans-serif;font-size:15px;font-weight:800;color:#fff;}
+  .inact-s{font-size:12.5px;color:#9098a8;margin-top:5px;line-height:1.5;}
+  .inact-b{padding:12px 14px;display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;}
+  .inact-row{display:flex;align-items:center;gap:11px;padding:11px 13px;background:#1f2229;border:1px solid #414a5c;border-radius:9px;cursor:pointer;transition:.13s;}
+  .inact-row:hover{border-color:#9098a8;}
+  .inact-row input{accent-color:#59b183;}
+  .ir-id{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;color:#caa75d;}
+  .ir-sub{flex:1;font-size:13px;color:#eef0f4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ir-d{font-size:11.5px;color:#8b93a4;white-space:nowrap;}
+  .inact-f{display:flex;gap:10px;padding:14px 20px 18px;justify-content:flex-end;border-top:1px solid #323a48;}
+  .inact-btn{padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}
+  .inact-btn.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}
   .presence-bar{display:flex;align-items:center;gap:10px;padding:11px 16px;background:rgba(232,153,90,.1);border:1px solid rgba(232,153,90,.35);border-radius:10px;margin-bottom:14px;}
   .presence-bar .pb-dot{width:8px;height:8px;border-radius:50%;background:#e8995a;flex-shrink:0;animation:pb-pulse 1.6s ease-in-out infinite;}
   .presence-bar .pb-t{font-size:12.5px;color:#d9cdbf;}
@@ -604,7 +619,13 @@ async function loadProcess(){
     return;
   }
   const {data:items}=await db.rpc('process_order_items',{p_id:ORDER_ID});
-  ORDER={...o, clients:{company_name:o.client_name}, contacts:null, record_type:'order', active_status:'active'};
+  ORDER={
+    ...o,
+    clients:{company_name:o.client_name}, contacts:null,
+    record_type:'order', active_status:'active',
+    subtotal:0, discount_total:0, hst:0, grand_total:0,   // never shown to process
+    client_id:null, contact_id:null
+  };
   LINES=(items||[]).map(it=>({
     id:it.id, line_order:it.line_order, style_number:it.style_number,
     description:it.description, quantity:it.quantity,
@@ -615,23 +636,80 @@ async function loadProcess(){
 }
 
 function renderProcess(o){
+  // Reuse the real render() so the template actually gets injected — a separate
+  // renderer is what left the page stuck on "Loading order…". The management-only
+  // parts (prices, totals, Order State, Record Type, Save) are hidden by the
+  // .role-process CSS, and no money ever reaches this page anyway.
+  render();
+
   const el=id=>document.getElementById(id);
-  const set=(id,v)=>{const e=el(id); if(e) e.textContent=v??'—';};
-  set('sum-client', o.client_name||'—');
-  set('sum-pickup', o.pickup_date?fmtD(o.pickup_date):'—');
-  set('sum-event',  o.event_date?fmtD(o.event_date):'—');
-  const tb=el('t-badge'); if(tb) tb.innerHTML=`<span class="badge-st st-${o.art_status}">${label(o.art_status)}</span>`;
-  const ss=el('sum-stage'); if(ss) ss.innerHTML=`<span class="badge-st st-${o.art_status}" style="font-size:10px;padding:3px 8px;">${label(o.art_status)}</span>`;
-  const t=el('t-title'); if(t) t.textContent='#'+o.stage_id+' — '+(o.client_name||'');
-  // read-only banner naming the assignee
+  const t=el('t-id'); if(t) t.textContent='#'+o.stage_id;
+
+  // Client select: a process user can't read the clients table (RLS), so seed it
+  // with just this order's client so the field shows the right name.
+  const cs=el('i-client');
+  if(cs){ cs.innerHTML=`<option>${esc(o.client_name||'—')}</option>`; cs.disabled=true; }
+  const ct=el('i-contact');
+  if(ct){ ct.innerHTML='<option>—</option>'; ct.disabled=true; }
+
+  // Read-only banner naming the assignee.
   const w=el('wrap');
   if(w && !document.querySelector('.ro-bar')){
     const bar=document.createElement('div'); bar.className='ro-bar';
     bar.innerHTML='<span class="rb-b">Production</span><span class="rb-t">View only — assigned to '+esc(o.assigned_to||'Unassigned')+'</span>';
     w.prepend(bar);
   }
-  renderLines();
-  const st=el('subject'); if(st) st.value=o.subject||'';
+}
+
+// ── Reuse an inactive order for this client ──────────────────────────
+// When you pick a client on a Sales Order, check whether that same company
+// already has an order sitting inactive. If so, offer it back rather than
+// letting a duplicate get raised. Yes -> reactivate it and go there. No -> carry on.
+let INACTIVE_OFFERED=false;
+async function offerInactiveForClient(){
+  if(!MGMT || !ORDER || ORDER.record_type!=='order') return;
+  if(!ORDER.client_id || INACTIVE_OFFERED) return;
+
+  const {data,error}=await db.rpc('inactive_orders_for_client',{p_client:ORDER.client_id});
+  if(error || !data || !data.length) return;
+  INACTIVE_OFFERED=true;   // only ask once per page
+
+  const list=data.map(r=>{
+    const d=r.pickup_date?fmtD(r.pickup_date):(r.quote_date?fmtD(r.quote_date):'no date');
+    return `<label class="inact-row"><input type="radio" name="inact" value="${r.id}"><span class="ir-id">#${r.stage_id}</span><span class="ir-sub">${esc(r.subject||'No subject')}</span><span class="ir-d">${d}</span></label>`;
+  }).join('');
+
+  const clientName=(CLIENT_LIST.find(c=>c.id===ORDER.client_id)||{}).company_name||'this client';
+  const pick=await new Promise(res=>{
+    const ov=document.createElement('div'); ov.className='inact-ov';
+    ov.innerHTML=`<div class="inact-card">
+      <div class="inact-h">
+        <div class="inact-t">${esc(clientName)} already has ${data.length===1?'an inactive order':'inactive orders'}</div>
+        <div class="inact-s">You set ${data.length===1?'this one':'these'} aside earlier. Use ${data.length===1?'it':'one'} instead of creating a new record?</div>
+      </div>
+      <div class="inact-b">${list}</div>
+      <div class="inact-f">
+        <button class="inact-btn" id="inact-no">No, create a new order</button>
+        <button class="inact-btn primary" id="inact-yes">Use this order</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('#inact-no').onclick=()=>{ov.remove();res(null);};
+    ov.querySelector('#inact-yes').onclick=()=>{
+      const c=ov.querySelector('input[name=inact]:checked');
+      if(!c){ return; }
+      ov.remove(); res(c.value);
+    };
+    const first=ov.querySelector('input[name=inact]'); if(first) first.checked=true;
+  });
+
+  if(!pick) return;   // "No" -> carry on with the new order
+
+  // Yes -> reactivate that order and open it.
+  const {error:upErr}=await db.from('quotes').update({active_status:'active'}).eq('id',pick);
+  if(upErr){ await smAlert('Could not reactivate: '+upErr.message,'Error','danger'); return; }
+  DIRTY=false;
+  location.href='order.html?id='+encodeURIComponent(pick);
 }
 
 async function load(){
@@ -809,7 +887,10 @@ async function populateClients(){
   }
   const sel=document.getElementById('i-client');
   sel.innerHTML='<option value="">— Select client —</option>'+CLIENT_LIST.map(c=>`<option value="${c.id}" ${ORDER.client_id===c.id?'selected':''}>${esc(c.company_name)}</option>`).join('');
-  sel.onchange=()=>{ORDER.client_id=sel.value||null;ORDER.contact_id=null;updateClientInfo();markDirty();};
+  sel.onchange=async()=>{
+    ORDER.client_id=sel.value||null;ORDER.contact_id=null;updateClientInfo();markDirty();
+    await offerInactiveForClient();
+  };
   updateClientInfo();
 }
 function updateClientInfo(){
