@@ -1818,30 +1818,7 @@ async function deleteOrder(){
 
 async function convertToInvoice(){
   if(DIRTY){ const s=await confirmModal('Save first?','You have unsaved changes. They’ll be saved before creating the invoice.',{confirmText:'Save & continue',cancelText:'Cancel'}); if(!s)return; await save(); }
-  // #3 — warn if any line still has a quantity that hasn't been ordered to a PO
-  const notOrdered=[];
-  for(const ln of LINES){
-    if(!ln.supplier_id) continue;                          // no supplier -> nothing to order
-    const need=parseFloat(ln.quantity)||0;
-    if(need<=0) continue;
-    // Use the SAME status the card shows (fulfillState), which counts BOTH
-    // allocations AND direct in_po / fulfillment_status. My earlier check only
-    // looked at allocations, so a line ordered directly was wrongly flagged.
-    const st=fulfillState(ln);
-    if(st==='placed'){                                     // supplier set, genuinely nothing ordered
-      notOrdered.push(ln.description||ln.style_number||'A line item');
-    }else if(st==='partial'){                              // some but not all ordered
-      const ordered=(ln._allocations||[]).reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);
-      notOrdered.push((ln.description||ln.style_number||'A line item')+` (${ordered} of ${need} ordered)`);
-    }
-    // 'in_po','issued','received','backordered' -> fully handled, no warning
-  }
-  if(notOrdered.length){
-    const proceed=await confirmModal('Some items aren’t fully ordered',
-      'These line items still have quantities that have not been ordered to a purchase order:<br><br>• '+notOrdered.map(esc).join('<br>• ')+'<br><br>You can still create the invoice, but the goods may not be on order yet.',
-      {confirmText:'Convert anyway',cancelText:'Go back',danger:true});
-    if(!proceed)return;
-  }
+  // One prompt only: the irreversibility confirmation.
   const ok=await confirmModal('Convert to invoice — this cannot be undone',
     'This turns order #'+ORDER.stage_id+' into an invoice. Once converted:<br><br>'
     +'• the invoice becomes <strong>read-only</strong> — no more edits to line items, prices, or quantities<br>'

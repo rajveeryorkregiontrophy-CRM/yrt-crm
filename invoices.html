@@ -134,6 +134,25 @@
   .pay-paid{background:rgba(61,220,132,.15);color:#3ddc84;} .pay-overdue{background:rgba(255,107,107,.15);color:#ff6b6b;}
   .pay-partial{background:rgba(255,182,39,.15);color:#ffb627;} .pay-unpaid{background:rgba(144,152,168,.14);color:#aab2c0;}
   @media(max-width:720px){.ic-right{min-width:0;padding:14px;}.ic-client{font-size:14px;}}
+  /* ── Modern hero: one dominant number ── */
+  .hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;margin-bottom:24px;align-items:stretch;}
+  .hero-main{background:linear-gradient(155deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);border-radius:18px;padding:26px 28px;}
+  .hero-k{font-family:var(--fd);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);}
+  .hero-v{font-family:var(--fd);font-size:52px;font-weight:900;line-height:1;letter-spacing:-.025em;color:#fff;margin:12px 0 8px;}
+  .hero-v small{font-size:26px;color:var(--text-2);font-weight:800;}
+  .hero-sub{font-size:13px;color:var(--text-3);}
+  .hero-side{display:flex;flex-direction:column;gap:14px;}
+  .hero-stat{flex:1;background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;}
+  .hero-stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .hero-stat.overdue::before{background:var(--unpaid);}
+  .hero-stat.paid::before{background:var(--paid);}
+  .hs-k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);font-weight:700;}
+  .hs-v{font-family:var(--fd);font-size:26px;font-weight:900;color:#fff;margin-top:5px;}
+  .hs-v small{font-size:15px;color:var(--text-2);}
+  @media(max-width:760px){.hero{grid-template-columns:1fr;}.hero-side{flex-direction:row;}}
+  .panel-flat{background:transparent;}
+  .list-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px;}
+  .list-head .count{font-family:var(--fd);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);}
 </style>
 </head>
 <body>
@@ -163,14 +182,21 @@
       <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="search" placeholder="Search invoice #, client…"></div>
     </header>
     <div class="content">
-      <div class="kpis">
-        <div class="kpi unpaid"><div class="l">Outstanding</div><div class="v" id="k-out">–</div></div>
-        <div class="kpi partial"><div class="l">Overdue Amount</div><div class="v" id="k-cnt">–</div></div>
-        <div class="kpi paid"><div class="l">Collected (all time)</div><div class="v" id="k-paid">–</div></div>
+      <div class="hero">
+        <div class="hero-main">
+          <div class="hero-k">Outstanding balance</div>
+          <div class="hero-v" id="k-out">–</div>
+          <div class="hero-sub" id="k-outsub">across all unpaid invoices</div>
+        </div>
+        <div class="hero-side">
+          <div class="hero-stat overdue"><div class="hs-k">Overdue</div><div class="hs-v" id="k-cnt">–</div></div>
+          <div class="hero-stat paid"><div class="hs-k">Collected all-time</div><div class="hs-v" id="k-paid">–</div></div>
+        </div>
       </div>
-      <section class="panel">
-        <div class="panel-head"><h2>Invoices</h2><span class="count" id="count">—</span>
+      <section class="panel-flat">
+        <div class="list-head">
           <div class="tabs"><button class="tab active" data-t="all">All</button><button class="tab" data-t="outstanding">Outstanding</button><button class="tab" data-t="overdue">Overdue</button><button class="tab" data-t="paid">Paid</button></div>
+          <span class="count" id="count">—</span>
         </div>
         <div id="wrap"><div class="state">Loading…</div></div>
       </section>
@@ -203,6 +229,7 @@ async function load(){
   const paid=ALL.reduce((s,i)=>s+Number(i.amount_paid||0),0);
   const overdueAmt=ALL.filter(i=>i.bucket==='overdue').reduce((s,i)=>s+Number(i.balance_due||0),0);
   document.getElementById('k-out').innerHTML='<small>$</small>'+Math.round(out).toLocaleString('en-CA');
+  const _os=document.getElementById('k-outsub');if(_os){const n=ALL.filter(i=>i.bucket!=='paid').length;_os.textContent=n+(n===1?' unpaid invoice':' unpaid invoices');}
   const kc=document.getElementById('k-cnt');if(kc)kc.innerHTML='<small>$</small>'+Math.round(overdueAmt).toLocaleString('en-CA');
   document.getElementById('k-paid').innerHTML='<small>$</small>'+Math.round(paid).toLocaleString('en-CA');
   render();

@@ -27,12 +27,12 @@
   .btn-dark{background:#fff;color:#15171c;border:none;}
   .badge-pay{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:5px 11px;border-radius:7px;text-transform:uppercase;font-family:var(--fd);}
   .pay-unpaid{background:var(--unpaid);color:#1a0f08;}.pay-partial{background:var(--partial);color:#231803;}.pay-paid{background:var(--paid);color:#04130a;}
-  .wrap{max-width:940px;margin:0 auto;padding:34px 24px 60px;display:flex;justify-content:center;}
-  .layout{width:100%;max-width:860px;background:var(--bg-2,#16181d);border:1px solid var(--line-2,#414a5c);border-radius:16px;overflow:hidden;box-shadow:0 40px 100px -30px rgba(0,0,0,.8),0 10px 30px -12px rgba(0,0,0,.5);}
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 28px 80px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:26px;align-items:start;}
   
 
   /* ---- The invoice as a real paper document ---- */
-  .sheet{background:#fbfbfd;color:#1a1d24;overflow:hidden;position:relative;margin:0;border-radius:0;}
+  .sheet{background:#fbfbfd;color:#1a1d24;border-radius:14px;overflow:hidden;position:relative;box-shadow:0 24px 60px -22px rgba(0,0,0,.6);}
   .sheet-band{height:5px;background:linear-gradient(90deg,#caa75d,#e7c989);}
   .sheet-in{padding:40px 44px 36px;}
   /* status stamp */
@@ -83,7 +83,8 @@
   .sh-foot{margin-top:30px;padding-top:18px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;gap:20px;font-size:11px;color:#9098a8;}
 
   /* ---- right rail (dark, the CRM workflow) ---- */
-  .rail{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:0;background:var(--bg-2,#16181d);border-top:1px solid var(--line,#323a48);align-items:stretch;}
+  \.rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:80px;}
+  @media(max-width:900px){.layout{grid-template-columns:1fr;}.rail{position:static;}}
   .rail .panel{border-right:1px solid var(--line,#323a48);border-radius:0;background:transparent;}
   .rail .panel:last-child{border-right:none;}
   @media(max-width:760px){.rail{grid-template-columns:1fr;}.rail .panel{border-right:none;border-bottom:1px solid var(--line,#323a48);}}
@@ -126,6 +127,31 @@
   .paid-lock .pl-check{width:46px;height:46px;border-radius:50%;background:rgba(61,220,132,.15);border:1px solid rgba(61,220,132,.5);color:#3ddc84;font-size:22px;display:grid;place-items:center;margin:0 auto 12px;}
   .paid-lock .pl-t{font-family:var(--fd,'Archivo');font-size:15px;font-weight:800;color:#eef0f4;}
   .paid-lock .pl-s{font-size:12px;color:#9098a8;margin-top:6px;line-height:1.5;max-width:240px;margin-left:auto;margin-right:auto;}
+  /* ── Modern action rail ── */
+  .hero-card{background:linear-gradient(160deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);border-radius:16px;padding:22px 20px;}
+  .hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .hero-lbl{font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);}
+  .hero-amt{font-family:var(--fd);font-weight:900;font-size:42px;line-height:1;letter-spacing:-.02em;color:var(--text);}
+  .hero-amt.clear{color:var(--paid);}
+  .hero-ring{margin:16px 0 18px;}
+  .hero-bar{height:6px;background:var(--bg);border-radius:6px;overflow:hidden;}
+  .hero-fill{height:100%;background:linear-gradient(90deg,var(--partial),var(--paid));border-radius:6px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+  .hero-prog{font-size:11.5px;color:var(--text-3);margin-top:8px;font-family:var(--fm);}
+  .hero-meta{display:flex;flex-direction:column;gap:9px;padding:16px 0;border-top:1px solid var(--line);}
+  .hm{display:flex;justify-content:space-between;align-items:baseline;}
+  .hm-k{font-size:12px;color:var(--text-3);}
+  .hm-v{font-size:13px;font-weight:600;color:var(--text);font-family:var(--fm);}
+  .hm-v.over{color:var(--unpaid);}
+  .pay-cta{width:100%;margin-top:6px;background:var(--brass-2);color:#15171c;border:none;border-radius:10px;padding:13px;font-family:var(--fd);font-weight:800;font-size:13px;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;transition:.14s;}
+  .pay-cta:hover{transform:translateY(-1px);box-shadow:0 8px 22px -8px rgba(244,246,251,.4);}
+  .pay-card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:16px;overflow:hidden;}
+  .pay-card-h{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line);font-family:var(--fd);font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);}
+  .pay-x{background:none;border:none;color:var(--text-3);font-size:15px;cursor:pointer;padding:2px 6px;border-radius:5px;}
+  .pay-x:hover{background:var(--bg-3);color:var(--text);}
+  .pay-card-b{padding:16px 18px;}
+  .pf-field .opt{font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0;font-size:10px;}
+  .hist-card{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;padding:16px 18px;}
+  .hist-h{font-family:var(--fd);font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -196,56 +222,52 @@
     </div>
   </div>
 
-  <!-- Workflow rail -->
+  <!-- Action rail: one dominant number, then progressive disclosure -->
   <div class="rail">
-    <div class="panel">
-      <div class="rail-bal">
-        <div class="lbl">Balance Due</div>
-        <div class="amt due" id="h-balance">$0.00</div>
-        <div class="status-line"><span class="badge-pay pay-unpaid" id="h-badge">Unpaid</span></div>
-        <div class="progress"><div class="bar" id="h-bar" style="width:0%"></div></div>
-        <div class="progress-txt" id="h-prog">$0.00 paid of $0.00</div>
+    <div class="hero-card">
+      <div class="hero-top">
+        <span class="hero-lbl">Balance due</span>
+        <span class="badge-pay pay-unpaid" id="h-badge">Unpaid</span>
       </div>
+      <div class="hero-amt" id="h-balance">$0.00</div>
+      <div class="hero-ring">
+        <div class="hero-bar"><div class="hero-fill" id="h-bar" style="width:0%"></div></div>
+        <div class="hero-prog" id="h-prog">$0.00 paid of $0.00</div>
+      </div>
+      <div class="hero-meta">
+        <div class="hm"><span class="hm-k">Issued</span><span class="hm-v" id="r-issued">—</span></div>
+        <div class="hm"><span class="hm-k">Due</span><span class="hm-v" id="r-due">—</span></div>
+        <div class="hm"><span class="hm-k">Terms</span><span class="hm-v" id="r-terms">—</span></div>
+      </div>
+      <button class="pay-cta" id="pay-open">Record a payment</button>
+      <select class="in" id="f-terms" style="display:none;"><option value="net_30">Net 30</option></select>
+      <div class="val" id="f-due" style="display:none;"></div>
     </div>
 
-    <div class="panel">
-      <div class="panel-h">Terms</div>
-      <div class="panel-b">
-        <div class="field"><label>Payment Terms</label>
-          <select class="in" id="f-terms">
-            <option value="on_receipt">Due on receipt</option>
-            <option value="net_15">Net 15</option>
-            <option value="net_30">Net 30</option>
-            <option value="net_60">Net 60</option>
-          </select>
-        </div>
-        <div class="field" style="margin-bottom:0;"><label>Due Date</label><div class="val" id="f-due">—</div></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-h">Record a Payment</div>
-      <div class="panel-b">
-        <div class="pf-grid">
-          <div class="pf-grid" id="pay-form"><div class="pf-field"><label>Date <span class="req">*</span></label><input class="in" id="pay-date" type="date"></div>
-          <div class="pf-field"><label>Amount <span class="req">*</span></label><input class="in" id="pay-amt" type="number" step="0.01" placeholder="0.00"></div>
-          <div class="pf-field full"><label>Method <span class="req">*</span></label>
+    <!-- Payment form: hidden until "Record a payment" is clicked -->
+    <div class="pay-card" id="pay-card" style="display:none;">
+      <div class="pay-card-h"><span>Record a payment</span><button class="pay-x" id="pay-close">✕</button></div>
+      <div class="pay-card-b">
+        <div class="pf-grid" id="pay-form">
+          <div class="pf-field"><label>Date</label><input class="in" id="pay-date" type="date"></div>
+          <div class="pf-field"><label>Amount</label><input class="in" id="pay-amt" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="pf-field full"><label>Method</label>
             <select class="in" id="pay-method">
-              <option value="">— Select method —</option>
+              <option value="">Select method</option>
               <option>Cheque</option><option>E-transfer</option><option>Credit Card</option>
               <option>Cash</option><option>Wire / EFT</option><option>Other</option>
             </select>
           </div>
-          <div class="pf-field full"><label>Reference (optional)</label><input class="in" id="pay-ref" placeholder="Cheque #, e-transfer ref…"></div>
+          <div class="pf-field full"><label>Reference <span class="opt">optional</span></label><input class="in" id="pay-ref" placeholder="Cheque #, e-transfer ref…"></div>
         </div>
-        <button class="btn-brass btn btn-full" id="add-pay">Record Payment</button>
-        <div class="msg" id="pay-msg"></div></div>
+        <button class="btn-brass btn btn-full" id="add-pay">Record payment</button>
+        <div class="msg" id="pay-msg"></div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-h">Payment History</div>
-      <div class="panel-b"><div id="pay-list"></div></div>
+    <div class="hist-card">
+      <div class="hist-h">Payments</div>
+      <div id="pay-list"></div>
     </div>
   </div>
 </div>
@@ -357,6 +379,10 @@ function render(){
   const termSel=document.getElementById('f-terms');
   if(termSel){ termSel.value=INV.terms||'net_30'; termSel.disabled=true; }
   const fdue=document.getElementById('f-due');if(fdue)fdue.textContent=fmtD(due);
+  // hero meta
+  const ri=document.getElementById('r-issued');if(ri)ri.textContent=fmtD(INV.invoice_date);
+  const rd=document.getElementById('r-due');if(rd){rd.textContent=fmtD(due);if(isOverdue())rd.className='hm-v over';}
+  const rt=document.getElementById('r-terms');if(rt)rt.textContent=(TERM_LABEL[INV.terms||'net_30']||'Net 30');
 
   // items
   document.getElementById('items').innerHTML=ITEMS.length?ITEMS.map(it=>`<tr><td class="li-code">${esc(it.style_number||it.category_name||'')}</td><td class="li-desc">${esc(it.description||'')}</td><td class="num">${it.quantity}</td><td class="num">${money(it.unit_price)}</td><td class="num">${money(it.net_amount)}</td></tr>`).join(''):'<tr><td colspan="5" style="color:#9ca3af;text-align:center;padding:24px;">No line items</td></tr>';
@@ -368,6 +394,14 @@ function render(){
   // confirmation, matching the server-side lock in record_payment().
   const payForm=document.getElementById('pay-form');
   const isPaid = INV.paid_status==='paid' || bal<=0.005;
+  const payOpen=document.getElementById('pay-open');
+  const payCard=document.getElementById('pay-card');
+  const payClose=document.getElementById('pay-close');
+  if(payOpen&&payCard){
+    payOpen.style.display = isPaid ? 'none' : '';
+    payOpen.onclick=()=>{payCard.style.display='';payOpen.style.display='none';const pa=document.getElementById('pay-amt');if(pa){pa.value=bal.toFixed(2);pa.focus();}};
+    if(payClose)payClose.onclick=()=>{payCard.style.display='none';if(!isPaid)payOpen.style.display='';};
+  }
   if(payForm){
     if(isPaid){
       payForm.innerHTML='<div class="paid-lock"><div class="pl-check">✓</div><div class="pl-t">Paid in full</div><div class="pl-s">This invoice is settled and locked. No further changes can be made.</div></div>';
