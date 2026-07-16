@@ -27,12 +27,12 @@
   .btn-dark{background:#fff;color:#15171c;border:none;}
   .badge-pay{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:5px 11px;border-radius:7px;text-transform:uppercase;font-family:var(--fd);}
   .pay-unpaid{background:var(--unpaid);color:#1a0f08;}.pay-partial{background:var(--partial);color:#231803;}.pay-paid{background:var(--paid);color:#04130a;}
-  .wrap{max-width:1180px;margin:0 auto;padding:26px 28px 80px;}
-  .layout{display:grid;grid-template-columns:1fr 332px;gap:24px;align-items:start;}
-  @media(max-width:980px){.layout{grid-template-columns:1fr;}}
+  .wrap{max-width:900px;margin:0 auto;padding:30px 24px 90px;}
+  .layout{display:flex;flex-direction:column;gap:22px;align-items:stretch;}
+  
 
   /* ---- The invoice as a real paper document ---- */
-  .sheet{background:#fbfbfd;color:#1a1d24;border-radius:14px;overflow:hidden;position:relative;box-shadow:0 24px 60px -20px rgba(0,0,0,.55),0 2px 0 rgba(255,255,255,.04);}
+  .sheet{background:#fbfbfd;color:#1a1d24;border-radius:6px;overflow:hidden;position:relative;box-shadow:0 30px 80px -24px rgba(0,0,0,.7),0 6px 18px -8px rgba(0,0,0,.4);max-width:820px;width:100%;margin:0 auto;}
   .sheet-band{height:5px;background:linear-gradient(90deg,#caa75d,#e7c989);}
   .sheet-in{padding:40px 44px 36px;}
   /* status stamp */
@@ -83,7 +83,8 @@
   .sh-foot{margin-top:30px;padding-top:18px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;gap:20px;font-size:11px;color:#9098a8;}
 
   /* ---- right rail (dark, the CRM workflow) ---- */
-  .rail{display:flex;flex-direction:column;gap:16px;position:sticky;top:78px;}
+  .rail{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:820px;width:100%;margin:0 auto;align-items:start;}
+  @media(max-width:760px){.rail{grid-template-columns:1fr;}}
   .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
   .panel-h{padding:13px 16px;border-bottom:1px solid var(--line);font-family:var(--fd);font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#aab2c4;}
   .panel-b{padding:16px;}
@@ -119,6 +120,10 @@
   .state{padding:50px;text-align:center;color:var(--text-3);}
   .badge-pay{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:5px 11px;border-radius:7px;text-transform:uppercase;font-family:var(--fd);}
   .pay-overdue{background:var(--danger);color:#fff;}
+  .paid-lock{text-align:center;padding:26px 18px;}
+  .paid-lock .pl-check{width:46px;height:46px;border-radius:50%;background:rgba(61,220,132,.15);border:1px solid rgba(61,220,132,.5);color:#3ddc84;font-size:22px;display:grid;place-items:center;margin:0 auto 12px;}
+  .paid-lock .pl-t{font-family:var(--fd,'Archivo');font-size:15px;font-weight:800;color:#eef0f4;}
+  .paid-lock .pl-s{font-size:12px;color:#9098a8;margin-top:6px;line-height:1.5;max-width:240px;margin-left:auto;margin-right:auto;}
 </style>
 </head>
 <body>
@@ -220,7 +225,7 @@
       <div class="panel-h">Record a Payment</div>
       <div class="panel-b">
         <div class="pf-grid">
-          <div class="pf-field"><label>Date <span class="req">*</span></label><input class="in" id="pay-date" type="date"></div>
+          <div class="pf-grid" id="pay-form"><div class="pf-field"><label>Date <span class="req">*</span></label><input class="in" id="pay-date" type="date"></div>
           <div class="pf-field"><label>Amount <span class="req">*</span></label><input class="in" id="pay-amt" type="number" step="0.01" placeholder="0.00"></div>
           <div class="pf-field full"><label>Method <span class="req">*</span></label>
             <select class="in" id="pay-method">
@@ -232,7 +237,7 @@
           <div class="pf-field full"><label>Reference (optional)</label><input class="in" id="pay-ref" placeholder="Cheque #, e-transfer ref…"></div>
         </div>
         <button class="btn-brass btn btn-full" id="add-pay">Record Payment</button>
-        <div class="msg" id="pay-msg"></div>
+        <div class="msg" id="pay-msg"></div></div>
       </div>
     </div>
 
@@ -346,21 +351,29 @@ function render(){
   const hb=document.getElementById('h-badge');hb.textContent=si.label;hb.className='badge-pay pay-'+si.key;
 
   // terms
-  const termSel=document.getElementById('f-terms');termSel.value=INV.terms||'net_30';
+  // Terms + due date are fixed at conversion. Invoice is read-only except payment.
+  const termSel=document.getElementById('f-terms');
+  if(termSel){ termSel.value=INV.terms||'net_30'; termSel.disabled=true; }
   const fdue=document.getElementById('f-due');if(fdue)fdue.textContent=fmtD(due);
-  termSel.onchange=async()=>{
-    INV.terms=termSel.value;INV.due_date=computeDue(INV.invoice_date,INV.terms);
-    await db.from('invoices').update({terms:INV.terms,due_date:INV.due_date}).eq('id',INV_ID);
-    render();
-  };
 
   // items
   document.getElementById('items').innerHTML=ITEMS.length?ITEMS.map(it=>`<tr><td class="li-code">${esc(it.style_number||it.category_name||'')}</td><td class="li-desc">${esc(it.description||'')}</td><td class="num">${it.quantity}</td><td class="num">${money(it.unit_price)}</td><td class="num">${money(it.net_amount)}</td></tr>`).join(''):'<tr><td colspan="5" style="color:#9ca3af;text-align:center;padding:24px;">No line items</td></tr>';
 
   recalcTotals();
   renderPayments();
-  document.getElementById('pay-date').value=new Date().toISOString().slice(0,10);
-  document.getElementById('add-pay').onclick=addPayment;
+
+  // Once the invoice is paid it locks: the payment-entry form is replaced by a
+  // confirmation, matching the server-side lock in record_payment().
+  const payForm=document.getElementById('pay-form');
+  const isPaid = INV.paid_status==='paid' || bal<=0.005;
+  if(payForm){
+    if(isPaid){
+      payForm.innerHTML='<div class="paid-lock"><div class="pl-check">✓</div><div class="pl-t">Paid in full</div><div class="pl-s">This invoice is settled and locked. No further changes can be made.</div></div>';
+    }else{
+      const pd=document.getElementById('pay-date'); if(pd) pd.value=new Date().toISOString().slice(0,10);
+      const ap=document.getElementById('add-pay'); if(ap) ap.onclick=addPayment;
+    }
+  }
   document.getElementById('btn-pdf').onclick=printInvoice;
 }
 
@@ -385,9 +398,8 @@ function renderPayments(){
   if(!PAYMENTS.length){el.innerHTML='<div class="pay-empty">No payments recorded yet.</div>';return;}
   el.innerHTML=PAYMENTS.map(p=>`<div class="pay-row">
     <div class="pr-meta"><span class="pr-method">${esc(p.method||'Payment')}</span><span class="pr-sub">${fmtD(p.pay_date)}${p.reference?' · '+esc(p.reference):''}</span></div>
-    <div class="pr-right"><span class="pay-amt">${money(p.amount)}</span><button class="pay-del" data-id="${p.id}" title="Remove payment">×</button></div>
+    <div class="pr-right"><span class="pay-amt">${money(p.amount)}</span></div>
   </div>`).join('');
-  el.querySelectorAll('.pay-del').forEach(b=>b.addEventListener('click',()=>removePayment(b.dataset.id)));
 }
 
 async function recomputeStatus(){
@@ -406,7 +418,6 @@ async function addPayment(){
   const method=document.getElementById('pay-method').value;
   const ref=document.getElementById('pay-ref').value.trim();
   const msg=document.getElementById('pay-msg');
-  // Date + Method + Amount are all required before a payment is recorded
   if(!date){msg.textContent='Choose the payment date.';msg.className='msg err';return;}
   if(!method){msg.textContent='Select a payment method.';msg.className='msg err';return;}
   if(!amt||amt<=0){msg.textContent='Enter a valid amount.';msg.className='msg err';return;}
@@ -416,20 +427,16 @@ async function addPayment(){
     if(!ok)return;
   }
   msg.textContent='Recording…';msg.className='msg';
-  const {error}=await db.from('payments').insert({invoice_id:INV_ID,amount:amt,method,reference:ref||null,pay_date:date});
+  // Atomic + server-side: status is computed in Postgres, and a paid invoice is locked.
+  const {data,error}=await db.rpc('record_payment',{
+    p_invoice:INV_ID, p_amount:amt, p_method:method, p_date:date, p_ref:ref||null
+  });
   if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
-  await recomputeStatus();
-  document.getElementById('pay-amt').value='';document.getElementById('pay-method').value='';document.getElementById('pay-ref').value='';
+  const row=Array.isArray(data)?data[0]:data;
+  if(row){ INV.paid_status=row.out_status; INV.amount_paid=row.out_paid; INV.balance_due=row.out_balance; }
+  const {data:pays}=await db.from('payments').select('*').eq('invoice_id',INV_ID).order('pay_date');PAYMENTS=pays||[];
   render();
-  document.getElementById('pay-msg').textContent='Payment recorded ✓';document.getElementById('pay-msg').className='msg ok';
-}
-
-async function removePayment(id){
-  const ok=await smConfirm('Remove this payment? The invoice balance will be recalculated.','Remove payment?',{confirmText:'Remove',cancelText:'Keep',danger:true});
-  if(!ok)return;
-  await db.from('payments').delete().eq('id',id);
-  await recomputeStatus();
-  render();
+  document.getElementById('pay-msg').textContent='Payment recorded';document.getElementById('pay-msg').className='msg ok';
 }
 function smChoice(title,msg,buttons){return new Promise(res=>{__ensureModal();document.getElementById('__sm_ic').className='ic info';document.getElementById('__sm_ic').innerHTML=__SM_IC.info;document.getElementById('__sm_t').textContent=title;document.getElementById('__sm_m').textContent=msg||'';const f=document.getElementById('__sm_f');f.style.flexDirection='column';f.innerHTML=buttons.map(b=>`<button class="b ${b.primary?'primary':(b.plain?'plain':'')}" data-k="${b.key}" style="width:100%;">${b.label}</button>`).join('');const ov=document.getElementById('__sm_ov');const close=v=>{ov.classList.remove('open');f.style.flexDirection='';res(v);};f.querySelectorAll('button').forEach(btn=>btn.onclick=()=>close(btn.dataset.k));ov.onclick=e=>{if(e.target===ov)close(null);};ov.classList.add('open');});}
 

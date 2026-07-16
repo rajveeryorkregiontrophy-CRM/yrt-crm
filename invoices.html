@@ -107,6 +107,33 @@
   .app.collapsed .sidebar:not(:hover) .nav a.active{background:transparent;}
   .app.collapsed .sidebar:not(:hover) .nav a.active .ico{color:#fff;}
   .app.collapsed .sidebar:not(:hover) .brand{padding-left:0;padding-right:0;}
+  .inv-group{margin-bottom:26px;}
+  .ig-head{display:flex;align-items:center;gap:10px;padding:0 2px 11px;border-bottom:1px solid var(--line,#323a48);margin-bottom:12px;}
+  .ig-dot{width:9px;height:9px;border-radius:50%;}
+  .ig-dot.overdue{background:#ff6b6b;} .ig-dot.outstanding{background:#ffb627;} .ig-dot.paid{background:#3ddc84;}
+  .ig-title{font-family:var(--fd,'Archivo');font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text,#eef0f4);}
+  .ig-count{font-family:var(--fm,'JetBrains Mono');font-size:11px;font-weight:700;color:var(--text-3,#9098a8);background:var(--bg-3,#1f2229);padding:2px 8px;border-radius:10px;}
+  .ig-sum{margin-left:auto;font-family:var(--fm,'JetBrains Mono');font-size:13px;font-weight:700;color:var(--text-2,#c4cad6);}
+  .ig-list{display:flex;flex-direction:column;gap:9px;}
+  .inv-card{display:flex;align-items:stretch;gap:0;background:var(--bg-2,#16181d);border:1px solid var(--line-2,#414a5c);border-radius:11px;overflow:hidden;cursor:pointer;transition:.13s;}
+  .inv-card:hover{border-color:var(--text-3,#9098a8);transform:translateY(-1px);}
+  .ic-rail{width:4px;flex-shrink:0;}
+  .inv-card.overdue .ic-rail{background:#ff6b6b;} .inv-card.outstanding .ic-rail,.inv-card.partial .ic-rail{background:#ffb627;} .inv-card.paid .ic-rail{background:#3ddc84;}
+  .ic-main{flex:1;padding:14px 16px;min-width:0;}
+  .ic-top{display:flex;align-items:baseline;gap:11px;}
+  .ic-no{font-family:var(--fm,'JetBrains Mono');font-size:12.5px;font-weight:700;color:var(--brass,#caa75d);}
+  .ic-client{font-family:var(--fd,'Archivo');font-size:15px;font-weight:700;color:var(--text,#eef0f4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ic-sub{font-size:13px;color:var(--text-2,#c4cad6);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ic-meta{font-size:11.5px;color:var(--text-3,#9098a8);margin-top:5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .late{font-family:var(--fd,'Archivo');font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#e6ae4a;background:rgba(255,182,39,.13);padding:2px 7px;border-radius:4px;}
+  .late.bad{color:#ff8080;background:rgba(255,107,107,.14);}
+  .ic-right{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:3px;padding:14px 18px;border-left:1px solid var(--line,#323a48);min-width:150px;}
+  .ic-bal{font-family:var(--fd,'Archivo');font-size:19px;font-weight:900;}
+  .ic-ball{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3,#9098a8);font-weight:700;}
+  .badge-pay{margin-top:6px;font-family:var(--fd,'Archivo');font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:5px;}
+  .pay-paid{background:rgba(61,220,132,.15);color:#3ddc84;} .pay-overdue{background:rgba(255,107,107,.15);color:#ff6b6b;}
+  .pay-partial{background:rgba(255,182,39,.15);color:#ffb627;} .pay-unpaid{background:rgba(144,152,168,.14);color:#aab2c0;}
+  @media(max-width:720px){.ic-right{min-width:0;padding:14px;}.ic-client{font-size:14px;}}
 </style>
 </head>
 <body>
@@ -143,7 +170,7 @@
       </div>
       <section class="panel">
         <div class="panel-head"><h2>Invoices</h2><span class="count" id="count">—</span>
-          <div class="tabs"><button class="tab active" data-t="all">All</button><button class="tab" data-t="unpaid">Unpaid</button><button class="tab" data-t="overdue">Overdue</button><button class="tab" data-t="partial">Partial</button><button class="tab" data-t="paid">Paid</button></div>
+          <div class="tabs"><button class="tab active" data-t="all">All</button><button class="tab" data-t="outstanding">Outstanding</button><button class="tab" data-t="overdue">Overdue</button><button class="tab" data-t="paid">Paid</button></div>
         </div>
         <div id="wrap"><div class="state">Loading…</div></div>
       </section>
@@ -164,46 +191,76 @@ function invOverdue(i){
   if(!due)return false;
   return new Date(due+'T23:59:59') < new Date();
 }
-function invState(i){
-  if(i.paid_status==='paid')return 'paid';
-  if(invOverdue(i))return 'overdue';
-  if(i.paid_status==='partial')return 'partial';
-  return 'unpaid';
-}
+
 async function load(){
-  const {data,error}=await db.from('invoices').select('*, clients(company_name)').order('invoice_date',{ascending:false});
+  // Buckets (outstanding / overdue / paid) and days_overdue are computed in
+  // Postgres by invoice_dashboard(), so the dashboard is always accurate.
+  const {data,error}=await db.rpc('invoice_dashboard');
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
-  ALL=data||[];const _ni=document.getElementById('nav-inv');if(_ni)_ni.textContent=ALL.length;
-  const out=ALL.reduce((s,i)=>s+Number(i.balance_due||0),0);
+  ALL=(data||[]).map(i=>({...i, clients:{company_name:i.client_name}}));
+  const _ni=document.getElementById('nav-inv');if(_ni)_ni.textContent=ALL.length;
+  const out=ALL.filter(i=>i.bucket!=='paid').reduce((s,i)=>s+Number(i.balance_due||0),0);
   const paid=ALL.reduce((s,i)=>s+Number(i.amount_paid||0),0);
-  const overdueAmt=ALL.filter(invOverdue).reduce((s,i)=>s+Number(i.balance_due||0),0);
+  const overdueAmt=ALL.filter(i=>i.bucket==='overdue').reduce((s,i)=>s+Number(i.balance_due||0),0);
   document.getElementById('k-out').innerHTML='<small>$</small>'+Math.round(out).toLocaleString('en-CA');
   const kc=document.getElementById('k-cnt');if(kc)kc.innerHTML='<small>$</small>'+Math.round(overdueAmt).toLocaleString('en-CA');
   document.getElementById('k-paid').innerHTML='<small>$</small>'+Math.round(paid).toLocaleString('en-CA');
   render();
 }
+function invState(i){ return i.bucket==='paid'?'paid':(i.bucket==='overdue'?'overdue':(i.paid_status==='partial'?'partial':'unpaid')); }
+
+function card(i){
+  const st=invState(i);
+  const stLabel={paid:'Paid',overdue:'Overdue',partial:'Partial',unpaid:'Outstanding'}[st];
+  const lateFlag = (i.days_overdue>0)
+    ? `<span class="late ${i.days_overdue>=30?'bad':''}">${i.days_overdue} day${i.days_overdue===1?'':'s'} overdue</span>` : '';
+  const balColor = i.balance_due>0 ? (st==='overdue'?'var(--danger,#ff6b6b)':'var(--text)') : 'var(--paid,#3ddc84)';
+  return `<div class="inv-card ${st}" data-id="${i.id}">
+    <div class="ic-rail"></div>
+    <div class="ic-main">
+      <div class="ic-top"><span class="ic-no">#${i.invoice_number||'—'}</span><span class="ic-client">${esc(i.client_name||'—')}</span></div>
+      <div class="ic-sub">${esc(i.subject||'No subject')}</div>
+      <div class="ic-meta">Issued ${fmtD(i.invoice_date)} · Due ${fmtD(i.due_date)} ${lateFlag}</div>
+    </div>
+    <div class="ic-right">
+      <div class="ic-bal" style="color:${balColor}">${money(i.balance_due>0?i.balance_due:i.grand_total)}</div>
+      <div class="ic-ball">${i.balance_due>0?'balance due':'total'}</div>
+      <span class="badge-pay pay-${st}">${stLabel}</span>
+    </div>
+  </div>`;
+}
+
 function render(){
   const q=(document.getElementById('search').value||'').toLowerCase();
-  let rows=ALL.filter(i=>{
-    if(TAB!=='all'&&invState(i)!==TAB)return false;
-    if(q){const hay=((i.clients?.company_name||'')+' '+i.invoice_number).toLowerCase();if(!hay.includes(q))return false;}
-    return true;
-  });
-  document.getElementById('count').textContent=rows.length+(rows.length===1?' invoice':' invoices');
-  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No invoices${TAB!=='all'?' in this view':' yet. Create one from an order’s “Convert to Invoice”.'}</div>`;return;}
-  document.getElementById('wrap').innerHTML=`<table><thead><tr><th style="width:84px;">Invoice</th><th style="width:26%;">Client</th><th style="width:110px;">Issued</th><th style="width:110px;">Due</th><th class="num" style="width:110px;">Total</th><th class="num" style="width:110px;">Balance</th><th style="width:108px;">Status</th></tr></thead><tbody>${rows.map(i=>{
-    const st=invState(i);const stLabel={paid:'Paid',overdue:'Overdue',partial:'Partial',unpaid:'Unpaid'}[st];
-    return `<tr data-id="${i.id}">
-      <td><span class="inv-no">#${i.invoice_number||'—'}</span></td>
-      <td><div class="c-name">${esc(i.clients?.company_name||'—')}</div></td>
-      <td><span class="q-date">${fmtD(i.invoice_date)}</span></td>
-      <td><span class="q-date ${st==='overdue'?'over':''}">${fmtD(i.due_date)}</span></td>
-      <td class="num"><span class="money">${money(i.grand_total)}</span></td>
-      <td class="num"><span class="bal" style="color:${i.balance_due>0?'var(--unpaid)':'var(--paid)'}">${money(i.balance_due)}</span></td>
-      <td><span class="badge-pay pay-${st}">${stLabel}</span></td>
-    </tr>`;}).join('')}</tbody></table>`;
-  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(tr.dataset.id)));
+  const match=i=>!q || ((i.client_name||'')+' '+i.invoice_number+' '+(i.subject||'')).toLowerCase().includes(q);
+  const filtered=ALL.filter(match);
+
+  // If a specific tab is chosen, show just that group flat. On "All", show the
+  // three groups stacked: Overdue first (needs attention), then Outstanding, then Paid.
+  const groups=[
+    {key:'overdue',    title:'Overdue',     items:filtered.filter(i=>i.bucket==='overdue')},
+    {key:'outstanding',title:'Outstanding', items:filtered.filter(i=>i.bucket==='outstanding')},
+    {key:'paid',       title:'Paid',        items:filtered.filter(i=>i.bucket==='paid')},
+  ];
+  const total=filtered.length;
+  document.getElementById('count').textContent=total+(total===1?' invoice':' invoices');
+
+  const wrap=document.getElementById('wrap');
+  if(!total){wrap.innerHTML=`<div class="state">No invoices${TAB!=='all'?' in this view':' yet. Create one from an order’s “Convert to Invoice”.'}</div>`;return;}
+
+  const show = TAB==='all' ? groups : groups.filter(g=>g.key===TAB);
+  wrap.innerHTML=show.map(g=>{
+    if(!g.items.length) return TAB==='all'?'':`<div class="state">No ${g.title.toLowerCase()} invoices.</div>`;
+    const sum=g.items.reduce((s,i)=>s+Number(g.key==='paid'?i.grand_total:i.balance_due||0),0);
+    return `<div class="inv-group">
+      <div class="ig-head"><span class="ig-dot ${g.key}"></span><span class="ig-title">${g.title}</span><span class="ig-count">${g.items.length}</span><span class="ig-sum">${money(sum)}</span></div>
+      <div class="ig-list">${g.items.map(card).join('')}</div>
+    </div>`;
+  }).join('')||`<div class="state">Nothing here.</div>`;
+
+  wrap.querySelectorAll('.inv-card[data-id]').forEach(c=>c.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(c.dataset.id)));
 }
+
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');TAB=t.dataset.t;render();}));
 document.getElementById('search').addEventListener('input',render);
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());

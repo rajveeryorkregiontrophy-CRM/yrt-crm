@@ -1833,7 +1833,13 @@ async function convertToInvoice(){
       {confirmText:'Convert anyway',cancelText:'Go back',danger:true});
     if(!proceed)return;
   }
-  const ok=await confirmModal('Create invoice?','This generates a new invoice from order #'+ORDER.stage_id+' and moves it to the invoice stage.',{confirmText:'Create invoice',cancelText:'Cancel'});
+  const ok=await confirmModal('Convert to invoice — this cannot be undone',
+    'This turns order #'+ORDER.stage_id+' into an invoice. Once converted:<br><br>'
+    +'• the invoice becomes <strong>read-only</strong> — no more edits to line items, prices, or quantities<br>'
+    +'• the order leaves the Sales Timeline<br>'
+    +'• this <strong>cannot be reversed</strong><br><br>'
+    +'Make sure everything is correct before continuing.',
+    {confirmText:'Yes, convert to invoice',cancelText:'Cancel',danger:true});
   if(!ok)return;
   const c=ORDER._calc||{subtotal:ORDER.subtotal,discount_total:ORDER.discount_total,hst:ORDER.hst,grand_total:ORDER.grand_total};
   const {data:seq,error:se}=await db.rpc('nextval_invoice');

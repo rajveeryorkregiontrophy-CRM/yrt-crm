@@ -498,7 +498,7 @@ async function loadProcess(){
   }))};
   const mine=DATA.order.filter(o=>o._mine).length;
   const wb=document.getElementById('wb-txt');
-  if(wb) wb.textContent=(PROFILE?.full_name||'')+' — '+mine+' assigned to you, '+DATA.order.length+' active in the shop';
+  if(wb) wb.textContent=(PROFILE?.full_name||'')+' — '+mine+(mine===1?' order assigned to you':' orders assigned to you');
   document.getElementById('list-title').textContent='Sales Orders';
   render();
 }
