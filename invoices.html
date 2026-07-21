@@ -206,16 +206,16 @@
   .d-msg{font-size:12px;margin-top:10px;}
   .d-msg.err{color:var(--danger);}.d-msg.ok{color:var(--paid);}
   /* ── Compact stat strip (no wasted space) ── */
-  .stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:var(--s4);margin-bottom:var(--s5);flex-shrink:0;}
-  .stat{position:relative;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:var(--s5);overflow:hidden;}
+  .stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:var(--s4);margin-bottom:var(--s5);flex-shrink:0;align-items:stretch;}
+  .stat{position:relative;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;overflow:hidden;}
   .stat.lead{background:linear-gradient(150deg,var(--bg-3),var(--bg-2));}
   .st-bar{position:absolute;left:0;top:0;bottom:0;width:3px;}
   .st-bar.overdue{background:var(--unpaid);} .st-bar.paid{background:var(--paid);}
   .st-k{font-family:var(--fd);font-size:var(--t-label);font-weight:var(--w-bold);letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--text-3);}
-  .st-v{font-family:var(--fd);font-size:26px;font-weight:var(--w-bold);line-height:1.05;letter-spacing:-.02em;color:#fff;margin-top:var(--s2);}
+  .st-v{font-family:var(--fd);font-size:22px;font-weight:var(--w-bold);line-height:1;letter-spacing:-.02em;color:#fff;margin-top:6px;}
   .st-v small{font-size:17px;color:var(--text-3);font-weight:var(--w-bold);}
-  .stat.lead .st-v{font-size:var(--t-display);}
-  .st-sub{font-size:var(--t-sm);color:var(--text-3);font-weight:var(--w-med);margin-top:var(--s2);}
+  .stat.lead .st-v{font-size:26px;}
+  .st-sub{font-size:12px;color:var(--text-3);font-weight:var(--w-med);margin-top:4px;}
   @media(max-width:760px){.stats{grid-template-columns:1fr;}}
   /* Scrollable list panel — matches the Sales Timeline */
   .panel{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;overflow:hidden;}
