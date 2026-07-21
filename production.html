@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Production Lineup — YRT CRM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   html:not(.role-ready) body{visibility:hidden;}
   /* ── Assignment: management assigns a job to one or more process people ── */
@@ -33,6 +33,8 @@
   .am-btn{padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid #414a5c;background:#1f2229;color:#eef0f4;}
   .am-btn.primary{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}
   .am-empty{padding:24px;text-align:center;color:#9098a8;font-size:13px;}
+  .am-err{padding:0 20px;color:#ff6b6b;font-size:12.5px;min-height:0;}
+  .am-err:not(:empty){padding:10px 20px 0;}
 
   :root{
     --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
@@ -40,10 +42,10 @@
     --brass:#e7ebf3;--brass-2:#f4f6fb;
     --art:#ff6b35;--due:#ffb627;--approved:#3ddc84;--process:#3da5ff;--invoice:#b06bff;--danger:#ff4d4d;
     --radius:11px;--radius-sm:8px;
-    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'Inter',system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
-  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  body{font-feature-settings:'tnum','cv01';font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
   ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
   .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
   .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
@@ -53,7 +55,7 @@
   .nav a:hover{background:var(--bg-3);color:#fff;}
   .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
   .nav a .ico{width:17px;height:17px;flex-shrink:0;}
-  .nav a .badge{margin-left:auto;background:var(--bg-4);color:var(--text);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;font-family:var(--fm);}
+  .nav a .badge{margin-left:auto;background:transparent;color:var(--text-3);font-size:11px;font-weight:800;padding:0;font-family:var(--fd);}
   .nav a.active .badge{background:rgba(0,0,0,.25);color:#15171c;}
   .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:20px 10px 8px;font-weight:700;}
   .nav-sep{height:1px;background:var(--line);margin:14px 14px;opacity:.7;}
@@ -169,7 +171,7 @@ const days=d=>{if(!d)return null;const x=new Date(d+'T00:00:00');return Math.rou
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const STAGES=[['send_art','Send Art','var(--art)'],['approval_due','Approval Due','var(--due)'],['approved','Approved','var(--approved)'],['in_process','In Process','var(--process)'],['invoice','Ready to Invoice','var(--invoice)']];
 const ST_LABEL={send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice'};
-let ALL=[],VIEW='stage',STAFF=[],ASSIGN={},MGMT=false;
+let ALL=[],VIEW='stage',STAFF=[],ASSIGN={},ANAME={},MGMT=false;
 async function load(){
   MGMT=isManagement();
   // Only ACTIVE, non-invoiced orders belong in production.
@@ -185,11 +187,15 @@ async function load(){
 }
 
 async function loadAssignments(){
-  ASSIGN={};
-  const {data}=await db.from('order_assignments').select('quote_id,profile_id');
-  (data||[]).forEach(a=>{ (ASSIGN[a.quote_id]=ASSIGN[a.quote_id]||[]).push(a.profile_id); });
+  ASSIGN={}; ANAME={};
+  const {data,error}=await db.rpc('order_assignees');
+  if(error){ console.error('[production] assignments', error); return; }
+  (data||[]).forEach(a=>{
+    (ASSIGN[a.quote_id]=ASSIGN[a.quote_id]||[]).push(a.profile_id);
+    ANAME[a.profile_id]=a.full_name;
+  });
 }
-const staffName=id=>{const s=STAFF.find(x=>x.id===id);return s?(s.full_name||s.email):'Unknown';};
+const staffName=id=>ANAME[id]||(STAFF.find(x=>x.id===id)?.full_name)||'Unknown';
 function jobCard(o){
   const n=days(o.pickup_date);
   const dcls=n===null?'d-ok':n<0?'d-over':n<=2?'d-soon':'d-ok';
@@ -264,14 +270,11 @@ document.getElementById('am-ov').addEventListener('click',e=>{if(e.target.id==='
 document.getElementById('am-save').addEventListener('click',async()=>{
   if(!AM_ID)return;
   const btn=document.getElementById('am-save'); btn.disabled=true; btn.textContent='Saving…';
-  // Replace the whole set for this order: delete then insert what's selected.
-  await db.from('order_assignments').delete().eq('quote_id',AM_ID);
-  if(AM_SEL.size){
-    const rows=[...AM_SEL].map(pid=>({quote_id:AM_ID,profile_id:pid}));
-    const {error}=await db.from('order_assignments').insert(rows);
-    if(error){alert('Could not save: '+error.message);}
-  }
+  const err=document.getElementById('am-err'); err.textContent='';
+  // One call. Runs as the owner in Postgres, so it can't be rejected by grants/RLS.
+  const {error}=await db.rpc('set_order_assignments',{p_quote:AM_ID,p_profiles:[...AM_SEL]});
   btn.disabled=false; btn.textContent='Save';
+  if(error){ err.textContent=error.message||'Could not save.'; return; }
   closeAssign();
   await loadAssignments();
   render();
@@ -283,6 +286,7 @@ load();
   <div class="am">
     <div class="am-h"><h3 id="am-title">Assign job</h3><div class="sub">Pick one person, or several to split the job between them.</div></div>
     <div class="am-b" id="am-b"></div>
+    <div class="am-err" id="am-err"></div>
     <div class="am-f"><button class="am-btn" id="am-cancel">Cancel</button><button class="am-btn primary" id="am-save">Save</button></div>
   </div>
 </div>

@@ -126,12 +126,47 @@ export async function requireAuth(){
   root.classList.add(profile?.role === 'management' ? 'role-management' : 'role-process');
   root.classList.add('role-ready');
 
+  // Show the signed-in person's name in the sidebar foot on EVERY page.
+  // The markup ("Operations Suite") is identical across pages, so doing it here
+  // means every page gets it — not just index.html.
+  try{
+    const name = profile?.full_name || profile?.email || '';
+    if(name){
+      const foot = document.querySelector('.sidebar-foot .foot-text');
+      if(foot){
+        const sub = foot.querySelector('div:last-child');
+        if(sub) sub.textContent = name;
+      }
+      // Process users have no sidebar; if a topbar date pill exists, use it.
+      if(profile?.role !== 'management'){
+        const pill = document.getElementById('today');
+        if(pill){ pill.textContent = name; pill.classList.add('who-pill'); }
+      }
+    }
+  }catch(e){}
+
   // Remember whose token this page was rendered against, then watch for a swap.
   _watchedUserId = data.session?.user?.id || null;
   watchSession();
 
+  // Show the signed-in person's name in the sidebar foot on EVERY page (not just
+  // index). Runs here so no page has to wire it individually.
+  applyIdentity(profile);
+
   hideAuthLoader();
   return data.session;
+}
+
+// Replace the "Operations Suite" line in the sidebar foot with the person's name.
+function applyIdentity(profile){
+  const name = profile?.full_name || profile?.email || '';
+  if(!name) return;
+  const foot = document.querySelector('.sidebar-foot .foot-text');
+  if(foot){
+    const lines = foot.querySelectorAll('div');
+    // second line is the subtitle ("Operations Suite")
+    if(lines[1]) lines[1].textContent = name;
+  }
 }
 
 // brief branded loading overlay while we verify the session
