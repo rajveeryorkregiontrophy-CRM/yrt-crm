@@ -1846,7 +1846,7 @@ async function convertToInvoice(){
   // (the timeline only shows inquiry/quote/order) and mark it completed.
   const {error:upErr}=await db.from('quotes').update({record_type:'invoice',art_status:'invoice',active_status:'completed'}).eq('id',ORDER_ID);
   if(upErr){ await alertModal('Invoice created, but…','The invoice was created but the order could not be moved off the timeline: '+upErr.message,'warn'); }
-  location.href='invoice.html?id='+encodeURIComponent(inv.id);
+  location.href='invoices.html?open='+encodeURIComponent(inv.id);
 }
 
 function label(s){return {send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice',no_data:'No Data'}[s]||s;}
