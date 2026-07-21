@@ -153,6 +153,64 @@
   .panel-flat{background:transparent;}
   .list-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px;}
   .list-head .count{font-family:var(--fd);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);}
+  /* ── Invoice drawer: same slide-out pattern as Clients/Suppliers ── */
+  .ov{position:fixed;inset:0;background:rgba(6,8,12,.6);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:50;}
+  .ov.open{opacity:1;pointer-events:auto;}
+  .idraw{position:fixed;top:0;right:0;height:100vh;width:560px;max-width:96vw;background:var(--bg-2,#16181d);border-left:1px solid var(--line-2,#414a5c);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);z-index:60;display:flex;flex-direction:column;box-shadow:-30px 0 80px -30px rgba(0,0,0,.7);}
+  .idraw.open{transform:translateX(0);}
+  .idraw-head{display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid var(--line,#323a48);}
+  .idh-num{font-family:var(--fm,'JetBrains Mono');font-size:13px;font-weight:700;color:var(--brass-2,#f4f6fb);}
+  .idh-client{font-family:var(--fd,'Archivo');font-size:16px;font-weight:800;color:var(--text,#eef0f4);margin-top:2px;}
+  .idraw-x{margin-left:auto;background:var(--bg-4,#2a2e37);border:none;color:var(--text-2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px;}
+  .idraw-x:hover{color:#fff;}
+  .idraw-body{flex:1;overflow-y:auto;padding:22px;}
+  .idraw-foot{display:flex;gap:10px;padding:14px 22px;border-top:1px solid var(--line,#323a48);}
+  .idraw-foot .btn{flex:1;padding:12px;border-radius:10px;font-family:var(--fd);font-weight:800;font-size:12px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border:1px solid var(--line-2);}
+  .btn.ghost{background:transparent;color:var(--text-2);}
+  .btn.ghost:hover{border-color:var(--text-3);color:#fff;}
+  .btn.brass{background:var(--brass-2,#f4f6fb);color:#15171c;border-color:var(--brass-2);}
+  .btn.brass:hover{transform:translateY(-1px);}
+  .btn.brass:disabled{opacity:.4;cursor:default;transform:none;}
+  /* drawer content blocks */
+  .d-bal{background:linear-gradient(155deg,var(--bg-3),var(--bg-2));border:1px solid var(--line-2);border-radius:14px;padding:20px;margin-bottom:18px;}
+  .d-bal-k{font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);}
+  .d-bal-v{font-family:var(--fd);font-size:38px;font-weight:900;line-height:1;letter-spacing:-.02em;color:#fff;margin:8px 0;}
+  .d-bal-v.clear{color:var(--paid);}
+  .d-bar{height:5px;background:var(--bg);border-radius:5px;overflow:hidden;margin-top:12px;}
+  .d-fill{height:100%;background:linear-gradient(90deg,var(--partial),var(--paid));border-radius:5px;}
+  .d-prog{font-family:var(--fm);font-size:11px;color:var(--text-3);margin-top:7px;}
+  .d-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:18px;}
+  .d-mi{background:var(--bg-2);padding:12px 14px;}
+  .d-mi .k{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);font-weight:700;}
+  .d-mi .v{font-family:var(--fm);font-size:12.5px;color:var(--text);margin-top:3px;font-weight:600;}
+  .d-mi .v.over{color:var(--unpaid);}
+  .d-sec{font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin:0 0 10px;}
+  .d-items{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px;}
+  .d-item{display:flex;justify-content:space-between;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);}
+  .d-item:last-child{border-bottom:none;}
+  .d-item .di-desc{font-size:13px;color:var(--text);font-weight:600;}
+  .d-item .di-sub{font-size:11px;color:var(--text-3);font-family:var(--fm);margin-top:2px;}
+  .d-item .di-amt{font-family:var(--fm);font-size:13px;color:var(--text);white-space:nowrap;}
+  .d-tot{padding:2px 2px 18px;}
+  .d-tot .r{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:var(--text-2);}
+  .d-tot .r.grand{border-top:1px solid var(--line);margin-top:6px;padding-top:11px;font-family:var(--fd);font-weight:800;font-size:15px;color:#fff;}
+  .d-tot .r .m{font-family:var(--fm);}
+  .d-payform{background:var(--bg-3);border:1px solid var(--line-2);border-radius:12px;padding:16px;margin-bottom:16px;}
+  .d-paid-lock{display:flex;align-items:center;gap:12px;background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.3);border-radius:12px;padding:16px;margin-bottom:16px;}
+  .d-paid-lock .plc{width:34px;height:34px;border-radius:50%;background:rgba(61,220,132,.16);color:var(--paid);display:grid;place-items:center;font-size:16px;flex-shrink:0;}
+  .d-paid-lock .plt{font-family:var(--fd);font-weight:800;font-size:13px;color:#fff;}
+  .d-paid-lock .pls{font-size:11.5px;color:var(--text-3);margin-top:2px;}
+  .d-hist .hr{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .d-hist .hr:last-child{border-bottom:none;}
+  .d-hist .hr .hm{color:var(--text-3);font-family:var(--fm);}
+  .pf2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .pf2 .f{display:flex;flex-direction:column;gap:5px;}
+  .pf2 .f.full{grid-column:1/-1;}
+  .pf2 label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);}
+  .pf2 .in{background:var(--bg);border:1px solid var(--line-2);color:var(--text);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:13px;}
+  .pf2 .in:focus{outline:none;border-color:var(--brass);}
+  .d-msg{font-size:12px;margin-top:10px;}
+  .d-msg.err{color:var(--danger);}.d-msg.ok{color:var(--paid);}
 </style>
 </head>
 <body>
@@ -285,13 +343,149 @@ function render(){
     </div>`;
   }).join('')||`<div class="state">Nothing here.</div>`;
 
-  wrap.querySelectorAll('.inv-card[data-id]').forEach(c=>c.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(c.dataset.id)));
+  wrap.querySelectorAll('.inv-card[data-id]').forEach(c=>c.addEventListener('click',()=>openInvoice(c.dataset.id)));
 }
 
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');TAB=t.dataset.t;render();}));
 document.getElementById('search').addEventListener('input',render);
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
 load();
+
+
+// ══ Invoice drawer ══════════════════════════════════════════════════
+const TERM_LABEL={on_receipt:'Due on receipt',net_15:'Net 15',net_30:'Net 30',net_60:'Net 60'};
+let D_INV=null, D_ITEMS=[], D_PAYS=[];
+
+function closeDraw(){
+  document.getElementById('inv-draw').classList.remove('open');
+  document.getElementById('inv-ov').classList.remove('open');
+  document.getElementById('inv-draw').setAttribute('aria-hidden','true');
+  D_INV=null;
+}
+document.getElementById('d-close').addEventListener('click',closeDraw);
+document.getElementById('inv-ov').addEventListener('click',closeDraw);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDraw();});
+
+async function openInvoice(id){
+  const ov=document.getElementById('inv-ov'), dr=document.getElementById('inv-draw');
+  ov.classList.add('open'); dr.classList.add('open'); dr.setAttribute('aria-hidden','false');
+  const body=document.getElementById('d-body');
+  body.innerHTML='<div class="state">Loading…</div>';
+
+  const {data:inv,error}=await db.from('invoices').select('*, clients(company_name,bill_address,bill_city,bill_province,bill_postal), quotes(stage_id)').eq('id',id).single();
+  if(error||!inv){ body.innerHTML='<div class="state">Couldn\'t load this invoice.</div>'; return; }
+  D_INV=inv;
+  const [{data:items},{data:pays}]=await Promise.all([
+    db.from('quote_items').select('*').eq('quote_id',inv.quote_id).order('line_order'),
+    db.from('payments').select('*').eq('invoice_id',id).order('pay_date')
+  ]);
+  D_ITEMS=items||[]; D_PAYS=pays||[];
+  renderDraw();
+}
+
+function renderDraw(){
+  const i=D_INV;
+  const paid=Number(i.amount_paid||0), total=Number(i.grand_total||0);
+  const bal=Math.max(0, total-paid);
+  const isPaid = i.paid_status==='paid' || bal<=0.005;
+  const overdue = !isPaid && i.due_date && new Date(i.due_date+'T00:00:00')<new Date(new Date().toDateString());
+  const st = isPaid?'paid':(overdue?'overdue':(paid>0?'partial':'unpaid'));
+  const stLabel={paid:'Paid',overdue:'Overdue',partial:'Partial',unpaid:'Unpaid'}[st];
+
+  document.getElementById('d-num').textContent='Invoice #'+(i.invoice_number||'—');
+  document.getElementById('d-client').textContent=i.clients?.company_name||'—';
+  const bd=document.getElementById('d-badge'); bd.textContent=stLabel; bd.className='badge-pay pay-'+st;
+
+  const items=D_ITEMS.map(it=>`<div class="d-item"><div><div class="di-desc">${esc(it.description||it.style_number||'Item')}</div><div class="di-sub">${esc(it.style_number||'')} · qty ${it.quantity||0}</div></div><div class="di-amt">${money(it.net_amount!=null?it.net_amount:(it.unit_price||0)*(it.quantity||0))}</div></div>`).join('');
+
+  const payHist = D_PAYS.length
+    ? D_PAYS.map(p=>`<div class="hr"><span>${esc(p.method||'Payment')} <span class="hm">${fmtD(p.pay_date)}${p.reference?' · '+esc(p.reference):''}</span></span><span class="money">${money(p.amount)}</span></div>`).join('')
+    : '<div class="hr" style="color:var(--text-3);justify-content:center;">No payments yet</div>';
+
+  const payArea = isPaid
+    ? `<div class="d-paid-lock"><div class="plc">✓</div><div><div class="plt">Paid in full</div><div class="pls">Settled and locked — no further changes.</div></div></div>`
+    : `<div class="d-payform" id="d-payform" style="display:none;">
+         <div class="pf2">
+           <div class="f"><label>Date</label><input class="in" type="date" id="d-date"></div>
+           <div class="f"><label>Amount</label><input class="in" type="number" step="0.01" id="d-amt" placeholder="0.00"></div>
+           <div class="f full"><label>Method</label><select class="in" id="d-method"><option value="">Select method</option><option>Cheque</option><option>E-transfer</option><option>Credit Card</option><option>Cash</option><option>Wire / EFT</option><option>Other</option></select></div>
+           <div class="f full"><label>Reference (optional)</label><input class="in" id="d-ref" placeholder="Cheque #, e-transfer ref…"></div>
+         </div>
+         <button class="btn brass" style="width:100%;margin-top:12px;padding:11px;border-radius:9px;" id="d-record">Record payment</button>
+         <div class="d-msg" id="d-msg"></div>
+       </div>`;
+
+  document.getElementById('d-body').innerHTML=`
+    <div class="d-bal">
+      <div class="d-bal-k">Balance due</div>
+      <div class="d-bal-v ${isPaid?'clear':''}">${money(bal)}</div>
+      <div class="d-bar"><div class="d-fill" style="width:${total>0?Math.min(100,paid/total*100):0}%"></div></div>
+      <div class="d-prog">${money(paid)} paid of ${money(total)}</div>
+    </div>
+    <div class="d-meta">
+      <div class="d-mi"><div class="k">Issued</div><div class="v">${fmtD(i.invoice_date)}</div></div>
+      <div class="d-mi"><div class="k">Due</div><div class="v ${overdue?'over':''}">${fmtD(i.due_date)}</div></div>
+      <div class="d-mi"><div class="k">Terms</div><div class="v">${TERM_LABEL[i.terms||'net_30']||'Net 30'}</div></div>
+    </div>
+    ${payArea}
+    <div class="d-sec">Line items</div>
+    <div class="d-items">${items||'<div class="d-item"><span class="di-desc">No items</span></div>'}</div>
+    <div class="d-tot">
+      <div class="r"><span>Subtotal</span><span class="m">${money(i.subtotal)}</span></div>
+      ${Number(i.discount_total)?`<div class="r"><span>Discount</span><span class="m">-${money(i.discount_total)}</span></div>`:''}
+      <div class="r"><span>HST (13%)</span><span class="m">${money(i.hst)}</span></div>
+      <div class="r grand"><span>Grand total</span><span class="m">${money(i.grand_total)}</span></div>
+    </div>
+    <div class="d-sec">Payments</div>
+    <div class="d-hist">${payHist}</div>`;
+
+  // footer buttons
+  const payBtn=document.getElementById('d-paybtn');
+  payBtn.style.display=isPaid?'none':'';
+  payBtn.onclick=()=>{
+    const pf=document.getElementById('d-payform');
+    if(pf){pf.style.display=pf.style.display==='none'?'':'none';
+      if(pf.style.display!=='none'){const a=document.getElementById('d-amt');a.value=bal.toFixed(2);document.getElementById('d-date').value=new Date().toISOString().slice(0,10);a.focus();
+        document.getElementById('d-record').onclick=()=>doRecord(i.id);}}
+  };
+  document.getElementById('d-print').onclick=()=>window.open('invoice.html?id='+encodeURIComponent(i.id)+'&print=1','_blank');
+}
+
+async function doRecord(id){
+  const date=document.getElementById('d-date').value;
+  const amt=parseFloat(document.getElementById('d-amt').value);
+  const method=document.getElementById('d-method').value;
+  const ref=document.getElementById('d-ref').value.trim();
+  const msg=document.getElementById('d-msg');
+  if(!date){msg.textContent='Choose a date.';msg.className='d-msg err';return;}
+  if(!method){msg.textContent='Select a method.';msg.className='d-msg err';return;}
+  if(!amt||amt<=0){msg.textContent='Enter a valid amount.';msg.className='d-msg err';return;}
+  msg.textContent='Recording…';msg.className='d-msg';
+  const {data,error}=await db.rpc('record_payment',{p_invoice:id,p_amount:amt,p_method:method,p_date:date,p_ref:ref||null});
+  if(error){msg.textContent='Error: '+error.message;msg.className='d-msg err';return;}
+  const row=Array.isArray(data)?data[0]:data;
+  if(row){D_INV.paid_status=row.out_status;D_INV.amount_paid=row.out_paid;D_INV.balance_due=row.out_balance;}
+  const {data:pays}=await db.from('payments').select('*').eq('invoice_id',id).order('pay_date');D_PAYS=pays||[];
+  renderDraw();
+  await load();  // refresh the dashboard behind the drawer
+}
+
 </script>
+<div class="ov" id="inv-ov"></div>
+<aside class="idraw" id="inv-draw" aria-hidden="true">
+  <div class="idraw-head">
+    <div class="idh-l">
+      <div class="idh-num" id="d-num">Invoice</div>
+      <div class="idh-client" id="d-client">—</div>
+    </div>
+    <span class="badge-pay" id="d-badge">—</span>
+    <button class="idraw-x" id="d-close" title="Close">✕</button>
+  </div>
+  <div class="idraw-body" id="d-body"><div class="state">Loading…</div></div>
+  <div class="idraw-foot">
+    <button class="btn ghost" id="d-print">Print / PDF</button>
+    <button class="btn brass" id="d-paybtn">Record a payment</button>
+  </div>
+</aside>
 </body>
 </html>
