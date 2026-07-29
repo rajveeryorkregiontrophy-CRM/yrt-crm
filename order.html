@@ -93,13 +93,31 @@
   .summary{max-width:1400px;margin:0 auto;padding:0 28px;}
   /* ── New order layout: details+status band, then a full-width line-items sheet ── */
   .order-layout{display:flex;flex-direction:column;}
-  .ol-head{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;align-items:start;margin-bottom:14px;}
-  .ol-head > .card{margin-bottom:0;}
+  /* equal-height band: both cards stretch, content distributes — no ragged bottoms */
+  .ol-head{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;align-items:stretch;margin-bottom:14px;}
+  .ol-head > .card{margin-bottom:0;display:flex;flex-direction:column;}
+  .ol-head > .card > .card-b{flex:1;display:flex;flex-direction:column;}
+  .ol-details .client-block{flex:1;align-content:space-between;}
+  .ol-status .status-pick{flex:1;justify-content:space-between;}
   .ol-lines{margin-bottom:0;}
   /* fixed layout → columns fill the sheet evenly instead of dumping slack into one */
   .ol-lines table{table-layout:fixed;}
   @media(max-width:1040px){.ol-head{grid-template-columns:1fr;}}
   @media(max-width:1040px){.ol-lines table{table-layout:auto;min-width:900px;}}
+  /* topbar identity meta (replaces the old summary strip) */
+  .tb-meta{display:flex;align-items:center;gap:12px;min-width:0;}
+  .tbm-client{font-size:13px;font-weight:700;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px;}
+  .tbm-sep{width:1px;height:18px;background:var(--line-2);}
+  .tbm-total{font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--brass-2);white-space:nowrap;font-variant-numeric:tabular-nums;}
+  @media(max-width:900px){.tb-meta{display:none;}}
+  /* skeleton loading — mirrors the final layout so nothing looks split/broken */
+  .sk-page{display:flex;flex-direction:column;gap:14px;padding-top:2px;}
+  .sk-band{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;}
+  .sk-card{border-radius:var(--radius);background:linear-gradient(100deg,var(--bg-2) 35%,var(--bg-3) 50%,var(--bg-2) 65%);background-size:220% 100%;animation:sk-sh 1.3s ease-in-out infinite;border:1px solid var(--line);}
+  .sk-a,.sk-b{height:250px;}
+  .sk-sheet{height:340px;}
+  @keyframes sk-sh{to{background-position:-120% 0;}}
+  @media(max-width:1040px){.sk-band{grid-template-columns:1fr;}}
   .summary-inner{display:flex;align-items:stretch;gap:0;background:linear-gradient(158deg,var(--bg-3) -30%,var(--paper-2) 55%);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;margin-top:14px;box-shadow:0 10px 26px -22px rgba(0,0,0,.9);}
   .sum-cell{flex:1;padding:12px 18px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;min-width:0;}
   .sum-cell:last-child{border-right:none;}
@@ -110,9 +128,12 @@
   .grid{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start;}
   @media(max-width:1000px){.grid{grid-template-columns:1fr;}}
 
-  .card{background:var(--paper-2);border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:0 12px 28px -24px rgba(0,0,0,.9);margin-bottom:14px;overflow:visible;}
+  .card{background:linear-gradient(165deg,var(--bg-3) -35%,var(--paper-2) 45%);border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:0 12px 28px -24px rgba(0,0,0,.9);margin-bottom:14px;overflow:visible;}
   .card-h{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
-  .card-h h3{font-family:var(--font-display);font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#aab2c4;}
+  .card-h h3{font-family:var(--font-display);font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#c3cad8;}
+  .card-h .ch-ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--bg-4);border:1px solid var(--line-2);color:var(--text-2);}
+  .card-h .ch-ico svg{width:13px;height:13px;}
+  .card-h .ch-count{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-left:2px solid var(--line-2);padding:1px 0 1px 9px;}
   .card-b{padding:16px 18px;}
 
   /* client header block — one even, dense 6-col grid (no ragged columns) */
@@ -128,13 +149,20 @@
   .field-row .field{flex:1;}
   .loc-val{font-size:13px;color:var(--text-2);padding:8px 11px;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);}
 
-  /* line items */
+  /* line items — corporate sheet: banded header, zebra rows, focus rail */
   table{width:100%;border-collapse:collapse;}
-  thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);background:var(--paper);}
+  thead th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.09em;color:#8b93a4;font-weight:700;padding:11px 10px;border-bottom:2px solid var(--line-2);background:linear-gradient(180deg,var(--bg-3),var(--bg-2));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  thead th:first-child{padding-left:18px;}
   thead th.num{text-align:right;}
-  tbody td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody td:first-child{padding-left:15px;}
+  tbody tr{position:relative;transition:background .12s;}
+  tbody tr:nth-child(even){background:rgba(255,255,255,.012);}
+  tbody tr:hover{background:var(--bg-3);}
+  /* editing rail: the row you're typing in gets a brass left edge */
+  tbody tr:focus-within{background:var(--bg-3);box-shadow:inset 3px 0 0 var(--brass-2);}
   tbody tr:last-child td{border-bottom:none;}
-  .li-input{width:100%;border:1px solid transparent;background:transparent;padding:6px 7px;border-radius:5px;font-size:13px;font-family:inherit;color:var(--ink);}
+  .li-input{width:100%;border:1px solid transparent;background:transparent;padding:7px 8px;border-radius:6px;font-size:13px;font-family:inherit;color:var(--ink);transition:border-color .12s,background .12s;}
   .li-desc{resize:none;overflow:hidden;line-height:1.4;min-height:30px;white-space:pre-wrap;word-break:break-word;}
   .cb-cell{position:relative;}
   .cb-menu{display:none;position:fixed;min-width:240px;max-width:420px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:9000;overflow:hidden;max-height:260px;overflow-y:auto;}
@@ -275,7 +303,7 @@
   .li-input:focus{outline:none;border-color:var(--brass);background:var(--bg);}
   .li-input.num{text-align:right;font-family:var(--font-mono);}
   .li-input.cat{font-family:var(--font-mono);font-size:12px;color:var(--brass);font-weight:600;}
-  .li-amt{text-align:right;font-family:var(--font-mono);font-weight:600;font-size:13px;padding-right:10px;white-space:nowrap;}
+  .li-amt{text-align:right;font-family:var(--font-mono);font-weight:700;font-size:13px;padding-right:10px;white-space:nowrap;color:#fff;font-variant-numeric:tabular-nums;}
   .li-del{border:none;background:transparent;color:var(--muted-2);cursor:pointer;padding:5px;border-radius:5px;font-size:15px;line-height:1;}
   .li-del:hover{background:var(--st-art-bg);color:var(--danger);}
   .add-line{margin:12px 18px 4px;padding:9px;width:calc(100% - 36px);border:1px dashed var(--line-strong);background:transparent;border-radius:var(--radius-sm);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
@@ -407,23 +435,18 @@
   </a>
   <div class="title">Sales Order <span class="id" id="t-id">#----</span></div>
   <div id="t-badge"></div>
+  <div class="tb-meta mgmt-only" id="tb-meta"></div>
   <div class="actions">
     <button class="btn" id="btn-quote">Print Quotation</button>
     <button class="btn-brass btn mgmt-only" id="btn-invoice">Convert to Invoice</button>
   </div>
 </header>
 
-<div class="summary" id="summary-wrap" style="display:none;">
-  <div class="summary-inner">
-    <div class="sum-cell grow"><div class="k">Client</div><div class="v" id="sum-client">—</div></div>
-    <div class="sum-cell"><div class="k">Pick-up</div><div class="v" id="sum-pickup">—</div></div>
-    <div class="sum-cell"><div class="k">Event</div><div class="v" id="sum-event">—</div></div>
-    <div class="sum-cell"><div class="k">Stage</div><div class="v" id="sum-stage">—</div></div>
-  </div>
-</div>
-
 <div class="wrap" id="wrap">
-  <div class="state">Loading order…</div>
+  <div class="sk-page">
+    <div class="sk-band"><div class="sk-card sk-a"></div><div class="sk-card sk-b"></div></div>
+    <div class="sk-card sk-sheet"></div>
+  </div>
 </div>
 
 <template id="tpl">
@@ -431,7 +454,7 @@
   <div class="ol-head">
     <!-- Client / order details -->
     <div class="card ol-details">
-      <div class="card-h"><h3>Client &amp; Order</h3></div>
+      <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><h3>Client &amp; Order</h3></div>
       <div class="card-b">
         <div class="client-block">
           <div class="field cb-3"><label>Client</label><select class="input" id="i-client"></select></div>
@@ -448,7 +471,7 @@
 
     <!-- Status -->
     <div class="card ol-status">
-      <div class="card-h"><h3>Status</h3></div>
+      <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span><h3>Status</h3></div>
       <div class="card-b">
         <div class="status-pick">
           <div class="seg mgmt-only">
@@ -487,7 +510,7 @@
 
   <!-- Line items — full width sheet -->
   <div class="card ol-lines">
-    <div class="card-h"><h3>Product Listing</h3>
+    <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><h3>Product Listing</h3><span class="ch-count" id="line-count">—</span>
       <div class="legend sup-col" id="po-legend">
         <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Not Ordered</span>
         <span class="lg"><span class="lg-dot" style="background:#f0b34e"></span>Partly Ordered</span>
@@ -794,7 +817,7 @@ function render(){
 
   document.getElementById('t-id').textContent='#'+ORDER.stage_id;
   document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;
-  document.getElementById('summary-wrap').style.display='block';
+  const _sw=document.getElementById('summary-wrap');if(_sw)_sw.style.display='block';
   updateSummary();
   applyRecordType();
 
@@ -900,6 +923,8 @@ function updateClientInfo(){
 function renderLines(){
   const tb=document.getElementById('lines');
   tb.innerHTML='';
+  const _lc=document.getElementById('line-count');
+  if(_lc)_lc.textContent=LINES.length+(LINES.length===1?' item':' items');
   LINES.forEach((ln,i)=>{
     const tr=document.createElement('tr');
     const discOpts=[0,5,7.5,10,12.5,15,20,25,50,75,100];
@@ -1392,14 +1417,12 @@ function recalc(){
 }
 
 function updateSummary(){
-  const g=document.getElementById('sum-client');if(!g)return;
+  // The old summary strip is gone; identity lives compactly in the topbar now.
+  const m=document.getElementById('tb-meta');if(!m)return;
   const c=ORDER.clients||{};
-  g.textContent=c.company_name||'—';
-  document.getElementById('sum-pickup').textContent=fmtD(ORDER.pickup_date);
-  document.getElementById('sum-event').textContent=fmtD(ORDER.event_date);
-  document.getElementById('sum-stage').innerHTML=ORDER.record_type==='order'?`<span class="badge-st st-${ORDER.art_status}" style="font-size:10px;padding:3px 8px;">${label(ORDER.art_status)}</span>`:({inquiry:'Inquiry',quote:'Quotation'}[ORDER.record_type]||'—');
   const grand=(ORDER._calc&&ORDER._calc.grand_total)||0;
-  const _st=document.getElementById('sum-total');if(_st)_st.textContent=money(grand);
+  m.innerHTML=(c.company_name?`<span class="tbm-client">${esc(c.company_name)}</span>`:'')
+    +(grand>0?`<span class="tbm-sep"></span><span class="tbm-total">${money(grand)}</span>`:'');
 }
 
 async function save(silent){
@@ -1443,6 +1466,14 @@ function showPresence(names){
 window.addEventListener('beforeunload',()=>{
   if(PRESENCE_TIMER) clearInterval(PRESENCE_TIMER);
   if(ORDER_ID && MGMT){ try{ db.rpc('clear_presence',{p_quote:ORDER_ID}); }catch(e){} }
+});
+
+// Ctrl/Cmd+S saves instead of triggering the browser's save-page dialog.
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){
+    e.preventDefault();
+    if(MGMT&&DIRTY) save();
+  }
 });
 
 load().then(startPresence);

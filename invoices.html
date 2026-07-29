@@ -235,6 +235,14 @@
   .st-sub{font-size:12px;color:var(--text-3);font-weight:var(--w-med);margin-top:9px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
   .st-sub b{color:var(--text-2);font-weight:700;}
   .st-sub .sep{width:3px;height:3px;border-radius:50%;background:var(--line-2);flex-shrink:0;}
+  /* composition bar — lead (Outstanding) card only */
+  .st-split{display:flex;height:6px;border-radius:6px;overflow:hidden;margin-top:12px;background:var(--bg);gap:2px;}
+  .st-split i{display:block;height:100%;border-radius:3px;}
+  .st-split i.over{background:var(--danger);} .st-split i.cur{background:var(--partial);}
+  .st-legend{display:flex;gap:var(--s4);margin-top:9px;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-3);}
+  .st-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .st-legend span::before{content:'';width:7px;height:7px;border-radius:2px;}
+  .st-legend .lg-over::before{background:var(--danger);} .st-legend .lg-cur::before{background:var(--partial);}
   @media(max-width:900px){.stats{grid-template-columns:1fr 1fr;}.stat.lead{grid-column:1/-1;}}
   @media(max-width:620px){.stats{grid-template-columns:1fr;}.stat.lead{grid-column:auto;}}
   /* Scrollable list panel — matches the Sales Timeline */
@@ -280,6 +288,8 @@
             <div class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
           </div>
           <div class="st-v" id="k-out">–</div>
+          <div class="st-split" id="k-split" style="display:none;"><i class="over" id="k-split-over"></i><i class="cur" id="k-split-cur"></i></div>
+          <div class="st-legend" id="k-legend" style="display:none;"><span class="lg-over" id="k-lg-over">Overdue</span><span class="lg-cur" id="k-lg-cur">Current</span></div>
           <div class="st-sub" id="k-outsub">–</div>
         </div>
         <div class="stat s-over">
@@ -347,8 +357,17 @@ async function load(){
   const oldest=overdueRows.reduce((m,i)=>(!m||i.days_overdue>m.days_overdue?i:m),null);
   document.getElementById('k-out').innerHTML='<small>$</small>'+Math.round(out).toLocaleString('en-CA');
   const _os=document.getElementById('k-outsub');
-  if(_os){_os.innerHTML='<b>'+unpaidCount+'</b> open '+(unpaidCount===1?'invoice':'invoices')
-    +(overdueAmt>0?'<span class="sep"></span><b>'+money0(overdueAmt)+'</b> overdue':'');}
+  if(_os){_os.innerHTML='Across <b>'+unpaidCount+'</b> open '+(unpaidCount===1?'invoice':'invoices');}
+  // Composition bar: overdue vs current share of what's outstanding (lead card only)
+  const _sp=document.getElementById('k-split'),_lg=document.getElementById('k-legend');
+  if(_sp&&out>0&&overdueAmt>0){
+    const oPct=Math.round(overdueAmt/out*100),cPct=100-oPct;
+    document.getElementById('k-split-over').style.width=oPct+'%';
+    document.getElementById('k-split-cur').style.width=cPct+'%';
+    document.getElementById('k-lg-over').textContent='Overdue '+oPct+'%';
+    document.getElementById('k-lg-cur').textContent='Current '+cPct+'%';
+    _sp.style.display='flex';_lg.style.display='flex';
+  } else if(_sp){_sp.style.display='none';_lg.style.display='none';}
   const kc=document.getElementById('k-cnt');if(kc)kc.innerHTML='<small>$</small>'+Math.round(overdueAmt).toLocaleString('en-CA');
   const _ov=document.getElementById('k-oversub');
   if(_ov){_ov.innerHTML=overdueCount
