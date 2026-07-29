@@ -9,7 +9,10 @@
   :root{
     --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
     --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
-    --brass:#e7ebf3;--brass-2:#f4f6fb;--paid:#3ddc84;--partial:#ffb627;--unpaid:#ff6b35;--danger:#ff4d4d;
+    --brass:#e7ebf3;--brass-2:#f4f6fb;
+    /* Refined, corporate semantic accents — clear but not neon */
+    --paid:#3ecf8e;--paid-dim:#2fae76;--partial:#f2b34d;--unpaid:#8b93a5;--danger:#ef6a63;--danger-dim:#c9524c;
+    --paid-soft:rgba(62,207,142,.12);--partial-soft:rgba(242,179,77,.13);--danger-soft:rgba(239,106,99,.13);
     --radius:12px;--radius-sm:8px;--radius-lg:16px;
     --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'Inter',system-ui,sans-serif;
     /* ── Design system: one spacing scale, one type scale ── */
@@ -27,6 +30,8 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
   body{font-feature-settings:'tnum','cv01';font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  .main{background:radial-gradient(1200px 520px at 78% -8%,rgba(120,132,158,.07),transparent 60%),var(--bg);}
+  .money-fig{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1;}
   ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
   .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
   .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
@@ -121,30 +126,34 @@
   .app.collapsed .sidebar:not(:hover) .brand{padding-left:0;padding-right:0;}
   .inv-group{margin-bottom:var(--s6);}
   .ig-head{display:flex;align-items:center;gap:var(--s3);padding:0 var(--s1) var(--s3);border-bottom:1px solid var(--line);margin-bottom:var(--s4);}
-  .ig-dot{width:9px;height:9px;border-radius:50%;}
-  .ig-dot.overdue{background:#ff6b6b;} .ig-dot.outstanding{background:#ffb627;} .ig-dot.paid{background:#3ddc84;}
-  .ig-title{font-family:var(--fd,'Archivo');font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text,#eef0f4);}
-  .ig-count{font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--text-2,#c4cad6);background:var(--bg-4,#2a2e37);padding:2px 7px;border-radius:4px;}
-  .ig-sum{margin-left:auto;font-family:var(--fm);font-size:13px;font-weight:800;color:var(--text,#eef0f4);}
+  .ig-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+  .ig-dot.overdue{background:var(--danger);} .ig-dot.outstanding{background:var(--partial);} .ig-dot.paid{background:var(--paid);}
+  .ig-title{font-family:var(--fd,'Archivo');font-size:12.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text,#eef0f4);}
+  .ig-count{font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--text-3);border-left:2px solid var(--line-2);padding:1px 0 1px 9px;}
+  .ig-sum{margin-left:auto;font-family:var(--fd);font-size:13.5px;font-weight:800;color:var(--text,#eef0f4);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
   .ig-list{display:flex;flex-direction:column;gap:var(--s2);}
-  .inv-card{display:flex;align-items:stretch;gap:0;background:var(--bg-3,#1f2229);border:1px solid var(--line-2,#414a5c);border-radius:11px;overflow:hidden;cursor:pointer;transition:.13s;}
-  .inv-card:hover{border-color:var(--text-3,#9098a8);transform:translateY(-1px);}
-  .ic-rail{width:4px;flex-shrink:0;}
-  .inv-card.overdue .ic-rail{background:#ff6b6b;} .inv-card.outstanding .ic-rail,.inv-card.partial .ic-rail{background:#ffb627;} .inv-card.paid .ic-rail{background:#3ddc84;}
+  .inv-card{display:flex;align-items:stretch;gap:0;background:linear-gradient(180deg,var(--bg-3),#1c1f26);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;box-shadow:0 8px 20px -18px rgba(0,0,0,.85);transition:border-color .16s,transform .16s,box-shadow .16s;animation:cardIn .32s cubic-bezier(.22,.61,.36,1) both;}
+  .inv-card:hover{border-color:var(--line-2);transform:translateY(-2px);box-shadow:0 16px 32px -18px rgba(0,0,0,.9);}
+  .inv-card:active{transform:translateY(0);}
+  @keyframes cardIn{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}
+  .ic-rail{width:3px;flex-shrink:0;}
+  .inv-card.overdue .ic-rail{background:var(--danger);box-shadow:0 0 14px -1px var(--danger-soft);} .inv-card.outstanding .ic-rail,.inv-card.partial .ic-rail{background:var(--partial);} .inv-card.paid .ic-rail{background:var(--paid);}
   .ic-main{flex:1;padding:var(--s4) var(--s5);min-width:0;}
   .ic-top{display:flex;align-items:baseline;gap:11px;}
-  .ic-no{font-family:var(--fm);font-size:12.5px;font-weight:700;color:var(--brass,#caa75d);}
-  .ic-client{font-family:var(--fd,'Archivo');font-size:15px;font-weight:800;color:var(--text,#eef0f4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .ic-sub{font-size:13px;font-weight:600;color:var(--text,#eef0f4);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .ic-meta{font-size:11.5px;font-weight:600;color:var(--text-2,#c4cad6);margin-top:5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
-  .late{font-family:var(--fd,'Archivo');font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#e6ae4a;background:rgba(255,182,39,.13);padding:2px 7px;border-radius:4px;}
-  .late.bad{color:#ff8080;background:rgba(255,107,107,.14);}
-  .ic-right{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:var(--s1);padding:var(--s4) var(--s5);border-left:1px solid var(--line);min-width:150px;}
-  .ic-bal{font-family:var(--fd,'Archivo');font-size:19px;font-weight:900;}
-  .ic-ball{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2,#c4cad6);font-weight:800;}
-  .badge-pay{margin-top:6px;font-family:var(--fd,'Archivo');font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:5px;}
-  .pay-paid{background:rgba(61,220,132,.15);color:#3ddc84;} .pay-overdue{background:rgba(255,107,107,.15);color:#ff6b6b;}
-  .pay-partial{background:rgba(255,182,39,.15);color:#ffb627;} .pay-unpaid{background:rgba(144,152,168,.14);color:#aab2c0;}
+  .ic-no{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--text-3);letter-spacing:.02em;font-variant-numeric:tabular-nums;}
+  .ic-client{font-family:var(--fd,'Archivo');font-size:15px;font-weight:800;color:var(--text,#eef0f4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.005em;}
+  .ic-sub{font-size:13px;font-weight:500;color:var(--text-2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ic-meta{font-size:11.5px;font-weight:600;color:var(--text-3);margin-top:7px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .ic-meta .dot{width:3px;height:3px;border-radius:50%;background:var(--line-2);}
+  .late{font-family:var(--fd,'Archivo');font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--partial);background:var(--partial-soft);padding:2px 7px;border-radius:4px;}
+  .late.bad{color:var(--danger);background:var(--danger-soft);}
+  .ic-right{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:var(--s1);padding:var(--s4) var(--s5);min-width:158px;background:rgba(0,0,0,.14);border-left:1px solid var(--line);}
+  .ic-bal{font-family:var(--fd,'Archivo');font-size:19px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums;}
+  .ic-ball{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);font-weight:800;}
+  .badge-pay{margin-top:8px;font-family:var(--fd,'Archivo');font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:5px;display:inline-flex;align-items:center;gap:6px;}
+  .badge-pay::before{content:'';width:6px;height:6px;border-radius:2px;background:currentColor;opacity:.9;}
+  .pay-paid{background:var(--paid-soft);color:var(--paid);} .pay-overdue{background:var(--danger-soft);color:var(--danger);}
+  .pay-partial{background:var(--partial-soft);color:var(--partial);} .pay-unpaid{background:rgba(139,147,165,.14);color:var(--text-2);}
   @media(max-width:720px){.ic-right{min-width:0;padding:14px;}.ic-client{font-size:14px;}}
   /* ── Modern hero: one dominant number ── */
   /* ── Invoice drawer: same slide-out pattern as Clients/Suppliers ── */
@@ -205,18 +214,39 @@
   .pf2 .in:focus{outline:none;border-color:var(--brass);}
   .d-msg{font-size:12px;margin-top:10px;}
   .d-msg.err{color:var(--danger);}.d-msg.ok{color:var(--paid);}
-  /* ── Compact stat strip (no wasted space) ── */
-  .stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:var(--s4);margin-bottom:var(--s5);flex-shrink:0;align-items:stretch;}
-  .stat{position:relative;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;overflow:hidden;}
-  .stat.lead{background:linear-gradient(150deg,var(--bg-3),var(--bg-2));}
-  .st-bar{position:absolute;left:0;top:0;bottom:0;width:3px;}
-  .st-bar.overdue{background:var(--unpaid);} .st-bar.paid{background:var(--paid);}
+  /* ── Stat strip — corporate finance cards ── */
+  .stats{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:var(--s4);margin-bottom:var(--s5);flex-shrink:0;align-items:stretch;}
+  .stat{position:relative;background:linear-gradient(158deg,var(--bg-3) -10%,var(--bg-2) 60%);border:1px solid var(--line);border-radius:var(--radius-lg);padding:var(--s5) var(--s5) var(--s4);overflow:hidden;display:flex;flex-direction:column;min-height:128px;box-shadow:0 1px 0 rgba(255,255,255,.02) inset,0 12px 28px -22px rgba(0,0,0,.9);transition:border-color .18s,transform .18s;}
+  .stat:hover{border-color:var(--line-2);transform:translateY(-1px);}
+  .stat.lead{background:linear-gradient(150deg,rgba(120,132,158,.10),var(--bg-2) 55%);border-color:var(--line-2);}
+  .stat::after{content:'';position:absolute;left:0;top:0;height:2px;width:100%;background:transparent;}
+  .stat.s-out::after{background:linear-gradient(90deg,rgba(230,235,243,.55),transparent 70%);}
+  .stat.s-over::after{background:linear-gradient(90deg,var(--danger),transparent 78%);}
+  .stat.s-paid::after{background:linear-gradient(90deg,var(--paid),transparent 78%);}
+  .st-top{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);}
   .st-k{font-family:var(--fd);font-size:var(--t-label);font-weight:var(--w-bold);letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--text-3);}
-  .st-v{font-family:var(--fd);font-size:22px;font-weight:var(--w-bold);line-height:1;letter-spacing:-.02em;color:#fff;margin-top:6px;}
-  .st-v small{font-size:17px;color:var(--text-3);font-weight:var(--w-bold);}
-  .stat.lead .st-v{font-size:26px;}
-  .st-sub{font-size:12px;color:var(--text-3);font-weight:var(--w-med);margin-top:4px;}
-  @media(max-width:760px){.stats{grid-template-columns:1fr;}}
+  .st-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;background:var(--bg-4);border:1px solid var(--line-2);color:var(--text-2);}
+  .st-ico svg{width:15px;height:15px;}
+  .stat.s-over .st-ico{background:var(--danger-soft);border-color:transparent;color:var(--danger);}
+  .stat.s-paid .st-ico{background:var(--paid-soft);border-color:transparent;color:var(--paid);}
+  .st-v{font-family:var(--fd);font-size:24px;font-weight:var(--w-bold);line-height:1;letter-spacing:-.02em;color:#fff;margin-top:auto;padding-top:var(--s4);font-variant-numeric:tabular-nums;}
+  .st-v small{font-size:16px;color:var(--text-3);font-weight:var(--w-bold);margin-right:1px;}
+  .stat.lead .st-v{font-size:30px;}
+  .st-sub{font-size:12px;color:var(--text-3);font-weight:var(--w-med);margin-top:7px;display:flex;align-items:center;gap:7px;}
+  .st-sub b{color:var(--text-2);font-weight:700;}
+  /* composition bar on the lead card */
+  .st-split{display:flex;height:6px;border-radius:6px;overflow:hidden;margin-top:12px;background:var(--bg);gap:2px;}
+  .st-split i{display:block;height:100%;border-radius:3px;}
+  .st-split i.over{background:var(--danger);} .st-split i.cur{background:var(--partial);}
+  .st-legend{display:flex;gap:var(--s4);margin-top:9px;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--text-3);}
+  .st-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .st-legend span::before{content:'';width:7px;height:7px;border-radius:2px;}
+  .st-legend .lg-over::before{background:var(--danger);} .st-legend .lg-cur::before{background:var(--partial);} .st-legend .lg-paid::before{background:var(--paid);}
+  /* single-fill meter (collection rate) */
+  .st-meter{height:6px;border-radius:6px;overflow:hidden;margin-top:12px;background:var(--bg);}
+  .st-meter i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--paid-dim),var(--paid));transition:width .5s cubic-bezier(.4,0,.2,1);}
+  @media(max-width:900px){.stats{grid-template-columns:1fr 1fr;}.stat.lead{grid-column:1/-1;}}
+  @media(max-width:620px){.stats{grid-template-columns:1fr;}.stat.lead{grid-column:auto;}}
   /* Scrollable list panel — matches the Sales Timeline */
   .panel{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;overflow:hidden;}
   .panel-head{flex-shrink:0;display:flex;align-items:center;gap:var(--s3);padding:var(--s4) var(--s5);border-bottom:1px solid var(--line);background:var(--bg-2);}
@@ -255,9 +285,33 @@
     </header>
     <div class="content">
       <div class="stats">
-        <div class="stat lead"><div class="st-k">Outstanding</div><div class="st-v" id="k-out">–</div><div class="st-sub" id="k-outsub">–</div></div>
-        <div class="stat"><div class="st-bar overdue"></div><div class="st-k">Overdue</div><div class="st-v" id="k-cnt">–</div></div>
-        <div class="stat"><div class="st-bar paid"></div><div class="st-k">Collected all-time</div><div class="st-v" id="k-paid">–</div></div>
+        <div class="stat lead s-out">
+          <div class="st-top"><div class="st-k">Outstanding</div>
+            <div class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          </div>
+          <div class="st-v" id="k-out">–</div>
+          <div class="st-split" id="k-split" style="display:none;"><i class="over" id="k-split-over"></i><i class="cur" id="k-split-cur"></i></div>
+          <div class="st-legend" id="k-legend" style="display:none;"><span class="lg-over" id="k-lg-over">Overdue</span><span class="lg-cur" id="k-lg-cur">Current</span></div>
+          <div class="st-sub" id="k-outsub">–</div>
+        </div>
+        <div class="stat s-over">
+          <div class="st-top"><div class="st-k">Overdue</div>
+            <div class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+          </div>
+          <div class="st-v" id="k-cnt">–</div>
+          <div class="st-split" id="k-age" style="display:none;"><i class="over" id="k-age-old"></i><i class="cur" id="k-age-new"></i></div>
+          <div class="st-legend" id="k-age-lg" style="display:none;"><span class="lg-over" id="k-age-old-l">30+ days</span><span class="lg-cur" id="k-age-new-l">1–30 days</span></div>
+          <div class="st-sub" id="k-oversub">–</div>
+        </div>
+        <div class="stat s-paid">
+          <div class="st-top"><div class="st-k">Collected all-time</div>
+            <div class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          </div>
+          <div class="st-v" id="k-paid">–</div>
+          <div class="st-meter" id="k-rate" style="display:none;"><i id="k-rate-fill"></i></div>
+          <div class="st-legend" id="k-rate-lg" style="display:none;"><span class="lg-paid" id="k-rate-l">Collection rate</span></div>
+          <div class="st-sub" id="k-paidsub">–</div>
+        </div>
       </div>
       <section class="panel">
         <div class="panel-head">
@@ -301,9 +355,47 @@ async function load(){
   const paid=ALL.reduce((s,i)=>s+Number(i.amount_paid||0),0);
   const overdueAmt=ALL.filter(i=>i.bucket==='overdue').reduce((s,i)=>s+Number(i.balance_due||0),0);
   document.getElementById('k-out').innerHTML='<small>$</small>'+Math.round(out).toLocaleString('en-CA');
-  const _os=document.getElementById('k-outsub');if(_os){const n=ALL.filter(i=>i.bucket!=='paid').length;_os.textContent=n+(n===1?' unpaid invoice':' unpaid invoices');}
+  const unpaidCount=ALL.filter(i=>i.bucket!=='paid').length;
+  const overdueCount=ALL.filter(i=>i.bucket==='overdue').length;
+  const currentAmt=Math.max(0,out-overdueAmt);
+  const _os=document.getElementById('k-outsub');if(_os){_os.innerHTML='Across <b>'+unpaidCount+'</b> open '+(unpaidCount===1?'invoice':'invoices');}
+  // Composition bar: overdue vs current share of what's outstanding
+  const _sp=document.getElementById('k-split'),_lg=document.getElementById('k-legend');
+  if(_sp&&out>0){
+    const oPct=Math.round(overdueAmt/out*100),cPct=100-oPct;
+    document.getElementById('k-split-over').style.width=oPct+'%';
+    document.getElementById('k-split-cur').style.width=cPct+'%';
+    document.getElementById('k-lg-over').textContent='Overdue '+oPct+'%';
+    document.getElementById('k-lg-cur').textContent='Current '+cPct+'%';
+    _sp.style.display=overdueAmt>0?'flex':'none';
+    _lg.style.display=overdueAmt>0?'flex':'none';
+  } else if(_sp){_sp.style.display='none';_lg.style.display='none';}
   const kc=document.getElementById('k-cnt');if(kc)kc.innerHTML='<small>$</small>'+Math.round(overdueAmt).toLocaleString('en-CA');
+  const _ov=document.getElementById('k-oversub');if(_ov){_ov.innerHTML=overdueCount?'<b>'+overdueCount+'</b> '+(overdueCount===1?'invoice past due':'invoices past due'):'Nothing past due';}
+  // Overdue aging: 30+ days vs 1–30 days share of the overdue balance
+  const overdueRows=ALL.filter(i=>i.bucket==='overdue');
+  const oldAmt=overdueRows.filter(i=>i.days_overdue>30).reduce((s,i)=>s+Number(i.balance_due||0),0);
+  const newAmt=Math.max(0,overdueAmt-oldAmt);
+  const _ag=document.getElementById('k-age'),_agl=document.getElementById('k-age-lg');
+  if(_ag&&overdueAmt>0){
+    const oldPct=Math.round(oldAmt/overdueAmt*100),newPct=100-oldPct;
+    document.getElementById('k-age-old').style.width=oldPct+'%';
+    document.getElementById('k-age-new').style.width=newPct+'%';
+    document.getElementById('k-age-old-l').textContent='30+ days '+oldPct+'%';
+    document.getElementById('k-age-new-l').textContent='1–30 days '+newPct+'%';
+    _ag.style.display='flex';_agl.style.display='flex';
+  } else if(_ag){_ag.style.display='none';_agl.style.display='none';}
   document.getElementById('k-paid').innerHTML='<small>$</small>'+Math.round(paid).toLocaleString('en-CA');
+  const _ps=document.getElementById('k-paidsub');if(_ps){const pc=ALL.filter(i=>i.bucket==='paid').length;_ps.innerHTML='<b>'+pc+'</b> '+(pc===1?'invoice settled':'invoices settled');}
+  // Collection rate: collected vs everything billed (collected + still owed)
+  const billed=paid+out;
+  const _rt=document.getElementById('k-rate'),_rtl=document.getElementById('k-rate-lg');
+  if(_rt&&billed>0){
+    const rate=Math.round(paid/billed*100);
+    document.getElementById('k-rate-fill').style.width=rate+'%';
+    document.getElementById('k-rate-l').textContent='Collection rate '+rate+'%';
+    _rt.style.display='block';_rtl.style.display='flex';
+  } else if(_rt){_rt.style.display='none';_rtl.style.display='none';}
   render();
 }
 function invState(i){ return i.bucket==='paid'?'paid':(i.bucket==='overdue'?'overdue':(i.paid_status==='partial'?'partial':'unpaid')); }
