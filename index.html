@@ -197,6 +197,8 @@
   .rc-date{color:#cdd3df;}
   .rc-contact{color:var(--text-3);}
   .rc-dot{color:#4a5160;}
+  .fu-chip{font-family:var(--fd);font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#e2b74a;background:rgba(226,183,74,.13);padding:2px 8px;border-radius:4px;margin-left:2px;}
+  .fu-chip.hot{color:#ef6a63;background:rgba(239,106,99,.13);}
   .rc-client{font-size:15px;font-weight:700;color:#f3f5f9;margin-bottom:6px;line-height:1.3;}
   .rc-subject{font-size:13px;color:#c4cad6;line-height:1.5;}
   .rc-action{display:flex;align-items:center;justify-content:center;padding:0 20px;color:var(--text-3);transition:.14s;}
@@ -413,7 +415,7 @@
   </div>
 </div>
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, isManagement, getProfile } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, isManagement, getProfile, aggregateStatus } from './auth.js';
 await requireAuth();
 const PROFILE = await getProfile();
 const MGMT = isManagement();
@@ -558,10 +560,11 @@ async function loadFulfillment(){
 function itemState(it){
   if(!it.supplier_id) return 'none';
   const sts=it._poStatuses||[];
-  // committed states take priority
-  if(sts.includes('backordered')) return 'backordered';
-  if(sts.length && sts.every(s=>s==='received')) return 'received';
-  if(sts.includes('issued')||sts.includes('verified')) return 'issued';
+  // committed states take priority — resolved by the shared rule in auth.js
+  if(sts.length){
+    const agg=aggregateStatus(sts);
+    if(agg!=='none'&&agg!=='in_po') return agg;
+  }
   const ordered=it._ordered||0;
   const need=it._need||0;
   if(ordered<=0) return 'placed';                    // supplier set, nothing ordered yet
@@ -577,13 +580,17 @@ const FS_META={
   issued:{label:'Issued',color:'#9aa2b1',bg:'rgba(139,147,164,.13)',bd:'transparent'},
   received:{label:'Received',color:'#3ec98a',bg:'rgba(62,201,138,.13)',bd:'transparent'},
   backordered:{label:'Back Ordered',color:'#8e77d4',bg:'rgba(142,119,212,.13)',bd:'transparent'},
-  mixed:{label:'Mixed Status',color:'#5197d6',bg:'rgba(81,151,214,.13)',bd:'transparent'}
+  mixed:{label:'Mixed Status',color:'#5197d6',bg:'rgba(81,151,214,.13)',bd:'transparent'},
+  unsourced:{label:'Line Unsourced',color:'#e2b74a',bg:'rgba(226,183,74,.13)',bd:'transparent'}
 };
 function rollup(orderId){
   const items=FULFILL_BY_ORDER[orderId]||[];
   if(!items.length)return null;
   const withSup=items.filter(it=>it.supplier_id);
   if(!withSup.length)return 'none';
+  // A line with no supplier is unprocured work — it must never be hidden behind
+  // a green "Received" just because every OTHER line is done.
+  if(withSup.length<items.length)return 'unsourced';
   const states=withSup.map(itemState);
   const uniq=[...new Set(states)];
   if(uniq.length===1)return uniq[0];
@@ -669,10 +676,20 @@ function render(){
     html=`<div class="card-list">${rows.map(o=>{
       const ct=o.contacts?((o.contacts.first_name||'')+' '+(o.contacts.last_name||'')).trim():'';
       const accentCls=`acc-${TAB}`;
+      // Follow-up reminder: a quote marked sent that has gone quiet for 3+ days
+      // gets a visible nudge (stronger at 7+) so it can be chased or closed out.
+      let fuChip='';
+      if(TAB==='quote' && o.sent_status==='sent'){
+        const ref=o.modified_at?new Date(o.modified_at):(o.quote_date?new Date(o.quote_date+'T00:00:00'):null);
+        if(ref){
+          const d=Math.floor((today-ref)/86400000);
+          if(d>=3) fuChip=`<span class="fu-chip ${d>=7?'hot':''}">Sent ${d}d ago · follow up</span>`;
+        }
+      }
       return `<div class="record-card ${accentCls}" data-id="${o.id}">
         <div class="rc-rail"></div>
         <div class="rc-body">
-          <div class="rc-meta"><span class="rc-id">#${o.stage_id}</span><span class="rc-dot">·</span><span class="rc-date">${fmtShort(o.quote_date)}</span>${ct?`<span class="rc-dot">·</span><span class="rc-contact">${esc(ct)}</span>`:''}</div>
+          <div class="rc-meta"><span class="rc-id">#${o.stage_id}</span><span class="rc-dot">·</span><span class="rc-date">${fmtShort(o.quote_date)}</span>${ct?`<span class="rc-dot">·</span><span class="rc-contact">${esc(ct)}</span>`:''}${fuChip}</div>
           <div class="rc-client">${esc(o.clients?.company_name||'—')}</div>
           <div class="rc-subject">${esc(o.subject||'—')}</div>
         </div>

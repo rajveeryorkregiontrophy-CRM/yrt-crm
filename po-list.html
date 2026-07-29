@@ -81,6 +81,21 @@
   .rc-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;}
   .rc-receive-all{font-size:12px;font-weight:700;padding:8px 16px;border-radius:7px;border:1px solid rgba(61,220,132,.4);background:rgba(61,220,132,.08);color:#3ddc84;cursor:pointer;font-family:inherit;}
   .rc-receive-all:hover{background:#3ddc84;color:#0f1115;}
+  /* quantity-aware receiving controls */
+  .rc-qty{width:56px;background:var(--bg);border:1px solid var(--line-2);color:var(--text);border-radius:6px;padding:6px 8px;font-size:13px;font-family:var(--fm);text-align:right;}
+  .rc-qty:focus{outline:none;border-color:var(--brass-2);}
+  .rc-of{font-size:11.5px;color:var(--text-3);font-weight:600;margin-left:4px;}
+  .rc-recdone{font-family:var(--fm);font-size:12.5px;color:#3ddc84;font-weight:700;}
+  .rc-exp{background:var(--bg);border:1px solid var(--line-2);color:var(--text-2);border-radius:6px;padding:5px 7px;font-size:11.5px;font-family:inherit;color-scheme:dark;width:132px;}
+  .rc-exp:focus{outline:none;border-color:var(--brass-2);}
+  .rc-owed{font-size:11px;font-weight:600;color:#c9a4f0;margin-top:4px;white-space:nowrap;}
+  .rc-owed b{color:#b06bff;}
+  .rc-owed.overdue{color:#ff8f88;} .rc-owed.overdue b{color:#ff6b6b;}
+  .rc-row-overdue{background:rgba(239,106,99,.05);}
+  .rc-act.rest{border-color:rgba(61,220,132,.4);color:#3ddc84;}
+  .rc-act.rest:hover{background:#3ddc84;color:#0f1115;border-color:#3ddc84;}
+  .rc-lock{font-size:11px;color:var(--text-3);font-weight:600;font-style:italic;}
+  .rc-actions{display:inline-flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
   .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
   .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
   .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
@@ -183,6 +198,7 @@
         <button class="tab active" data-f="open">Open <span class="n" id="n-open">0</span></button>
         <button class="tab" data-f="sent">Sent <span class="n" id="n-sent">0</span></button>
         <button class="tab" data-f="receiving">Receiving <span class="n" id="n-receiving">0</span></button>
+        <button class="tab" data-f="completed">Completed <span class="n" id="n-completed">0</span></button>
         <button class="tab" data-f="all">All <span class="n" id="n-all">0</span></button>
       </div>
       <section class="panel">
@@ -206,7 +222,7 @@
 </div>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut, subscribeFulfillment } from './auth.js';
+import { supabase as db, requireAuth, signOut, subscribeFulfillment, aggregateStatus } from './auth.js';
 await requireAuth();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
@@ -233,21 +249,30 @@ const ST_LABEL={open:'Open',sent:'Sent',received:'Received',verified:'Verified',
 let POS=[],SUPPLIERS=[],FILTER='open';
 
 async function load(){
-  const {data:pos,error}=await db.from('purchase_orders').select('*, suppliers(company_name,short_name,supplier_number), po_items(id,part_no,style_number,product_name,description,quantity,amount,ordered_for,status,source_quote_item_id,source_allocation_id)').order('po_number',{ascending:false});
+  const {data:pos,error}=await db.from('purchase_orders').select('*, suppliers(company_name,short_name,supplier_number), po_items(id,part_no,style_number,product_name,description,quantity,qty_received,backorder_expected,amount,ordered_for,status,source_quote_item_id,source_allocation_id)').order('po_number',{ascending:false});
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   POS=pos||[];
   const {data:sups}=await db.from('suppliers').select('id,company_name,short_name,supplier_number').order('company_name');
   SUPPLIERS=sups||[];
   document.getElementById('n-open').textContent=POS.filter(p=>p.status==='open').length;
   document.getElementById('n-sent').textContent=POS.filter(p=>p.status==='sent').length;
-  const recEl=document.getElementById('n-receiving');if(recEl)recEl.textContent=POS.filter(p=>p.status==='sent').length;
+  // Receiving = sent POs still waiting on goods; fully-received POs move to Completed.
+  const recEl=document.getElementById('n-receiving');if(recEl)recEl.textContent=POS.filter(p=>p.status==='sent'&&!poComplete(p)).length;
+  const cmpEl=document.getElementById('n-completed');if(cmpEl)cmpEl.textContent=POS.filter(p=>p.status==='sent'&&poComplete(p)).length;
   document.getElementById('n-all').textContent=POS.length;
   const _np=document.getElementById('nav-po');if(_np)_np.textContent=POS.filter(p=>p.status==='open').length;
   render();
 }
 
+// A PO is complete when every line has arrived.
+function poComplete(p){
+  const items=p.po_items||[];
+  return items.length>0 && items.every(i=>(i.status||'issued')==='received');
+}
+
 function render(){
-  if(FILTER==='receiving'){ renderReceiving(); return; }
+  if(FILTER==='receiving'){ renderReceiving(false); return; }
+  if(FILTER==='completed'){ renderReceiving(true); return; }
   document.getElementById('list-title').textContent={open:'Open Purchase Orders',sent:'Sent Purchase Orders',all:'All Purchase Orders'}[FILTER];
   let rows=POS.filter(p=>FILTER==='all'?true:p.status===FILTER);
   document.getElementById('count').textContent=rows.length+(rows.length===1?' PO':' POs');
@@ -261,19 +286,26 @@ function render(){
 // ---- Receiving: mark items Received / Back Ordered (separate from the view-only Sent records) ----
 const RC_INFO={issued:{label:'Issued',color:'#8a92a2',bg:'rgba(138,146,162,.16)'},received:{label:'Received',color:'#3ddc84',bg:'rgba(61,220,132,.16)'},backordered:{label:'Back Ordered',color:'#b06bff',bg:'rgba(176,107,255,.16)'}};
 function rcBadge(s){const i=RC_INFO[s]||RC_INFO.issued;return `<span class="rc-badge" style="color:${i.color};background:${i.bg};">${i.label}</span>`;}
-function renderReceiving(){
-  document.getElementById('list-title').textContent='Receiving';
-  const sentPOs=POS.filter(p=>p.status==='sent');
+function renderReceiving(completed){
+  document.getElementById('list-title').textContent=completed?'Completed Purchase Orders':'Receiving';
+  const sentPOs=POS.filter(p=>p.status==='sent'&&poComplete(p)===!!completed);
   document.getElementById('count').textContent=sentPOs.length+(sentPOs.length===1?' PO':' POs');
-  if(!sentPOs.length){document.getElementById('wrap').innerHTML='<div class="state">No purchase orders awaiting receiving. Purchase orders appear here once they have been sent to a supplier.</div>';return;}
-  document.getElementById('wrap').innerHTML=`<div class="rc-intro">Mark items as received or back ordered as goods arrive. Updates sync instantly to the related sales orders.</div>`+sentPOs.map(p=>{
+  if(!sentPOs.length){
+    document.getElementById('wrap').innerHTML=completed
+      ? '<div class="state">No completed purchase orders yet. A PO lands here once every line on it has been received.</div>'
+      : '<div class="state">Nothing awaiting receiving. Sent POs appear here until all of their items have arrived.</div>';
+    return;
+  }
+  document.getElementById('wrap').innerHTML=(completed?'':`<div class="rc-intro">Mark items as received or back ordered as goods arrive. Updates sync instantly to the related sales orders. Fully received POs move to the Completed tab.</div>`)+sentPOs.map(p=>{
     const sup=p.suppliers||{};
     const items=(p.po_items||[]);
     const total=items.length;
-    const received=items.filter(i=>(i.status||'issued')==='received').length;
+    // Progress is now unit-based: sum received units vs ordered units across the PO.
+    const ordUnits=items.reduce((s,i)=>s+(Number(i.quantity)||0),0);
+    const recUnits=items.reduce((s,i)=>s+Math.min(Number(i.qty_received)||0,Number(i.quantity)||0),0);
     const backordered=items.filter(i=>(i.status||'issued')==='backordered').length;
-    const pct=total?Math.round((received/total)*100):0;
-    const allDone=total>0&&received===total;
+    const pct=ordUnits?Math.round((recUnits/ordUnits)*100):0;
+    const allDone=total>0&&items.every(i=>(i.status||'issued')==='received');
     return `<div class="rc-card">
       <div class="rc-head">
         <div class="rc-head-l">
@@ -282,45 +314,73 @@ function renderReceiving(){
         </div>
         <div class="rc-head-r">
           <div class="rc-dates"><span class="rc-dlabel">Ordered</span> ${fmtD(p.order_date)}${p.in_hand_date?` &nbsp;·&nbsp; <span class="rc-dlabel">In&#8209;hand</span> ${fmtD(p.in_hand_date)}`:''}</div>
-          <div class="rc-progress-wrap"><div class="rc-progress"><div class="rc-progress-bar ${allDone?'done':''}" style="width:${pct}%"></div></div><span class="rc-progress-txt ${allDone?'done':''}">${received}/${total} received${backordered?` · ${backordered} back ordered`:''}</span></div>
+          <div class="rc-progress-wrap"><div class="rc-progress"><div class="rc-progress-bar ${allDone?'done':''}" style="width:${pct}%"></div></div><span class="rc-progress-txt ${allDone?'done':''}">${recUnits}/${ordUnits} units received${backordered?` · ${backordered} line${backordered===1?'':'s'} back ordered`:''}</span></div>
         </div>
       </div>
-      <table class="rc-table"><thead><tr><th style="width:100px;">Part No.</th><th>Product</th><th class="num" style="width:60px;">Qty</th><th style="width:130px;">From Order</th><th style="width:130px;">Status</th><th style="width:200px;text-align:right;">Action</th></tr></thead><tbody>
-      ${items.map(it=>{const st=it.status||'issued';return `<tr class="rc-row rc-row-${st}"><td><span class="ro mono">${esc(it.part_no||it.style_number||'')}</span></td><td><span class="ro">${esc(it.product_name||it.description||'')}</span></td><td class="num"><span class="ro mono">${it.quantity??''}</span></td><td><span class="ro">${it.ordered_for?'#'+esc(String(it.ordered_for)):'—'}</span></td>
-        <td>${rcBadge(st)}</td>
-        <td class="rc-actcell">
-          <div class="rc-actions">
-            ${st!=='received'?`<button class="rc-act ok" data-po="${p.id}" data-item="${it.id}" data-act="received">Receive</button>`:''}
-            ${st!=='backordered'?`<button class="rc-act bad" data-po="${p.id}" data-item="${it.id}" data-act="backordered">Back Order</button>`:''}
-            ${st!=='issued'?`<button class="rc-act reset" data-po="${p.id}" data-item="${it.id}" data-act="issued">Reset</button>`:''}
-          </div>
-        </td></tr>`;}).join('')}
+      <table class="rc-table"><thead><tr><th style="width:96px;">Part No.</th><th>Product</th><th class="num" style="width:56px;">Ord</th><th style="width:96px;">From Order</th><th style="width:150px;">Received</th><th style="width:150px;">Status</th><th style="width:210px;text-align:right;">Action</th></tr></thead><tbody>
+      ${items.map(it=>{
+        const st=it.status||'issued';
+        const ordered=Number(it.quantity)||0;
+        const recv=Math.min(Number(it.qty_received)||0,ordered);
+        const owed=Math.max(0,ordered-recv);
+        const exp=it.backorder_expected;
+        const overdue=st==='backordered'&&exp&&new Date(exp+'T23:59:59')<new Date();
+        const done=st==='received';
+        return `<tr class="rc-row rc-row-${st}${overdue?' rc-row-overdue':''}">
+          <td><span class="ro mono">${esc(it.part_no||it.style_number||'')}</span></td>
+          <td><span class="ro">${esc(it.product_name||it.description||'')}</span></td>
+          <td class="num"><span class="ro mono">${ordered||''}</span></td>
+          <td><span class="ro">${it.ordered_for?'#'+esc(String(it.ordered_for)):'—'}</span></td>
+          <td class="rc-recvcell">${completed||done
+            ? `<span class="rc-recdone">${recv} of ${ordered}</span>`
+            : `<input type="number" class="rc-qty" data-item="${it.id}" data-ordered="${ordered}" value="${recv||''}" placeholder="0" min="0" max="${ordered}"> <span class="rc-of">/ ${ordered}</span>`}</td>
+          <td class="rc-statuscell">${rcBadge(st)}${st==='backordered'?`<div class="rc-owed ${overdue?'overdue':''}"><b>${owed}</b> owed${exp?` · ${overdue?'was due':'due'} ${fmtD(exp)}`:''}</div>`:''}</td>
+          <td class="rc-actcell">${completed
+            ? `<span class="rc-lock">Received in full</span>`
+            : `<div class="rc-actions">
+              ${!done?`<input type="date" class="rc-exp" data-item="${it.id}" value="${exp||''}" title="Only used if fewer units arrive than ordered">`:''}
+              ${!done?`<button class="rc-act ok" data-item="${it.id}" data-po="${p.id}" data-act="confirm">Confirm</button>`:''}
+              ${st==='backordered'?`<button class="rc-act rest" data-item="${it.id}" data-po="${p.id}" data-ordered="${ordered}" data-act="rest">Receive rest</button>`:''}
+              ${st!=='issued'?`<button class="rc-act reset" data-item="${it.id}" data-po="${p.id}" data-act="reset">Reset</button>`:''}
+            </div>`}</td>
+        </tr>`;}).join('')}
       </tbody></table>
-      ${received<total?'':''}
     </div>`;
   }).join('');
-  document.querySelectorAll('.rc-act').forEach(b=>b.addEventListener('click',()=>markReceiving(b.dataset.item,b.dataset.act,b.dataset.po)));
+  document.querySelectorAll('.rc-act').forEach(b=>b.addEventListener('click',()=>{
+    const item=b.dataset.item, po=b.dataset.po, act=b.dataset.act;
+    if(act==='reset'){ receiveItem(item,po,0,null); return; }
+    if(act==='rest'){ receiveItem(item,po,Number(b.dataset.ordered)||0,null); return; }
+    // confirm: read the quantity that arrived + an expected date for any shortfall
+    const qEl=document.querySelector('.rc-qty[data-item="'+item+'"]');
+    const eEl=document.querySelector('.rc-exp[data-item="'+item+'"]');
+    const ordered=Number(qEl&&qEl.dataset.ordered)||0;
+    let qty=parseInt(qEl&&qEl.value,10); if(isNaN(qty)||qty<0)qty=0; if(qty>ordered)qty=ordered;
+    const exp=(qty>0&&qty<ordered)?((eEl&&eEl.value)||null):null;
+    receiveItem(item,po,qty,exp);
+  }));
 }
 
-async function markReceiving(itemId,status,poId,skipRender){
-  const patch={status};
-  if(status==='received'){patch.verified_at=new Date().toISOString();}
-  const {error}=await db.from('po_items').update(patch).eq('id',itemId);
+// Receiving is atomic: one RPC records the (possibly partial) receipt AND cascades
+// it to the allocation + parent sales line inside a single DB transaction.
+//   qty >= ordered  -> received
+//   0 < qty < ordered -> back ordered (balance owed, optional expected date)
+//   qty = 0         -> reset to issued
+async function receiveItem(itemId,poId,qty,expected){
+  const {data,error}=await db.rpc('receive_po_item',{p_item:itemId,p_qty:qty,p_expected:expected||null});
   if(error){await smAlert('Could not update: '+error.message,'Error','danger');return;}
+  const row=Array.isArray(data)?data[0]:data;
   const po=POS.find(p=>p.id===poId);
   const it=po&&(po.po_items||[]).find(x=>x.id===itemId);
-  if(it){
-    it.status=status;
-    if(it.source_allocation_id){
-      // update this allocation, then recompute the PARENT line from ALL its orders
-      await db.from('quote_item_allocations').update({status}).eq('id',it.source_allocation_id);
-      const {data:al}=await db.from('quote_item_allocations').select('quote_item_id,status').eq('id',it.source_allocation_id).single();
-      if(al&&al.quote_item_id){ await recomputeParentLine(al.quote_item_id); }
-    }else if(it.source_quote_item_id){
-      await recomputeParentLine(it.source_quote_item_id, status);
-    }
+  if(it&&row){
+    it.status=row.out_status;
+    it.qty_received=row.out_qty_received;
+    it.backorder_expected=(row.out_status==='backordered')?(expected||it.backorder_expected||null):null;
   }
-  if(!skipRender) renderReceiving();
+  // refresh tab counts — a fully received PO moves from Receiving to Completed
+  const recEl=document.getElementById('n-receiving');if(recEl)recEl.textContent=POS.filter(p=>p.status==='sent'&&!poComplete(p)).length;
+  const cmpEl=document.getElementById('n-completed');if(cmpEl)cmpEl.textContent=POS.filter(p=>p.status==='sent'&&poComplete(p)).length;
+  render();
 }
 
 // Recompute a sales line's status from ALL its orders (allocations + direct PO lines),
@@ -340,18 +400,7 @@ async function recomputeParentLine(quoteItemId, directStatus){
   await db.from('quote_items').update({fulfillment_status:fs}).eq('id',quoteItemId);
 }
 
-// Combine allocation statuses into one parent line status
-function aggregateStatus(statuses){
-  const s=statuses.filter(Boolean);
-  if(!s.length)return 'none';
-  const uniq=[...new Set(s.map(x=>x==='pending'?'in_po':x))];
-  if(uniq.length===1)return uniq[0];
-  if(uniq.includes('backordered'))return 'backordered';   // surface backorder
-  // otherwise report the least-advanced stage so it doesn't look "done" prematurely
-  const order=['in_po','issued','received'];
-  for(const st of order){ if(uniq.includes(st))return st; }
-  return uniq[0];
-}
+// (aggregateStatus now lives in auth.js — one rulebook shared by every page.)
 
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   FILTER=t.dataset.f;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.f===FILTER));render();

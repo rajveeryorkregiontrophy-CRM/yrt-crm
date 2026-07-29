@@ -1,0 +1,5 @@
+# graphify knowledge graph — local reference tool, not site content
+graphify-out/
+
+# OS / editor cruft
+.DS_Store

@@ -217,3 +217,22 @@ export function subscribeFulfillment(cb, opts){
   channel.subscribe();
   return ()=>{ try{ supabase.removeChannel(channel); }catch(e){} };
 }
+// ============================================================
+// Fulfillment status aggregation — THE single source of truth.
+// Combines the statuses of a sales line's PO lines / allocations
+// into one parent status. Used by index.html, po.html and
+// po-list.html; do not re-implement this rule locally.
+// Normalizes legacy values: pending→in_po, verified→received.
+// ============================================================
+export function aggregateStatus(statuses){
+  const s=(statuses||[]).filter(Boolean)
+    .map(x=>x==='pending'?'in_po':(x==='verified'?'received':x));
+  if(!s.length)return 'none';
+  const uniq=[...new Set(s)];
+  if(uniq.length===1)return uniq[0];
+  if(uniq.includes('backordered'))return 'backordered';   // surface backorders
+  // otherwise report the least-advanced stage so nothing looks done prematurely
+  const order=['in_po','issued','received'];
+  for(const st of order){ if(uniq.includes(st))return st; }
+  return uniq[0];
+}

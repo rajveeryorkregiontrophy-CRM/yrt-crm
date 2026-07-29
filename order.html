@@ -88,7 +88,7 @@
   .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
   .btn-brass:hover{background:#c3cad8;}
 
-  .wrap{max-width:1400px;margin:0 auto;padding:16px 28px 26px;flex:1 0 auto;width:100%;}
+  .wrap{max-width:1400px;margin:0 auto;padding:16px 28px 10px;flex:1 0 auto;width:100%;}
   /* at-a-glance summary strip */
   .summary{max-width:1400px;margin:0 auto;padding:0 28px;}
   /* ── New order layout: details+status band, then a full-width line-items sheet ── */
@@ -318,6 +318,13 @@
   select.input:hover,input.input:hover{border-color:var(--line-strong);}
   select.input:focus,input.input:focus{outline:none;border-color:var(--brass-2);background:var(--bg-2);}
   input.input[type=date]{color-scheme:dark;}
+  /* selects: custom chevron with real breathing room from the edge */
+  select.input,select.li-disc{appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%239098a8" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>');background-repeat:no-repeat;background-position:right 11px center;background-size:12px;padding-right:32px;}
+  select.li-disc{background-position:right 8px center;padding-right:26px;}
+  /* qty + unit live together: number with a quiet unit suffix */
+  .qty-cell{white-space:nowrap;text-align:right;}
+  .qty-cell .li-input{width:calc(100% - 26px);display:inline-block;vertical-align:middle;}
+  .unit-suffix{display:inline-block;vertical-align:middle;font-size:11px;font-weight:700;color:var(--text-3);margin-left:3px;width:20px;text-align:left;}
   /* order totals relocated into the right column */
   .totals-card .ot-inner{width:100%;border:none;background:transparent;padding:0;}
   .totals-card .card-b{padding:14px 18px 16px;}
@@ -525,13 +532,12 @@
       <thead><tr>
         <th style="width:9%;">Category</th>
         <th style="width:8%;">Style #</th>
-        <th style="width:25%;">Description</th>
-        <th class="sup-col" style="width:15%;">Supplier</th>
+        <th style="width:27%;">Description</th>
+        <th class="sup-col" style="width:16%;">Supplier</th>
         <th class="num" style="width:8%;">Order Qty</th>
-        <th style="width:6%;">Unit</th>
-        <th class="num money-col" style="width:8%;">Unit Price</th>
+        <th class="num money-col" style="width:9%;">Unit Price</th>
         <th class="money-col" style="width:9%;">Discount</th>
-        <th class="num money-col" style="width:9%;">Amount</th>
+        <th class="num money-col" style="width:11%;">Amount</th>
         <th style="width:3%;"></th>
       </tr></thead>
       <tbody id="lines"></tbody>
@@ -939,8 +945,7 @@ function renderLines(){
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn" data-alloc="${i}" title="Order this line's quantity to a purchase order">⊞ Order to PO</button>
       </td>
-      <td><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"></td>
-      <td><input class="li-input" value="${esc(ln.unit||'Pc')}" data-i="${i}" data-k="unit" style="width:40px;"></td>
+      <td class="qty-cell"><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></td>
       <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
       <td class="disc-cell">
         <select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
@@ -1824,7 +1829,16 @@ async function printQuotation(){
     const saved=await mod.makePDF('QUOTATION',payload);
     if(!saved)return; // user cancelled the OS save dialog
     const done=await confirmModal('Quotation saved','Did the quotation save successfully?',{confirmText:'Complete',cancelText:'Not yet'});
-    if(done){ location.href='index.html'; return; }
+    if(done){
+      // A completed PDF means the quote went to the client — record it so the
+      // timeline can start the follow-up clock. Goes through save() to respect
+      // the concurrent-edit lock.
+      if(MGMT && ORDER.record_type==='quote' && ORDER.sent_status!=='sent'){
+        ORDER.sent_status='sent';
+        try{ await save(true); }catch(e){}
+      }
+      location.href='index.html'; return;
+    }
     // "Not yet" -> loop and re-open the save dialog
   }
 }

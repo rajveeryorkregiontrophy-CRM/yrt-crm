@@ -130,7 +130,7 @@
 </div>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, aggregateStatus } from './auth.js';
 await requireAuth();
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
@@ -246,22 +246,7 @@ function renderLines(){
   recalc();
 }
 
-async function markItemStatus(i,status){
-  const l=LINES[i]; if(!l||!l.id)return;
-  const patch={status};
-  if(status==='verified'){patch.verified_at=new Date().toISOString();}
-  const {error}=await db.from('po_items').update(patch).eq('id',l.id);
-  if(error){return;}
-  l.status=status;
-  // propagate to the source sales-order line item / allocation so it recolours
-  if(l.source_allocation_id){
-    await db.from('quote_item_allocations').update({status}).eq('id',l.source_allocation_id);
-  }
-  if(l.source_quote_item_id){
-    await db.from('quote_items').update({fulfillment_status:status}).eq('id',l.source_quote_item_id);
-  }
-  renderLines();
-}
+// (markItemStatus removed — per-item receiving lives in po-list.html's Receiving tab.)
 function addLine(){LINES.push({part_no:'',product_name:'',quantity:1,rate:0,amount:0,ordered_for:'',line_order:LINES.length+1});renderLines();dirty();}
 function recalc(){document.getElementById('t-total').textContent=money(LINES.reduce((s,l)=>s+(parseFloat(l.amount)||0),0));}
 
