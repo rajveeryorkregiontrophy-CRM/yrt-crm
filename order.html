@@ -71,7 +71,7 @@
     --st-art-bg:var(--art);--st-due-bg:var(--due);--st-approved-bg:var(--approved);--st-process-bg:var(--process);--st-invoice-bg:var(--invoice);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
 
   .topbar{height:58px;background:var(--paper-2);border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:16px;padding:0 24px;position:sticky;top:0;z-index:30;}
   .back{display:inline-flex;align-items:center;gap:7px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;padding:7px 11px;border-radius:var(--radius-sm);border:1px solid var(--line-strong);background:var(--paper-2);}
@@ -88,33 +88,45 @@
   .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
   .btn-brass:hover{background:#c3cad8;}
 
-  .wrap{max-width:1340px;margin:0 auto;padding:16px 22px 90px;}
+  .wrap{max-width:1400px;margin:0 auto;padding:16px 28px 26px;flex:1 0 auto;width:100%;}
   /* at-a-glance summary strip */
-  .summary{max-width:1340px;margin:0 auto;padding:0 22px;}
-  .summary-inner{display:flex;align-items:stretch;gap:0;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:14px;}
-  .sum-cell{padding:11px 18px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;min-width:0;}
+  .summary{max-width:1400px;margin:0 auto;padding:0 28px;}
+  /* ── New order layout: details+status band, then a full-width line-items sheet ── */
+  .order-layout{display:flex;flex-direction:column;}
+  .ol-head{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;align-items:start;margin-bottom:14px;}
+  .ol-head > .card{margin-bottom:0;}
+  .ol-lines{margin-bottom:0;}
+  /* fixed layout → columns fill the sheet evenly instead of dumping slack into one */
+  .ol-lines table{table-layout:fixed;}
+  @media(max-width:1040px){.ol-head{grid-template-columns:1fr;}}
+  @media(max-width:1040px){.ol-lines table{table-layout:auto;min-width:900px;}}
+  .summary-inner{display:flex;align-items:stretch;gap:0;background:linear-gradient(158deg,var(--bg-3) -30%,var(--paper-2) 55%);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;margin-top:14px;box-shadow:0 10px 26px -22px rgba(0,0,0,.9);}
+  .sum-cell{flex:1;padding:12px 18px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;min-width:0;}
   .sum-cell:last-child{border-right:none;}
-  .sum-cell .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .sum-cell .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:4px;}
   .sum-cell .v{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .sum-cell.grow{flex:1;}
+  .sum-cell.grow{flex:1.6;}
   .sum-cell .v.accent{color:var(--brass-2);font-family:var(--fm);}
   .grid{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start;}
   @media(max-width:1000px){.grid{grid-template-columns:1fr;}}
 
-  .card{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:13px;overflow:visible;}
-  .card-h{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
-  .card-h h3{font-family:var(--font-display);font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#aab2c4;}
-  .card-b{padding:14px 16px;}
+  .card{background:var(--paper-2);border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:0 12px 28px -24px rgba(0,0,0,.9);margin-bottom:14px;overflow:visible;}
+  .card-h{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .card-h h3{font-family:var(--font-display);font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#aab2c4;}
+  .card-b{padding:16px 18px;}
 
-  /* client header block */
-  .client-block{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  /* client header block — one even, dense 6-col grid (no ragged columns) */
+  .client-block{display:grid;grid-template-columns:repeat(6,1fr);gap:13px 16px;}
+  .client-block .field{margin-bottom:0;min-width:0;}
+  .cb-3{grid-column:span 3;} .cb-2{grid-column:span 2;} .cb-4{grid-column:span 4;} .cb-6{grid-column:span 6;}
   .field{margin-bottom:10px;}
-  .field label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:4px;}
-  .field .val{font-size:14px;font-weight:500;}
+  .field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:5px;}
+  .field .val{font-size:13.5px;font-weight:500;color:var(--text-2);}
   .field .val.big{font-size:17px;font-weight:700;font-family:var(--font-display);}
   .field .val.mono{font-family:var(--font-mono);}
   .field-row{display:flex;gap:14px;}
   .field-row .field{flex:1;}
+  .loc-val{font-size:13px;color:var(--text-2);padding:8px 11px;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);}
 
   /* line items */
   table{width:100%;border-collapse:collapse;}
@@ -151,16 +163,17 @@
   .lines-scroll::-webkit-scrollbar{width:9px;}.lines-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2);}
   .lines-scroll thead th{position:sticky;top:0;background:var(--paper-2);z-index:2;}
   /* inline totals under product listing (modern CRM style) */
-  .listing-foot{display:flex;align-items:stretch;justify-content:space-between;gap:24px;border-top:1px solid var(--line);margin-top:4px;padding:18px;}
-  .listing-foot .meta-foot{border:none;background:transparent;padding:0;align-self:flex-end;flex:0 0 auto;}
-  .order-totals{display:flex;justify-content:flex-end;padding:0;flex:1;}
-  .ot-inner{width:320px;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:16px 18px;}
-  .ot-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;}
-  .ot-row .ot-lbl{color:var(--muted);font-weight:500;}
-  .ot-row .ot-amt{font-family:var(--fm);font-weight:600;color:var(--ink);}
-  .ot-grand{border-top:1px solid var(--line-2);margin-top:8px;padding-top:12px;}
-  .ot-grand .ot-lbl{font-family:var(--fd);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:12.5px;color:var(--ink);}
-  .ot-grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:19px;color:var(--brass-2);}
+  /* totals — a horizontal footer bar spanning the sheet, not a floating corner box */
+  .listing-foot{display:flex;align-items:center;justify-content:space-between;gap:24px;border-top:1px solid var(--line-2);margin-top:0;padding:14px 20px;background:linear-gradient(180deg,rgba(255,255,255,.015),transparent);}
+  .listing-foot .meta-foot{border:none;background:transparent;padding:0;flex:0 0 auto;}
+  .order-totals{display:flex;align-items:stretch;margin-left:auto;}
+  .ot-cell{display:flex;flex-direction:column;justify-content:center;gap:5px;text-align:right;padding:2px 24px;border-left:1px solid var(--line);}
+  .ot-cell .ot-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;}
+  .ot-cell .ot-amt{font-family:var(--fm);font-weight:700;font-size:14px;color:var(--ink);white-space:nowrap;}
+  .ot-cell.grand{padding-right:8px;padding-left:28px;}
+  .ot-cell.grand .ot-lbl{color:var(--text-2);}
+  .ot-cell.grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:22px;color:var(--brass-2);letter-spacing:-.01em;}
+  @media(max-width:640px){.order-totals{flex-wrap:wrap;justify-content:flex-end;gap:6px 0;}.ot-cell{padding:2px 14px;}}
   .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
   .cb-sup{text-overflow:ellipsis;}
   /* fulfillment colour: the status pill carries the colour; the split summary count tints to match */
@@ -268,20 +281,31 @@
   .add-line{margin:12px 18px 4px;padding:9px;width:calc(100% - 36px);border:1px dashed var(--line-strong);background:transparent;border-radius:var(--radius-sm);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
   .add-line:hover{border-color:var(--brass);color:var(--brass-2);}
 
-  /* totals sidebar */
-  .status-pick{display:flex;flex-direction:column;gap:13px;}
-  .seg{display:flex;flex-direction:column;gap:7px;}
-  .seg label{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;}
-  select.input,input.input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:7px 10px;font-size:13px;font-family:inherit;color:var(--ink);}
-  select.input:focus,input.input:focus{outline:none;border-color:var(--brass-2);}
+  /* status sidebar */
+  .status-pick{display:flex;flex-direction:column;gap:14px;}
+  .seg{display:flex;flex-direction:column;gap:6px;}
+  .seg label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;}
+  .seg-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  select.input,input.input{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:var(--radius-sm);padding:8px 11px;font-size:13px;font-family:inherit;color:var(--ink);transition:border-color .13s,background .13s;}
+  select.input:hover,input.input:hover{border-color:var(--line-strong);}
+  select.input:focus,input.input:focus{outline:none;border-color:var(--brass-2);background:var(--bg-2);}
+  input.input[type=date]{color-scheme:dark;}
+  /* order totals relocated into the right column */
+  .totals-card .ot-inner{width:100%;border:none;background:transparent;padding:0;}
+  .totals-card .card-b{padding:14px 18px 16px;}
+  .totals-card .ot-row{padding:7px 0;}
+  .totals-card .ot-grand{margin-top:6px;padding-top:12px;}
 
   .badge-st{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.02em;padding:7px 13px;border-radius:8px;text-transform:uppercase;font-family:var(--font-display);}
   .badge-st::before{content:'';width:7px;height:7px;border-radius:50%;background:rgba(0,0,0,.45);}
-  .st-send_art{background:var(--art);color:#1a0f08;}
-  .st-approval_due{background:var(--due);color:#231803;}
-  .st-approved{background:var(--approved);color:#04130a;}
-  .st-in_process{background:var(--process);color:#03101f;}
-  .st-invoice{background:var(--invoice);color:#15071f;}
+  /* corporate status coding: soft tinted chip, colour carried by text + a leading dot */
+  .badge-st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+  .st-send_art{background:rgba(224,148,74,.14);color:#e0944a;}
+  .st-approval_due{background:rgba(226,183,74,.14);color:#e2b74a;}
+  .st-approved{background:rgba(62,201,138,.14);color:#3ec98a;}
+  .st-in_process{background:rgba(81,151,214,.14);color:#5197d6;}
+  .st-invoice{background:rgba(142,119,212,.14);color:#8e77d4;}
+  .st-no_data{background:rgba(139,147,164,.14);color:#9aa2b1;}
 
   .totals{padding:4px 0;}
   .totals .t-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13.5px;}
@@ -301,7 +325,7 @@
   .pip.on{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:var(--brass-2);}
   .meta-foot{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted-2);padding:12px 18px;border-top:1px solid var(--line);background:var(--paper);}
   .meta-foot b{color:var(--muted);font-weight:600;}
-  .save-bar{position:fixed;bottom:0;left:0;right:0;background:var(--paper-2);border-top:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:12px;justify-content:flex-end;z-index:40;box-shadow:0 -2px 10px rgba(20,23,28,.05);}
+  .save-bar{position:sticky;bottom:0;background:var(--paper-2);border-top:1px solid var(--line-2);padding:12px 28px;display:flex;align-items:center;gap:12px;justify-content:flex-end;z-index:40;box-shadow:0 -8px 24px -12px rgba(0,0,0,.6);}
   .save-bar .status-msg{margin-right:auto;font-size:13px;color:var(--muted);}
   .save-bar .status-msg.saved{color:var(--st-approved);}
   .save-bar .status-msg.err{color:var(--danger);}
@@ -395,7 +419,6 @@
     <div class="sum-cell"><div class="k">Pick-up</div><div class="v" id="sum-pickup">—</div></div>
     <div class="sum-cell"><div class="k">Event</div><div class="v" id="sum-event">—</div></div>
     <div class="sum-cell"><div class="k">Stage</div><div class="v" id="sum-stage">—</div></div>
-    <div class="sum-cell mgmt-only"><div class="k">Grand Total</div><div class="v accent" id="sum-total">$0.00</div></div>
   </div>
 </div>
 
@@ -404,86 +427,27 @@
 </div>
 
 <template id="tpl">
-<div class="grid">
-  <div>
-    <!-- Client / order header -->
-    <div class="card">
+<div class="order-layout">
+  <div class="ol-head">
+    <!-- Client / order details -->
+    <div class="card ol-details">
       <div class="card-h"><h3>Client &amp; Order</h3></div>
       <div class="card-b">
         <div class="client-block">
-          <div>
-            <div class="field"><label>Client</label>
-              <select class="input" id="i-client"></select>
-            </div>
-            <div class="field"><label>Contact</label>
-              <select class="input" id="i-contact"></select>
-            </div>
-            <div class="field"><label>Location</label><div class="val" id="f-loc" style="font-size:13px;color:var(--text-2);">—</div></div>
-          </div>
-          <div>
-            <div class="field-row">
-              <div class="field"><label>Subject</label><input class="input" id="i-subject" placeholder="e.g. Trophies"></div>
-              <div class="field"><label>Serviced By</label><input class="input" id="i-staff" placeholder="Karan"></div>
-            </div>
-            <div class="field"><label>Client P.O. #</label><input class="input" id="i-po" placeholder="optional"></div>
-            <div class="field-row">
-              <div class="field"><label>Quote Date</label><input type="date" class="input" id="i-qdate"></div>
-              <div class="field"><label>Ship Mode</label>
-                <select class="input" id="i-ship"><option value="pickup">Pick-up</option><option value="courier">Courier</option><option value="deliver">Deliver</option></select>
-              </div>
-            </div>
-          </div>
+          <div class="field cb-3"><label>Client</label><select class="input" id="i-client"></select></div>
+          <div class="field cb-3"><label>Contact</label><select class="input" id="i-contact"></select></div>
+          <div class="field cb-4"><label>Subject</label><input class="input" id="i-subject" placeholder="e.g. Trophies"></div>
+          <div class="field cb-2"><label>Serviced By</label><input class="input" id="i-staff" placeholder="Karan"></div>
+          <div class="field cb-2"><label>Quote Date</label><input type="date" class="input" id="i-qdate"></div>
+          <div class="field cb-2"><label>Ship Mode</label><select class="input" id="i-ship"><option value="pickup">Pick-up</option><option value="courier">Courier</option><option value="deliver">Deliver</option></select></div>
+          <div class="field cb-2"><label>Client P.O. #</label><input class="input" id="i-po" placeholder="optional"></div>
+          <div class="field cb-6"><label>Billing Location</label><div class="loc-val" id="f-loc">—</div></div>
         </div>
       </div>
     </div>
 
-    <!-- Line items -->
-    <div class="card">
-      <div class="card-h"><h3>Product Listing</h3>
-        <div class="legend sup-col" id="po-legend">
-          <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Not Ordered</span>
-          <span class="lg"><span class="lg-dot" style="background:#f0b34e"></span>Partly Ordered</span>
-          <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>Ordered</span>
-          <span class="lg"><span class="lg-dot" style="background:#8a92a2"></span>Issued</span>
-          <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Received</span>
-          <span class="lg"><span class="lg-dot" style="background:#b06bff"></span>Back Order</span>
-        </div>
-      </div>
-      <div class="lines-scroll">
-      <table>
-        <thead><tr>
-          <th style="width:120px;">Category</th>
-          <th style="width:100px;">Style #</th>
-          <th style="min-width:240px;">Description</th>
-          <th class="sup-col" style="width:170px;">Supplier</th>
-          <th class="num" style="width:72px;">Order Qty</th>
-          <th style="width:48px;">Unit</th>
-          <th class="num money-col" style="width:86px;">Unit Price</th>
-          <th class="money-col" style="width:96px;">Discount</th>
-          <th class="num money-col" style="width:96px;">Amount</th>
-          <th style="width:30px;"></th>
-        </tr></thead>
-        <tbody id="lines"></tbody>
-      </table>
-      </div>
-      <button class="add-line" id="add-line">+ Add line item</button>
-      <div class="listing-foot">
-        <div class="meta-foot" id="meta"></div>
-        <div class="order-totals mgmt-only">
-          <div class="ot-inner">
-            <div class="ot-row"><span class="ot-lbl">Subtotal</span><span class="ot-amt" id="t-sub">$0.00</span></div>
-            <div class="ot-row"><span class="ot-lbl">Discount</span><span class="ot-amt" id="t-disc">$0.00</span></div>
-            <div class="ot-row"><span class="ot-lbl">HST (13%)</span><span class="ot-amt" id="t-hst">$0.00</span></div>
-            <div class="ot-row ot-grand"><span class="ot-lbl">Grand Total</span><span class="ot-amt" id="t-grand">$0.00</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Sidebar: status + totals -->
-  <div>
-    <div class="card">
+    <!-- Status -->
+    <div class="card ol-status">
       <div class="card-h"><h3>Status</h3></div>
       <div class="card-b">
         <div class="status-pick">
@@ -512,22 +476,52 @@
               <button type="button" class="stog" data-v="inactive">Inactive</button>
             </div>
           </div>
-          <div class="seg">
-            <label>Pick-up Date</label>
-            <input type="date" class="input" id="i-pickup">
-          </div>
-          <div class="seg">
-            <label>Event Date</label>
-            <input type="date" class="input" id="i-event">
-          </div>
-          <div class="seg">
-            <label>Sent to Client</label>
-            <select class="input" id="i-sent">
-              <option value="not_sent">Not Sent</option>
-              <option value="sent">Sent</option>
-            </select>
+          <div class="seg-2">
+            <div class="seg"><label>Pick-up Date</label><input type="date" class="input" id="i-pickup"></div>
+            <div class="seg"><label>Event Date</label><input type="date" class="input" id="i-event"></div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Line items — full width sheet -->
+  <div class="card ol-lines">
+    <div class="card-h"><h3>Product Listing</h3>
+      <div class="legend sup-col" id="po-legend">
+        <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Not Ordered</span>
+        <span class="lg"><span class="lg-dot" style="background:#f0b34e"></span>Partly Ordered</span>
+        <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>Ordered</span>
+        <span class="lg"><span class="lg-dot" style="background:#8a92a2"></span>Issued</span>
+        <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Received</span>
+        <span class="lg"><span class="lg-dot" style="background:#b06bff"></span>Back Order</span>
+      </div>
+    </div>
+    <div class="lines-scroll">
+    <table>
+      <thead><tr>
+        <th style="width:9%;">Category</th>
+        <th style="width:8%;">Style #</th>
+        <th style="width:25%;">Description</th>
+        <th class="sup-col" style="width:15%;">Supplier</th>
+        <th class="num" style="width:8%;">Order Qty</th>
+        <th style="width:6%;">Unit</th>
+        <th class="num money-col" style="width:8%;">Unit Price</th>
+        <th class="money-col" style="width:9%;">Discount</th>
+        <th class="num money-col" style="width:9%;">Amount</th>
+        <th style="width:3%;"></th>
+      </tr></thead>
+      <tbody id="lines"></tbody>
+    </table>
+    </div>
+    <button class="add-line" id="add-line">+ Add line item</button>
+    <div class="listing-foot">
+      <div class="meta-foot" id="meta"></div>
+      <div class="order-totals mgmt-only">
+        <div class="ot-cell"><span class="ot-lbl">Subtotal</span><span class="ot-amt" id="t-sub">$0.00</span></div>
+        <div class="ot-cell"><span class="ot-lbl">Discount</span><span class="ot-amt" id="t-disc">$0.00</span></div>
+        <div class="ot-cell"><span class="ot-lbl">HST (13%)</span><span class="ot-amt" id="t-hst">$0.00</span></div>
+        <div class="ot-cell grand"><span class="ot-lbl">Grand Total</span><span class="ot-amt" id="t-grand">$0.00</span></div>
       </div>
     </div>
   </div>
@@ -778,10 +772,10 @@ function applyRecordType(){
   // stage pipeline only relevant for sales orders
   const stageSeg=document.getElementById('stage-seg');
   if(stageSeg)stageSeg.style.display=ORDER.record_type==='order'?'':'none';
-  // Print Quotation: allowed on quote + order, NOT inquiry
+  // Print Quotation: quotations only. A confirmed order converts to an invoice instead.
   const bq=document.getElementById('btn-quote');
-  if(bq)bq.style.display=ORDER.record_type==='inquiry'?'none':'';
-  // Convert to Invoice only really makes sense on an order
+  if(bq)bq.style.display=ORDER.record_type==='quote'?'':'none';
+  // Convert to Invoice: sales orders only.
   const bi=document.getElementById('btn-invoice');
   if(bi)bi.style.display=ORDER.record_type==='order'?'':'none';
   // Supplier column (PO linking) only on Sales Orders
@@ -847,7 +841,7 @@ function render(){
     }
     ORDER.event_date=ev.value||null;markDirty();
   });
-  const is=document.getElementById('i-sent');is.value=ORDER.sent_status||'not_sent';is.addEventListener('change',()=>{ORDER.sent_status=is.value;markDirty();});
+  const is=document.getElementById('i-sent');if(is){is.value=ORDER.sent_status||'not_sent';is.addEventListener('change',()=>{ORDER.sent_status=is.value;markDirty();});}
   // Order State: two options only. Anything legacy (on_hold/cancelled) reads as inactive.
   // 'completed' is set automatically on invoice conversion and is left alone.
   const _isInactive=v=>v && v!=='active' && v!=='completed';
@@ -1405,7 +1399,7 @@ function updateSummary(){
   document.getElementById('sum-event').textContent=fmtD(ORDER.event_date);
   document.getElementById('sum-stage').innerHTML=ORDER.record_type==='order'?`<span class="badge-st st-${ORDER.art_status}" style="font-size:10px;padding:3px 8px;">${label(ORDER.art_status)}</span>`:({inquiry:'Inquiry',quote:'Quotation'}[ORDER.record_type]||'—');
   const grand=(ORDER._calc&&ORDER._calc.grand_total)||0;
-  document.getElementById('sum-total').textContent=money(grand);
+  const _st=document.getElementById('sum-total');if(_st)_st.textContent=money(grand);
 }
 
 async function save(silent){
