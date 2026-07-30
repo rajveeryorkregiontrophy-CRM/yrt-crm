@@ -53,8 +53,8 @@
   @keyframes pb-pulse{0%,100%{opacity:.45}50%{opacity:1}}
   .ro-bar .rb-t{font-size:12.5px;color:var(--text-2,#c4cad6);font-weight:600;}
   /* Order State: two equal halves, text centred in each. */
-  .statetog{display:grid;grid-template-columns:1fr 1fr;width:100%;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;background:var(--bg);}
-  .stog{display:flex;align-items:center;justify-content:center;text-align:center;background:transparent;border:none;height:38px;padding:0;color:var(--text-3);font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:.13s;}
+  .statetog{display:inline-flex;width:fit-content;border:1px solid var(--line-2);border-radius:9px;overflow:hidden;background:var(--bg);}
+  .stog{display:flex;align-items:center;justify-content:center;text-align:center;background:transparent;border:none;height:34px;padding:0 18px;color:var(--text-3);font-family:var(--fd);font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:.13s;white-space:nowrap;}
   .stog + .stog{border-left:1px solid var(--line-2);}
   .stog:hover{color:var(--text);}
   .stog.on[data-v="active"]{background:rgba(61,220,132,.16);color:#5fe3a1;}
@@ -100,14 +100,18 @@
      its content. Structurally gap-proof at any record type or width. */
   .order-layout > .card{margin-bottom:14px;}
   .ol-details .client-block{align-content:start;}
-  /* Status as a horizontal command strip */
-  #status-card .status-pick{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px 30px;align-items:flex-start;}
-  #status-card .seg{min-width:170px;flex:0 0 auto;}
-  #status-card #stage-seg{flex:1 1 360px;}
-  #status-card #active-seg{min-width:220px;}
-  #status-card #outcome-seg{min-width:260px;flex:1 1 260px;max-width:420px;}
-  #status-card .seg-2{display:flex;gap:12px;min-width:330px;flex:0 1 auto;}
-  #status-card .seg-2 .seg{min-width:155px;flex:1;}
+  /* Status as a command rail: zones split by hairlines, every control 34px tall */
+  #status-card .card-b{padding:15px 18px;}
+  #status-card .status-pick{display:flex;flex-direction:row;flex-wrap:wrap;gap:14px 0;align-items:stretch;}
+  #status-card .status-pick > .seg{min-width:0;flex:0 0 auto;padding:0 26px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:8px;justify-content:flex-start;}
+  #status-card .status-pick > .seg:first-child{padding-left:0;border-left:none;}
+  html.role-process #status-card #stage-seg{border-left:none;padding-left:0;}
+  #status-card #stage-seg{flex:1 1 auto;}
+  #status-card #outcome-seg{min-width:260px;max-width:440px;flex:1 1 260px;}
+  #status-card .seg-2{display:flex;flex-direction:row;gap:14px;padding:0 0 0 26px;border-left:1px solid var(--line);}
+  #status-card .seg-2 .seg{display:flex;flex-direction:column;gap:8px;}
+  #status-card .seg-2 .input{height:34px;padding:0 11px;width:150px;}
+  @media(max-width:1080px){#status-card .status-pick{gap:16px 26px;}#status-card .status-pick > .seg,#status-card .seg-2{border-left:none;padding-left:0;}}
   #extras-card .card-b{padding:14px 18px 16px;}
   .extras-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 28px;align-items:start;}
   @media(max-width:1240px){.extras-grid{grid-template-columns:1fr;}}
@@ -404,13 +408,23 @@
   .totals .t-grand .amt{font-family:var(--font-display);font-weight:800;font-size:21px;color:var(--brass-2);}
 
   .state{padding:60px;text-align:center;color:var(--muted);}
-  .pipeline{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
-  .pip{flex:1;min-width:60px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:7px 4px;border-radius:5px;background:var(--paper);color:var(--muted-2);border:1px solid var(--line);cursor:pointer;}
-  .rtype{display:flex;gap:5px;}
-  .rt{flex:1;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:9px 4px;border-radius:6px;background:var(--paper);color:var(--muted-2);border:1px solid var(--line-strong);cursor:pointer;font-family:var(--fd);}
-  .rt:hover{border-color:var(--brass);color:var(--text);}
-  .rt.on{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;}
-  .pip.on{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:var(--brass-2);}
+  /* Production Stage — a stepper: dots on a track, done = green, current = solid pill */
+  .pipeline{display:flex;align-items:center;flex-wrap:wrap;row-gap:8px;}
+  .pip{position:relative;display:inline-flex;align-items:center;height:34px;padding:0 12px 0 27px;border-radius:8px;font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3);cursor:pointer;transition:.13s;white-space:nowrap;}
+  .pip::before{content:'';position:absolute;left:11px;width:8px;height:8px;border-radius:50%;border:2px solid var(--line-2);background:transparent;transition:.13s;}
+  .pip:hover{color:var(--text);}
+  .pip+.pip{margin-left:20px;}
+  .pip+.pip::after{content:'';position:absolute;left:-20px;top:50%;width:20px;height:2px;background:var(--line);}
+  .pip.done{color:var(--text-2);}
+  .pip.done::before{border-color:var(--approved);background:var(--approved);}
+  .pip.on{background:var(--brass-2);color:#15171c;}
+  .pip.on::before{border-color:#15171c;background:#15171c;}
+  /* Record Type — one connected segmented switch */
+  .rtype{display:inline-flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden;background:var(--bg);width:fit-content;}
+  .rt{display:flex;align-items:center;justify-content:center;height:34px;padding:0 16px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;background:transparent;color:var(--text-3);border:none;cursor:pointer;font-family:var(--font-display);transition:.13s;white-space:nowrap;}
+  .rt+.rt{border-left:1px solid var(--line-2);}
+  .rt:hover{color:var(--text);}
+  .rt.on{background:#f4f6fb;color:#15171c;}
   .meta-foot{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted-2);padding:12px 18px;border-top:1px solid var(--line);background:var(--paper);}
   .meta-foot b{color:var(--muted);font-weight:600;}
   .save-bar{position:sticky;bottom:0;background:var(--paper-2);border-top:1px solid var(--line-2);padding:12px 28px;display:flex;align-items:center;gap:12px;justify-content:flex-end;z-index:40;box-shadow:0 -8px 24px -12px rgba(0,0,0,.6);}
@@ -971,7 +985,7 @@ async function logArt(event,note,file_path){
 async function setArtStage(st){
   if(ORDER.art_status===st)return;
   ORDER.art_status=st;
-  document.querySelectorAll('.pip').forEach(x=>x.classList.toggle('on',x.dataset.s===st));
+  paintPipeline();
   const tb=document.getElementById('t-badge'); if(tb)tb.innerHTML=`<span class="badge-st st-${st}">${label(st)}</span>`;
   try{ await save(true); }catch(e){ markDirty(); }   // persisting logs stage_history via trigger
 }
@@ -1071,6 +1085,16 @@ function applySupplierColVisibility(){
   document.querySelectorAll('.sup-col').forEach(el=>{ el.style.display=isOrder?'':'none'; });
 }
 
+// One painter for the stage stepper: current stage = solid pill, earlier stages = green done-dots.
+const PIP_ORDER=['send_art','approval_due','approved','in_process','invoice'];
+function paintPipeline(){
+  const idx=PIP_ORDER.indexOf(ORDER.art_status);
+  document.querySelectorAll('.pip').forEach((p,i)=>{
+    p.classList.toggle('on',p.dataset.s===ORDER.art_status);
+    p.classList.toggle('done',idx>-1&&i<idx);
+  });
+}
+
 function render(){
   const wrap=document.getElementById('wrap');
   wrap.innerHTML='';
@@ -1101,9 +1125,9 @@ function render(){
   populateClients();
 
   // status controls
+  paintPipeline();
   document.querySelectorAll('.pip').forEach(p=>{
-    if(p.dataset.s===ORDER.art_status)p.classList.add('on');
-    p.addEventListener('click',()=>{ORDER.art_status=p.dataset.s;document.querySelectorAll('.pip').forEach(x=>x.classList.toggle('on',x.dataset.s===ORDER.art_status));document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;markDirty();});
+    p.addEventListener('click',()=>{ORDER.art_status=p.dataset.s;paintPipeline();document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;markDirty();});
   });
   const ip=document.getElementById('i-pickup');ip.value=ORDER.pickup_date||'';
   const ev=document.getElementById('i-event');ev.value=ORDER.event_date||'';
