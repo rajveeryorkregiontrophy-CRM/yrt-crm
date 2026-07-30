@@ -87,6 +87,10 @@
   .job-id{font-family:var(--fm);font-size:12px;font-weight:700;color:#b9c1d2;}
   .job-days{font-family:var(--fm);font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;}
   .d-over{background:var(--danger);color:#fff;}.d-soon{background:var(--art);color:#1a0f08;}.d-ok{background:var(--bg-4);color:var(--text-2);}
+  .job-chips{display:flex;align-items:center;gap:6px;}
+  .job-days.sd{background:var(--bg-4);color:var(--text-3);}
+  .job-days.sd-warn{background:rgba(226,183,74,.16);color:#e2b74a;}
+  .job-days.sd-bad{background:rgba(239,106,99,.16);color:#ef6a63;}
   .job-client{font-weight:700;color:#fff;font-size:14px;margin-bottom:3px;}
   .job-subject{font-size:12.5px;color:#aab0c0;margin-bottom:10px;}
   .job-foot{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--text-2);border-top:1px solid var(--line);padding-top:9px;}
@@ -182,8 +186,28 @@ async function load(){
   const {data:staff,error:sErr}=await db.rpc('process_staff');
   if(sErr) console.error('[production] could not load staff', sErr);
   STAFF=staff||[];
+  await loadStageAges();
   await loadAssignments();
   render();
+}
+
+// How long each job has sat in its CURRENT stage (from stage_history; falls
+// back to modified_at for records that predate history tracking).
+let STAGE_AT={};
+async function loadStageAges(){
+  STAGE_AT={};
+  const ids=ALL.map(o=>o.id);
+  if(!ids.length)return;
+  const {data,error}=await db.from('stage_history')
+    .select('quote_id,changed_at').eq('field','art_status')
+    .in('quote_id',ids).order('changed_at',{ascending:false});
+  if(error)return;   // table not present yet — chips just fall back
+  (data||[]).forEach(r=>{ if(!STAGE_AT[r.quote_id]) STAGE_AT[r.quote_id]=r.changed_at; });
+}
+function inStageDays(o){
+  const ref=STAGE_AT[o.id]||o.modified_at||null;
+  if(!ref)return null;
+  return Math.max(0,Math.floor((Date.now()-new Date(ref).getTime())/86400000));
 }
 
 async function loadAssignments(){
@@ -200,8 +224,11 @@ function jobCard(o){
   const n=days(o.pickup_date);
   const dcls=n===null?'d-ok':n<0?'d-over':n<=2?'d-soon':'d-ok';
   const dtxt=n===null?'—':n<0?Math.abs(n)+'d late':n===0?'today':n+'d';
+  const sd=inStageDays(o);
+  const sdCls=sd===null?'sd':sd>=10?'sd-bad':sd>=5?'sd-warn':'sd';
+  const sdChip=sd===null?'':`<span class="job-days ${sdCls}" title="Time in current stage">${sd}d in stage</span>`;
   return `<div class="job l-${o.art_status}" data-id="${o.id}">
-    <div class="job-top"><span class="job-id">#${o.stage_id}</span><span class="job-days ${dcls}">${dtxt}</span></div>
+    <div class="job-top"><span class="job-id">#${o.stage_id}</span><span class="job-chips">${sdChip}<span class="job-days ${dcls}">${dtxt}</span></span></div>
     <div class="job-client">${esc(o.clients?.company_name||'—')}</div>
     <div class="job-subject">${esc(o.subject||'—')}</div>
     <div class="job-foot"><span class="pick">Pick: ${fmtD(o.pickup_date)}</span><span class="job-staff">${esc(o.serviced_by||'—')}</span></div>

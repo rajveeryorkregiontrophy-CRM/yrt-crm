@@ -206,6 +206,10 @@
   .d-hist .hr{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
   .d-hist .hr:last-child{border-bottom:none;}
   .d-hist .hr .hm{color:var(--text-3);font-family:var(--fm);}
+  .d-hist .hr .money{margin-left:auto;}
+  .hr-x{margin-left:10px;background:transparent;border:1px solid var(--line-2);color:var(--text-3);width:26px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1;flex-shrink:0;transition:.13s;}
+  .hr-x:hover{border-color:var(--danger);color:var(--danger);}
+  .hr-x.arm{width:auto;padding:0 8px;border-color:var(--danger);color:var(--danger);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;}
   .pf2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .pf2 .f{display:flex;flex-direction:column;gap:5px;}
   .pf2 .f.full{grid-column:1/-1;}
@@ -487,7 +491,7 @@ function renderDraw(){
   const items=D_ITEMS.map(it=>`<div class="d-item"><div><div class="di-desc">${esc(it.description||it.style_number||'Item')}</div><div class="di-sub">${esc(it.style_number||'')} · qty ${it.quantity||0}</div></div><div class="di-amt">${money(it.net_amount!=null?it.net_amount:(it.unit_price||0)*(it.quantity||0))}</div></div>`).join('');
 
   const payHist = D_PAYS.length
-    ? D_PAYS.map(p=>`<div class="hr"><span>${esc(p.method||'Payment')} <span class="hm">${fmtD(p.pay_date)}${p.reference?' · '+esc(p.reference):''}</span></span><span class="money">${money(p.amount)}</span></div>`).join('')
+    ? D_PAYS.map(p=>`<div class="hr"><span>${esc(p.method||'Payment')} <span class="hm">${fmtD(p.pay_date)}${p.reference?' · '+esc(p.reference):''}</span></span><span class="money">${money(p.amount)}</span><button class="hr-x" data-pid="${p.id}" title="Reverse this payment">↩</button></div>`).join('')
     : '<div class="hr" style="color:var(--text-3);justify-content:center;">No payments yet</div>';
 
   const payArea = isPaid
@@ -527,6 +531,18 @@ function renderDraw(){
     <div class="d-sec">Payments</div>
     <div class="d-hist">${payHist}</div>`;
 
+  // payment reversal: first click arms, second click (within 3s) reverses
+  document.querySelectorAll('#d-body .hr-x').forEach(b=>b.addEventListener('click',async()=>{
+    if(!b.dataset.arm){b.dataset.arm='1';b.textContent='Undo?';b.classList.add('arm');
+      setTimeout(()=>{b.dataset.arm='';b.textContent='↩';b.classList.remove('arm');},3000);return;}
+    const {data,error}=await db.rpc('reverse_payment',{p_payment:b.dataset.pid});
+    if(error){b.textContent='✕';setTimeout(()=>{b.textContent='↩';},1500);return;}
+    const row=Array.isArray(data)?data[0]:data;
+    if(row){D_INV.paid_status=row.out_status;D_INV.amount_paid=row.out_paid;D_INV.balance_due=row.out_balance;}
+    const {data:pays}=await db.from('payments').select('*').eq('invoice_id',D_INV.id).order('pay_date');D_PAYS=pays||[];
+    renderDraw();
+    await load();
+  }));
   // footer buttons
   const payBtn=document.getElementById('d-paybtn');
   payBtn.style.display=isPaid?'none':'';

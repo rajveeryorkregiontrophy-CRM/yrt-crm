@@ -446,7 +446,7 @@ const ST_LABEL={send_art:'Send Art',approval_due:'Approval Due',approved:'Approv
 const TAB_TITLE={inquiry:'Inquiries',quote:'Quotations',order:'Sales Orders'};
 const TAB_NEW={inquiry:'New Inquiry',quote:'New Quote',order:'New Order'};
 
-let DATA={inquiry:[],quote:[],order:[]};let INACTIVE=[];let TAB='order',FILTER='all';
+let DATA={inquiry:[],quote:[],order:[]};let INACTIVE=[];let LOST={inquiry:[],quote:[],order:[]};let TAB='order',FILTER='all';
 
 // Operational runway hints on each stage KPI card — flags jobs going silent.
 const ageDays=d=>{if(!d)return null;return Math.round((today-new Date(d+'T00:00:00'))/86400000);};
@@ -492,7 +492,10 @@ async function load(){
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   DATA={inquiry:[],quote:[],order:[]};
   INACTIVE=[];
+  LOST={inquiry:[],quote:[],order:[]};
   (data||[]).forEach(r=>{
+    // Lost / declined records leave the active pipeline, reachable via the Lost filter.
+    if(r.active_status==='lost'){ (LOST[r.record_type]||LOST.quote).push(r); return; }
     // Set-aside orders live in their own bucket, reachable via the Inactive filter.
     if(r.record_type==='order' && r.active_status==='inactive'){ INACTIVE.push(r); return; }
     (DATA[r.record_type]||DATA.order).push(r);
@@ -624,11 +627,19 @@ function render(){
     filtersEl.innerHTML=fkeys.map(f=>`<button class="chip ${FILTER===f?'active':''}" data-f="${f}">${f==='all'?'All':ST_LABEL[f]}</button>`).join('')
       + (MGMT?`<button class="chip chip-inactive ${FILTER==='inactive'?'active':''}" data-f="inactive">Inactive${INACTIVE.length?` <span class="chip-n">${INACTIVE.length}</span>`:''}</button>`:'');
     filtersEl.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{FILTER=c.dataset.f;render();}));
+  }else if(MGMT&&(TAB==='quote'||TAB==='inquiry')){
+    // Quotes & inquiries: Active vs Lost (declined) view.
+    const lostN=(LOST[TAB]||[]).length;
+    filtersEl.innerHTML=`<button class="chip ${FILTER!=='lost'?'active':''}" data-f="all">Active</button>`
+      +`<button class="chip chip-inactive ${FILTER==='lost'?'active':''}" data-f="lost">Lost${lostN?` <span class="chip-n">${lostN}</span>`:''}</button>`;
+    filtersEl.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{FILTER=c.dataset.f;render();}));
   }else{filtersEl.innerHTML='';}
   const legendEl=document.getElementById('legend');if(legendEl)legendEl.style.display='none';   // legend stays removed
 
   const q=(document.getElementById('search').value||'').toLowerCase();
-  const source = (TAB==='order' && FILTER==='inactive') ? INACTIVE : (DATA[TAB]||[]);
+  const source = (TAB==='order' && FILTER==='inactive') ? INACTIVE
+               : ((TAB==='quote'||TAB==='inquiry') && FILTER==='lost') ? (LOST[TAB]||[])
+               : (DATA[TAB]||[]);
   let rows=source.filter(o=>{
     if(TAB==='order'&&FILTER!=='all'&&FILTER!=='inactive'&&o.art_status!==FILTER)return false;
     if(q){const hay=((o.clients?.company_name||'')+' '+(o.subject||'')+' '+o.stage_id+' '+(o.serviced_by||'')).toLowerCase();if(!hay.includes(q))return false;}
@@ -689,7 +700,7 @@ function render(){
       return `<div class="record-card ${accentCls}" data-id="${o.id}">
         <div class="rc-rail"></div>
         <div class="rc-body">
-          <div class="rc-meta"><span class="rc-id">#${o.stage_id}</span><span class="rc-dot">·</span><span class="rc-date">${fmtShort(o.quote_date)}</span>${ct?`<span class="rc-dot">·</span><span class="rc-contact">${esc(ct)}</span>`:''}${fuChip}</div>
+          <div class="rc-meta"><span class="rc-id">#${o.stage_id}</span><span class="rc-dot">·</span><span class="rc-date">${fmtShort(o.quote_date)}</span>${ct?`<span class="rc-dot">·</span><span class="rc-contact">${esc(ct)}</span>`:''}${fuChip}${o.active_status==='lost'?`<span class="fu-chip" style="color:#ef6a63;background:rgba(239,106,99,.14);">Lost${o.lost_reason?' · '+esc(o.lost_reason):''}</span>`:''}</div>
           <div class="rc-client">${esc(o.clients?.company_name||'—')}</div>
           <div class="rc-subject">${esc(o.subject||'—')}</div>
         </div>

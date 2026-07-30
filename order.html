@@ -21,6 +21,8 @@
   html.role-process #btn-po,
   html.role-process #btn-pdf,
   html.role-process #add-line,
+  html.role-process #batch-po,
+  html.role-process #deposit-seg,
   html.role-process .split-btn{display:none !important;}
   /* line items become read-only text, not inputs */
   html.role-process .li-input{pointer-events:none;background:transparent;border-color:transparent;color:var(--text);}
@@ -148,6 +150,48 @@
   .field-row{display:flex;gap:14px;}
   .field-row .field{flex:1;}
   .loc-val{font-size:13px;color:var(--text-2);padding:8px 11px;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);}
+  .fld-blk{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#ef6a63;background:rgba(239,106,99,.14);padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:1px;}
+  /* quote outcome (lost / reactivate) */
+  #outcome-ui .btn-lost{width:100%;background:transparent;border:1px solid var(--line-2);color:var(--text-2);padding:9px;border-radius:var(--radius-sm);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:.13s;}
+  #outcome-ui .btn-lost:hover{border-color:var(--danger);color:var(--danger);}
+  #outcome-ui .lost-box{display:flex;flex-direction:column;gap:9px;}
+  #outcome-ui .lost-head{display:flex;align-items:center;gap:9px;}
+  #outcome-ui .lost-badge{font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#ef6a63;background:rgba(239,106,99,.14);padding:4px 9px;border-radius:5px;}
+  #outcome-ui .lost-when{font-size:11.5px;color:var(--text-3);}
+  #outcome-ui .btn-react{align-self:flex-start;background:transparent;border:1px solid var(--line-2);color:var(--text-2);padding:6px 12px;border-radius:var(--radius-sm);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+  #outcome-ui .btn-react:hover{border-color:var(--approved);color:#5fe3a1;}
+  /* deposits on an order */
+  .dep-tot{font-family:var(--font-mono);color:var(--brass-2);font-weight:700;margin-left:6px;text-transform:none;letter-spacing:0;}
+  .dep-list{display:flex;flex-direction:column;gap:4px;}
+  .dep-row{display:flex;align-items:center;gap:10px;font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 10px;}
+  .dep-row .dr-d{color:var(--text-3);font-size:11.5px;}
+  .dep-row .dr-m{color:var(--text-2);}
+  .dep-row .dr-a{margin-left:auto;font-family:var(--font-mono);font-weight:700;color:var(--text);}
+  .dep-applied{font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5fe3a1;background:rgba(61,220,132,.13);padding:2px 6px;border-radius:4px;}
+  .dep-empty{font-size:12px;color:var(--text-3);padding:2px 1px;}
+  .dep-form{display:grid;grid-template-columns:1.1fr .9fr 1fr auto;gap:7px;margin-top:7px;}
+  .dep-add{background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);padding:0 14px;border-radius:var(--radius-sm);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .dep-add:hover{border-color:var(--brass-2);color:#fff;}
+  /* artwork & approval */
+  .art-list{display:flex;flex-direction:column;gap:4px;}
+  .art-row{display:flex;align-items:center;gap:9px;font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 10px;}
+  .art-row .ar-ico{width:16px;text-align:center;flex-shrink:0;color:var(--text-3);}
+  .art-row .ar-t{color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .art-row .ar-t a{color:var(--brass-2);text-decoration:none;cursor:pointer;}
+  .art-row .ar-t a:hover{text-decoration:underline;}
+  .art-row .ar-d{margin-left:auto;color:var(--text-3);font-size:11px;white-space:nowrap;}
+  .art-row.ev-approved .ar-ico{color:#5fe3a1;}
+  .art-row.ev-proof_sent .ar-ico{color:#e2b74a;}
+  .art-empty{font-size:12px;color:var(--text-3);padding:2px 1px;}
+  .art-actions{display:flex;gap:7px;margin-top:7px;flex-wrap:wrap;}
+  .art-up{flex:1;text-align:center;background:var(--bg-3);border:1px dashed var(--line-2);color:var(--text-2);padding:8px 10px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;transition:.13s;}
+  .art-up:hover{border-color:var(--brass-2);color:#fff;}
+  .art-act{background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);padding:8px 12px;border-radius:var(--radius-sm);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.13s;}
+  .art-act:hover{border-color:#e2b74a;color:#e2b74a;}
+  .art-act.ok:hover{border-color:#5fe3a1;color:#5fe3a1;}
+  /* batch order-to-PO */
+  .batch-po{margin-left:10px;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);padding:5px 11px;border-radius:7px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;transition:.13s;}
+  .batch-po:hover{border-color:var(--brass-2);color:#fff;}
 
   /* line items — corporate sheet: banded header, zebra rows, focus rail */
   table{width:100%;border-collapse:collapse;}
@@ -464,7 +508,7 @@
       <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><h3>Client &amp; Order</h3></div>
       <div class="card-b">
         <div class="client-block">
-          <div class="field cb-3"><label>Client</label><select class="input" id="i-client"></select></div>
+          <div class="field cb-3"><label>Client <span id="i-client-blk" class="fld-blk" style="display:none;">⚠ Blacklisted</span></label><select class="input" id="i-client"></select></div>
           <div class="field cb-3"><label>Contact</label><select class="input" id="i-contact"></select></div>
           <div class="field cb-4"><label>Subject</label><input class="input" id="i-subject" placeholder="e.g. Trophies"></div>
           <div class="field cb-2"><label>Serviced By</label><input class="input" id="i-staff" placeholder="Karan"></div>
@@ -506,9 +550,32 @@
               <button type="button" class="stog" data-v="inactive">Inactive</button>
             </div>
           </div>
+          <div class="seg mgmt-only" id="outcome-seg" style="display:none;">
+            <label>Quote Outcome</label>
+            <div id="outcome-ui"></div>
+          </div>
           <div class="seg-2">
             <div class="seg"><label>Pick-up Date</label><input type="date" class="input" id="i-pickup"></div>
             <div class="seg"><label>Event Date</label><input type="date" class="input" id="i-event"></div>
+          </div>
+          <div class="seg mgmt-only" id="deposit-seg" style="display:none;">
+            <label>Deposits <span class="dep-tot" id="dep-total"></span></label>
+            <div class="dep-list" id="dep-list"></div>
+            <div class="dep-form">
+              <input type="date" class="input" id="dep-date">
+              <input type="number" step="0.01" class="input" id="dep-amt" placeholder="0.00">
+              <select class="input" id="dep-method"><option value="">Method</option><option>Cheque</option><option>E-transfer</option><option>Credit Card</option><option>Cash</option><option>Other</option></select>
+              <button type="button" id="dep-add" class="dep-add">Add</button>
+            </div>
+          </div>
+          <div class="seg mgmt-only" id="art-seg" style="display:none;">
+            <label>Artwork &amp; Approval</label>
+            <div class="art-list" id="art-list"></div>
+            <div class="art-actions">
+              <input type="file" id="art-file" accept=".pdf,image/*" style="display:none;">
+              <button type="button" class="art-act send" id="art-sent">➤ Proof sent — attach PDF</button>
+              <button type="button" class="art-act ok" id="art-approved">✓ Approved</button>
+            </div>
           </div>
         </div>
       </div>
@@ -517,7 +584,7 @@
 
   <!-- Line items — full width sheet -->
   <div class="card ol-lines">
-    <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><h3>Product Listing</h3><span class="ch-count" id="line-count">—</span>
+    <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><h3>Product Listing</h3><span class="ch-count" id="line-count">—</span><button type="button" class="batch-po sup-col" id="batch-po" title="Order every line's outstanding balance onto its supplier's open PO">⊞ Order all to PO</button>
       <div class="legend sup-col" id="po-legend">
         <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Not Ordered</span>
         <span class="lg"><span class="lg-dot" style="background:#f0b34e"></span>Partly Ordered</span>
@@ -624,7 +691,7 @@ function choiceModal(title,msg,buttons){
 const params=new URLSearchParams(location.search);
 const ORDER_ID=params.get('id');
 
-let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[], SUPPLIERS=[];
+let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[], SUPPLIERS=[], DEPOSITS=[], ART=[], ART_OK=false;
 
 function markDirty(){DIRTY=true;const m=document.getElementById('save-msg');m.textContent='Unsaved changes';m.className='status-msg';}
 
@@ -761,6 +828,10 @@ async function load(){
   SUPPLIERS=sups||[];
   const {data:items}=await db.from('quote_items').select('*').eq('quote_id',ORDER_ID).order('line_order');
   LINES=items||[];
+  const {data:deps}=await db.from('order_deposits').select('*').eq('quote_id',ORDER_ID).order('dep_date');
+  DEPOSITS=deps||[];
+  const {data:aev,error:aerr}=await db.from('art_events').select('*').eq('quote_id',ORDER_ID).order('created_at');
+  ART_OK=!aerr; ART=aev||[];   // table may not exist yet — the panel hides itself
   // resolve supplier display info for any line that has a supplier_id
   LINES.forEach(l=>{ if(l.supplier_id){ const s=SUPPLIERS.find(x=>x.id===l.supplier_id); if(s){ l._supplier_name=s.short_name||s.company_name||''; l._supplier_number=s.supplier_number; } } });
   await loadAllocations();
@@ -807,8 +878,158 @@ function applyRecordType(){
   // Convert to Invoice: sales orders only.
   const bi=document.getElementById('btn-invoice');
   if(bi)bi.style.display=ORDER.record_type==='order'?'':'none';
+  // Order State (active / set-aside) is an order concept; quotes & inquiries use Outcome.
+  const actSeg=document.getElementById('active-seg');
+  if(actSeg)actSeg.style.display=ORDER.record_type==='order'?'':'none';
+  const outSeg=document.getElementById('outcome-seg');
+  if(outSeg)outSeg.style.display=ORDER.record_type==='order'?'none':'';
+  renderOutcome();
+  renderDeposits();
+  renderArt();
   // Supplier column (PO linking) only on Sales Orders
   applySupplierColVisibility();
+}
+
+// Deposits taken against this order (management, orders only). Applied to the
+// invoice automatically at Convert-to-Invoice via record_payment.
+function renderDeposits(){
+  const seg=document.getElementById('deposit-seg'); if(!seg)return;
+  seg.style.display=(MGMT&&ORDER.record_type==='order')?'':'none';
+  if(seg.style.display==='none')return;
+  const tot=DEPOSITS.reduce((s,d)=>s+Number(d.amount||0),0);
+  document.getElementById('dep-total').textContent=tot?money(tot):'';
+  document.getElementById('dep-list').innerHTML=DEPOSITS.length
+    ? DEPOSITS.map(d=>`<div class="dep-row"><span class="dr-d">${fmtD(d.dep_date)}</span><span class="dr-m">${esc(d.method||'—')}</span>${d.applied_invoice_id?'<span class="dep-applied">applied</span>':''}<span class="dr-a">${money(d.amount)}</span></div>`).join('')
+    : '<div class="dep-empty">No deposits taken.</div>';
+  const add=document.getElementById('dep-add');
+  if(add)add.onclick=async()=>{
+    const date=document.getElementById('dep-date').value||new Date().toISOString().slice(0,10);
+    const amt=parseFloat(document.getElementById('dep-amt').value);
+    const method=document.getElementById('dep-method').value||null;
+    if(!(amt>0)){await alertModal('Deposit','Enter a deposit amount greater than 0.','warn');return;}
+    const {data,error}=await db.from('order_deposits').insert({quote_id:ORDER_ID,dep_date:date,amount:amt,method}).select().single();
+    if(error){await alertModal('Could not save deposit',error.message,'danger');return;}
+    DEPOSITS.push(data);
+    document.getElementById('dep-amt').value='';
+    renderDeposits();
+  };
+}
+
+// ── Artwork & approval: proof files + sent/approved events, synced to the stage pipeline ──
+const ART_META={upload:{ico:'⤒',t:e=>e.note||'Proof uploaded'},proof_sent:{ico:'➤',t:e=>'Proof sent'+(e.note?' — '+e.note:' to client')},approved:{ico:'✓',t:()=>'Artwork approved'},revision:{ico:'↻',t:e=>e.note||'Revision requested'}};
+function renderArt(){
+  const seg=document.getElementById('art-seg'); if(!seg)return;
+  seg.style.display=(MGMT&&ART_OK&&ORDER.record_type==='order')?'':'none';
+  if(seg.style.display==='none')return;
+  document.getElementById('art-list').innerHTML=ART.length
+    ? ART.map(e=>{const m=ART_META[e.event]||ART_META.upload;
+        const body=e.file_path?`<a data-path="${esc(e.file_path)}">${esc(m.t(e))}</a>`:esc(m.t(e));
+        return `<div class="art-row ev-${e.event}"><span class="ar-ico">${m.ico}</span><span class="ar-t">${body}</span><span class="ar-d">${fmtD(String(e.created_at).slice(0,10))}</span></div>`;}).join('')
+    : '<div class="art-empty">No artwork activity yet.</div>';
+  document.getElementById('art-list').onclick=async ev=>{
+    const a=ev.target.closest('a[data-path]'); if(!a)return;
+    const {data}=await db.storage.from('artwork').createSignedUrl(a.dataset.path,3600);
+    if(data&&data.signedUrl)window.open(data.signedUrl,'_blank');
+  };
+  // "Proof sent" REQUIRES the proof file: the click opens the picker, and only a
+  // chosen file records the send (one event carrying the PDF + date) and advances
+  // the stage. Cancelling the picker records nothing. Re-sending a revised proof
+  // is just clicking it again — every send keeps its own file.
+  const fi=document.getElementById('art-file');
+  fi.onchange=async()=>{
+    const f=fi.files&&fi.files[0]; fi.value=''; if(!f)return;
+    const path=ORDER_ID+'/'+Date.now()+'_'+f.name.replace(/[^\w.\-]+/g,'_');
+    const {error:ue}=await db.storage.from('artwork').upload(path,f);
+    if(ue){await alertModal('Upload failed',ue.message,'danger');return;}
+    await logArt('proof_sent',f.name,path);
+    await setArtStage('approval_due');
+  };
+  document.getElementById('art-sent').onclick=()=>fi.click();
+  document.getElementById('art-approved').onclick=async()=>{await logArt('approved');await setArtStage('approved');};
+}
+async function logArt(event,note,file_path){
+  const {data,error}=await db.from('art_events').insert({quote_id:ORDER_ID,event,note:note||null,file_path:file_path||null}).select().single();
+  if(error){await alertModal('Could not record',error.message,'danger');return;}
+  ART.push(data); renderArt();
+}
+async function setArtStage(st){
+  if(ORDER.art_status===st)return;
+  ORDER.art_status=st;
+  document.querySelectorAll('.pip').forEach(x=>x.classList.toggle('on',x.dataset.s===st));
+  const tb=document.getElementById('t-badge'); if(tb)tb.innerHTML=`<span class="badge-st st-${st}">${label(st)}</span>`;
+  try{ await save(true); }catch(e){ markDirty(); }   // persisting logs stage_history via trigger
+}
+
+// Batch: place every line's outstanding balance onto its supplier's open PO.
+async function batchOrderToPO(){
+  if(!MGMT||!ORDER||ORDER.record_type!=='order')return;
+  if(DIRTY){const s=await confirmModal('Save first?','Line changes must be saved before ordering to POs.',{confirmText:'Save & continue',cancelText:'Cancel'});if(!s)return;await save(true);}
+  const work=[];
+  for(const ln of LINES){
+    if(!ln.id||!ln.supplier_id)continue;
+    const need=parseFloat(ln.quantity)||0;
+    const done=(ln._allocations||[]).reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);
+    if(need-done>0)work.push({ln,bal:need-done});
+  }
+  const unsourced=LINES.filter(l=>l.id&&!l.supplier_id).length;
+  if(!work.length){await alertModal('Nothing to order','Every line with a supplier is already fully on a purchase order.'+(unsourced?' '+unsourced+' line'+(unsourced===1?' has':'s have')+' no supplier yet.':''),'info');return;}
+  const supIds=[...new Set(work.map(w=>w.ln.supplier_id))];
+  const {data:pos}=await db.from('purchase_orders').select('id,po_number,supplier_id').eq('status','open').in('supplier_id',supIds).order('po_number',{ascending:false});
+  const poBySup={};(pos||[]).forEach(p=>{if(!poBySup[p.supplier_id])poBySup[p.supplier_id]=p;});
+  const doable=work.filter(w=>poBySup[w.ln.supplier_id]);
+  const missing=[...new Set(work.filter(w=>!poBySup[w.ln.supplier_id]).map(w=>w.ln._supplier_name||'supplier'))];
+  if(!doable.length){await alertModal('No open POs','None of these suppliers have an open PO. Create one in the Purchase Timeline first.','warn');return;}
+  const ok=await confirmModal('Order '+doable.length+' line'+(doable.length===1?'':'s')+' to open POs?',
+    doable.map(w=>esc(w.ln.description||w.ln.style_number||'Line')+' — <b>'+w.bal+'</b> → PO #'+poBySup[w.ln.supplier_id].po_number).join('<br>')
+    +(missing.length?'<br><br><span style="color:var(--due)">Skipped (no open PO): '+missing.map(esc).join(', ')+'</span>':''),
+    {confirmText:'Order all',cancelText:'Cancel'});
+  if(!ok)return;
+  let placed=0;
+  for(const w of doable){
+    const po=poBySup[w.ln.supplier_id];
+    const {data:alloc,error:ae}=await db.from('quote_item_allocations').insert({
+      quote_item_id:w.ln.id,supplier_id:w.ln.supplier_id,quantity:w.bal,in_po:true,po_id:po.id,status:'in_po'
+    }).select().single();
+    if(ae)continue;
+    await db.from('po_items').insert({
+      po_id:po.id,source_quote_item_id:null,source_allocation_id:alloc.id,
+      style_number:w.ln.style_number||null,category_name:w.ln.category_name||null,
+      part_no:w.ln.style_number||null,product_name:w.ln.description||null,description:w.ln.description||null,
+      quantity:w.bal,rate:Number(w.ln.unit_price)||0,amount:w.bal*(Number(w.ln.unit_price)||0),
+      ordered_for:ORDER.stage_id?String(ORDER.stage_id):null,status:'issued'
+    });
+    await db.from('quote_items').update({in_po:true,po_id:po.id,fulfillment_status:'in_po'}).eq('id',w.ln.id);
+    placed++;
+  }
+  await loadAllocations();
+  renderLines();
+  await alertModal('Ordered','Placed '+placed+' line'+(placed===1?'':'s')+' onto open POs.'+(missing.length?' Skipped (no open PO): '+missing.join(', ')+'.':''),'info');
+}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#batch-po');if(t)batchOrderToPO();});
+
+// Quote / inquiry outcome: mark lost (with an optional reason) or reactivate.
+function renderOutcome(){
+  const el=document.getElementById('outcome-ui'); if(!el) return;
+  if(ORDER.active_status==='lost'){
+    const when=ORDER.lost_at?String(ORDER.lost_at).slice(0,10):null;
+    el.innerHTML=`<div class="lost-box">
+      <div class="lost-head"><span class="lost-badge">Lost</span>${when?`<span class="lost-when">${fmtD(when)}</span>`:''}</div>
+      <input class="input" id="i-lostreason" placeholder="Reason (optional)" value="${esc(ORDER.lost_reason||'')}">
+      <button type="button" class="btn-react" id="btn-react">Reactivate quote</button>
+    </div>`;
+    const ri=document.getElementById('i-lostreason');
+    if(ri)ri.addEventListener('input',()=>{ORDER.lost_reason=ri.value;markDirty();});
+    const rb=document.getElementById('btn-react');
+    if(rb)rb.addEventListener('click',()=>{ORDER.active_status='active';ORDER.lost_at=null;ORDER.lost_reason=null;renderOutcome();markDirty();});
+  }else{
+    el.innerHTML=`<button type="button" class="btn-lost" id="btn-marklost">Mark as lost</button>`;
+    const mb=document.getElementById('btn-marklost');
+    if(mb)mb.addEventListener('click',async()=>{
+      const ok=await confirmModal('Mark as lost?','This leaves the active pipeline and moves to the Lost view. You can reactivate it any time.',{confirmText:'Mark lost',cancelText:'Cancel',danger:true});
+      if(!ok)return;
+      ORDER.active_status='lost';ORDER.lost_at=new Date().toISOString();renderOutcome();markDirty();
+    });
+  }
 }
 
 function applySupplierColVisibility(){
@@ -905,13 +1126,17 @@ function render(){
 let CLIENT_LIST=[];
 async function populateClients(){
   if(!CLIENT_LIST.length){
-    const {data}=await db.from('clients').select('id,company_name,bill_address,bill_city,bill_province,bill_postal, contacts(id,first_name,last_name,tel1,email1)').order('company_name');
+    const {data}=await db.from('clients').select('id,company_name,bill_address,bill_city,bill_province,bill_postal,blacklisted,terms_days, contacts(id,first_name,last_name,tel1,email1)').order('company_name');
     CLIENT_LIST=data||[];
   }
   const sel=document.getElementById('i-client');
-  sel.innerHTML='<option value="">— Select client —</option>'+CLIENT_LIST.map(c=>`<option value="${c.id}" ${ORDER.client_id===c.id?'selected':''}>${esc(c.company_name)}</option>`).join('');
+  sel.innerHTML='<option value="">— Select client —</option>'+CLIENT_LIST.map(c=>`<option value="${c.id}" ${ORDER.client_id===c.id?'selected':''}>${esc(c.company_name)}${c.blacklisted?' — BLACKLISTED':''}</option>`).join('');
   sel.onchange=async()=>{
     ORDER.client_id=sel.value||null;ORDER.contact_id=null;updateClientInfo();markDirty();
+    const c=CLIENT_LIST.find(x=>x.id===ORDER.client_id);
+    if(c&&c.blacklisted){
+      await alertModal('Blacklisted client','<b>'+esc(c.company_name)+'</b> is flagged as blacklisted. Clear this with management before quoting or producing anything for them.','warn');
+    }
     await offerInactiveForClient();
   };
   updateClientInfo();
@@ -920,6 +1145,7 @@ function updateClientInfo(){
   const c=CLIENT_LIST.find(x=>x.id===ORDER.client_id);
   const loc=c?[c.bill_address,c.bill_city,c.bill_province,c.bill_postal].filter(Boolean).join(', '):'';
   document.getElementById('f-loc').textContent=loc||'—';
+  const blk=document.getElementById('i-client-blk');if(blk)blk.style.display=(c&&c.blacklisted)?'':'none';
   const csel=document.getElementById('i-contact');
   const cts=c?(c.contacts||[]):[];
   csel.innerHTML='<option value="">— Select contact —</option>'+cts.map(ct=>`<option value="${ct.id}" ${ORDER.contact_id===ct.id?'selected':''}>${esc(((ct.first_name||'')+' '+(ct.last_name||'')).trim())}</option>`).join('');
@@ -1505,7 +1731,8 @@ load().then(startPresence);
     client_id:ORDER.client_id,contact_id:ORDER.contact_id,subject:ORDER.subject,serviced_by:ORDER.serviced_by,record_type:ORDER.record_type,
     po_number:ORDER.po_number,quote_date:ORDER.quote_date,ship_mode:ORDER.ship_mode,
     art_status:ORDER.art_status,pickup_date:ORDER.pickup_date,event_date:ORDER.event_date,sent_status:ORDER.sent_status,
-    active_status:ORDER.active_status,subtotal:c.subtotal||0,discount_total:c.discount_total||0,
+    active_status:ORDER.active_status,lost_reason:ORDER.lost_reason||null,lost_at:ORDER.lost_at||null,
+    subtotal:c.subtotal||0,discount_total:c.discount_total||0,
     hst:c.hst||0,grand_total:c.grand_total||0
   }).eq('id',ORDER_ID);
   if(e1){if(msg){msg.textContent='Error: '+e1.message;msg.className='status-msg err';}return;}
@@ -1881,6 +2108,13 @@ async function convertToInvoice(){
     balance_due:c.grand_total||0, paid_status:'unpaid'
   }).select().single();
   if(error){await alertModal('Couldn’t create invoice',error.message,'danger');return;}
+  // Apply deposits taken on this order as payments on the new invoice.
+  // record_payment is atomic and recomputes paid/balance/status server-side;
+  // stamping applied_invoice_id ensures a deposit can never apply twice.
+  for(const d of (DEPOSITS||[]).filter(x=>!x.applied_invoice_id)){
+    const {error:pe}=await db.rpc('record_payment',{p_invoice:inv.id,p_amount:Number(d.amount),p_method:d.method||'Deposit',p_date:d.dep_date,p_ref:d.reference||('Deposit on order #'+ORDER.stage_id)});
+    if(!pe){ await db.from('order_deposits').update({applied_invoice_id:inv.id}).eq('id',d.id); }
+  }
   // remove the order from the Sales Timeline: flip record_type to 'invoice'
   // (the timeline only shows inquiry/quote/order) and mark it completed.
   const {error:upErr}=await db.from('quotes').update({record_type:'invoice',art_status:'invoice',active_status:'completed'}).eq('id',ORDER_ID);

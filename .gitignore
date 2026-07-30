@@ -3,3 +3,6 @@ graphify-out/
 
 # OS / editor cruft
 .DS_Store
+
+# local dev aid, not site content
+CLAUDE.md

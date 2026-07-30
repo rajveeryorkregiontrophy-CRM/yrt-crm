@@ -118,6 +118,22 @@
   .add-contact:hover{border-color:var(--brass);color:var(--brass-2);}
   .msg{margin-right:auto;font-size:13px;color:var(--text-3);align-self:center;}.msg.ok{color:var(--approved);}.msg.err{color:var(--danger);}
   .btn-del-c{margin-left:auto;padding:5px 11px;font-size:12px;}
+  /* sectors */
+  .sec-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--fd,'Archivo');font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:rgba(139,147,165,.14);color:#aab2c0;vertical-align:2px;}
+  .sec-chip::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .sec-chip.hot{background:rgba(242,179,77,.14);color:#f2b34d;}
+  .sec-chip.now{background:rgba(62,207,142,.13);color:#3ecf8e;}
+  .sec-box{position:relative;}
+  .sec-menu{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--bg-2,#16181d);border:1px solid var(--line-2,#414a5c);border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.5);z-index:80;max-height:210px;overflow-y:auto;display:none;}
+  .sec-menu.open{display:block;}
+  .sec-opt{padding:9px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;}
+  .sec-opt:hover{background:var(--bg-3,#1f2229);}
+  .sec-opt .mo{font-size:11px;color:var(--text-3,#9098a8);white-space:nowrap;}
+  .sec-opt.new{color:var(--brass-2,#f4f6fb);font-weight:600;}
+  .sec-months{display:none;gap:10px;margin-top:9px;}
+  .sec-months.open{display:flex;}
+  .sec-months .field{flex:1;}
+  .sec-hint{font-size:11px;color:var(--text-3,#9098a8);margin-top:5px;}
 </style>
 </head>
 <body>
@@ -161,6 +177,15 @@ const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','N
 const ST_LABEL={send_art:'Send Art',approval_due:'Approval',approved:'Approved',in_process:'Process',invoice:'Invoice',no_data:'—'};
 const CID=new URLSearchParams(location.search).get('id');
 let CLIENT=null,CONTACTS=[],ORDERS=[],INVOICES=[],EDIT_CONTACTS=[];
+let SECTORS=[],SECMAP={},SEC_OK=false;
+const monthsAhead=m=>{const cur=new Date().getMonth()+1;return ((m-cur)+12)%12;};
+const inSeason=(f,t)=>{const cur=new Date().getMonth()+1;return f<=t?(cur>=f&&cur<=t):(cur>=f||cur<=t);};
+const seasonLabel=s=>MON[s.active_from_month-1]+'–'+MON[s.active_to_month-1];
+function secChipFor(sectorId){
+  const s=SEC_OK&&SECMAP[sectorId]; if(!s)return '';
+  const cls=inSeason(s.active_from_month,s.active_to_month)?'now':(monthsAhead(s.active_from_month)<=3&&monthsAhead(s.active_from_month)>=1?'hot':'');
+  return `<span class="sec-chip ${cls}" title="Busy season ${seasonLabel(s)}">${esc(s.name)}</span>`;
+}
 let INQ=[],QUOTE=[],SALES=[],HTAB='inquiry';
 
 function stars(n){n=n||0;let s='';for(let i=1;i<=5;i++)s+=`<span class="${i<=n?'':'off'}">★</span>`;return `<span class="stars">${s}</span>`;}
@@ -176,6 +201,8 @@ async function load(){
   ORDERS=ord||[];
   const {data:inv}=await db.from('invoices').select('*').eq('client_id',CID).order('invoice_date',{ascending:false});
   INVOICES=inv||[];
+  const {data:secs,error:secErr}=await db.from('sectors').select('*').order('name');
+  SEC_OK=!secErr; SECTORS=secs||[]; SECMAP={}; SECTORS.forEach(s=>SECMAP[s.id]=s);
   render();
 }
 
@@ -201,7 +228,7 @@ function render(){
     <div class="hero">
       <div class="hero-badge">${esc(initials(CLIENT.company_name))}</div>
       <div class="hero-main">
-        <div class="hero-name">${esc(CLIENT.company_name)} ${CLIENT.blacklisted?'<span class="blk">Blacklisted</span>':''}</div>
+        <div class="hero-name">${esc(CLIENT.company_name)} ${CLIENT.blacklisted?'<span class="blk">Blacklisted</span>':''} ${secChipFor(CLIENT.sector_id)}</div>
         <div class="hero-sub">
           <span class="it">${stars(CLIENT.rating)}</span>
           ${loc?`<span class="it">📍 ${esc(loc)}</span>`:''}
@@ -243,6 +270,8 @@ function render(){
           <div class="info-row"><span class="l">Shipment</span><span class="v">${{pickup:'Pick-up',courier:'Courier',deliver:'Deliver'}[CLIENT.shipment_mode]||'—'}</span></div>
           <div class="info-row"><span class="l">Contact Cycle</span><span class="v">${CLIENT.contact_cycle_months?CLIENT.contact_cycle_months+' months':'—'}</span></div>
           <div class="info-row"><span class="l">Referred By</span><span class="v">${esc(CLIENT.referred_by||'—')}</span></div>
+          <div class="info-row"><span class="l">Sector</span><span class="v">${SEC_OK&&SECMAP[CLIENT.sector_id]?esc(SECMAP[CLIENT.sector_id].name):'—'}</span></div>
+          <div class="info-row"><span class="l">Busy Season</span><span class="v">${SEC_OK&&SECMAP[CLIENT.sector_id]?seasonLabel(SECMAP[CLIENT.sector_id]):'—'}</span></div>
           <div class="info-row"><span class="l">Rating</span><span class="v">${stars(CLIENT.rating)}</span></div>
         </div>
       </div>
@@ -298,6 +327,15 @@ function editForm(){
   document.getElementById('d-body').innerHTML=`
     <div class="fgroup"><div class="fgroup-t">Company</div>
       <div class="field"><label>Company Name *</label><input class="in" id="company_name" value="${esc(c.company_name||'')}"></div>
+      ${SEC_OK?`<div class="field sec-box"><label>Sector</label>
+        <input class="in" id="sector-input" placeholder="Start typing — e.g. Schools" autocomplete="off" value="${esc((SECMAP[c.sector_id]||{}).name||'')}">
+        <div class="sec-menu" id="sec-menu"></div>
+        <div class="sec-months" id="sec-months">
+          <div class="field"><label>Busy From</label><select class="in" id="sec-from">${MON.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select></div>
+          <div class="field"><label>Busy To</label><select class="in" id="sec-to">${MON.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select></div>
+        </div>
+        <div class="sec-hint" id="sec-hint"></div>
+      </div>`:''}
       <div class="frow"><div class="field"><label>Rating</label><select class="in" id="rating">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${(c.rating||0)===n?'selected':''}>${n===0?'Unrated':n+' ★'}</option>`).join('')}</select></div>
         <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
         <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
@@ -320,7 +358,52 @@ function editForm(){
       <div class="field"><label>Internal Notes</label><textarea class="in" id="internal_notes">${esc(c.internal_notes||'')}</textarea></div>
     </div>`;
   drawEditContacts();
+  if(SEC_OK)wireSector(c.sector_id);
   document.getElementById('ec-add').addEventListener('click',()=>{EDIT_CONTACTS.push({first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:EDIT_CONTACTS.length===0});drawEditContacts();});
+}
+
+// ── Sector type-ahead (same rules as the client list: match existing, or create with a busy season)
+let SEC_SEL=null;
+function wireSector(currentId){
+  const inp=document.getElementById('sector-input'),menu=document.getElementById('sec-menu');
+  const months=document.getElementById('sec-months'),hint=document.getElementById('sec-hint');
+  SEC_SEL=currentId||null;
+  const sync=()=>{
+    const q=inp.value.trim().toLowerCase();
+    const exact=SECTORS.find(s=>s.name.toLowerCase()===q);
+    SEC_SEL=exact?exact.id:null;
+    const isNew=q&&!exact;
+    months.classList.toggle('open',isNew);
+    hint.textContent=exact?('Busy season '+seasonLabel(exact)):(isNew?'New sector — set its busy season below.':'');
+    if(!q){menu.classList.remove('open');return;}
+    const hits=SECTORS.filter(s=>s.name.toLowerCase().includes(q)).slice(0,8);
+    menu.innerHTML=hits.map(s=>`<div class="sec-opt" data-id="${s.id}"><span>${esc(s.name)}</span><span class="mo">${seasonLabel(s)}</span></div>`).join('')
+      +(exact?'':`<div class="sec-opt new" data-new="1">＋ Create “${esc(inp.value.trim())}”</div>`);
+    menu.classList.add('open');
+    menu.querySelectorAll('.sec-opt').forEach(o=>o.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      if(o.dataset.id){const s=SECMAP[o.dataset.id];inp.value=s.name;SEC_SEL=s.id;months.classList.remove('open');hint.textContent='Busy season '+seasonLabel(s);}
+      else{months.classList.add('open');hint.textContent='New sector — set its busy season below.';}
+      menu.classList.remove('open');
+    }));
+  };
+  inp.addEventListener('input',sync);
+  inp.addEventListener('focus',sync);
+  inp.addEventListener('blur',()=>setTimeout(()=>menu.classList.remove('open'),150));
+}
+async function resolveSector(){
+  if(!SEC_OK)return undefined;
+  const inp=document.getElementById('sector-input');
+  if(!inp)return undefined;
+  const name=inp.value.trim();
+  if(!name)return null;
+  const exact=SECTORS.find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if(exact)return exact.id;
+  const payload={name,active_from_month:+document.getElementById('sec-from').value||1,active_to_month:+document.getElementById('sec-to').value||12};
+  const {data,error}=await db.from('sectors').insert(payload).select().single();
+  if(error)throw new Error('Sector: '+error.message);
+  SECTORS.push(data);SECMAP[data.id]=data;
+  return data.id;
 }
 function drawEditContacts(){
   document.getElementById('ec-list').innerHTML=EDIT_CONTACTS.map((ct,i)=>`
@@ -341,6 +424,7 @@ async function save(){
   const msg=document.getElementById('d-msg');const name=document.getElementById('company_name').value.trim();
   if(!name){msg.textContent='Company name required';msg.className='msg err';return;}
   msg.textContent='Saving…';msg.className='msg';
+  let _sector; try{_sector=await resolveSector();}catch(e){msg.textContent=e.message;msg.className='msg err';return;}
   const payload={company_name:name,rating:+document.getElementById('rating').value||null,terms_days:+document.getElementById('terms_days').value||0,
     serviced_by:document.getElementById('serviced_by').value||null,shipment_mode:document.getElementById('shipment_mode').value,
     contact_cycle_months:+document.getElementById('contact_cycle_months').value||null,referred_by:document.getElementById('referred_by').value||null,
@@ -348,6 +432,7 @@ async function save(){
     bill_unit:document.getElementById('bill_unit').value||null,bill_address:document.getElementById('bill_address').value||null,
     bill_city:document.getElementById('bill_city').value||null,bill_postal:document.getElementById('bill_postal').value||null,
     bill_province:document.getElementById('bill_province').value||null,notes:document.getElementById('notes').value||null,internal_notes:document.getElementById('internal_notes').value||null};
+  if(_sector!==undefined)payload.sector_id=_sector;
   const {error}=await db.from('clients').update(payload).eq('id',CID);
   if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
   await db.from('contacts').delete().eq('client_id',CID);

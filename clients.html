@@ -60,7 +60,7 @@
 
   .table-wrap{}
   table{width:100%;border-collapse:collapse;}
-  thead th{text-align:left;font-family:var(--fb);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:#fff;font-weight:800;padding:12px 18px;border-bottom:2px solid var(--line-2);background:var(--bg-3);position:sticky;top:0;z-index:5;}
+  thead th{text-align:left;font-family:var(--fb);font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#8b93a4;font-weight:700;padding:11px 18px;border-bottom:2px solid var(--line-2);background:linear-gradient(180deg,var(--bg-3),var(--bg-2));position:sticky;top:0;z-index:5;}
   thead th.num{text-align:right;}
   td.num{text-align:right;}
   .q-date{font-family:var(--fb);font-size:13.5px;color:#fff;font-weight:400;white-space:nowrap;}
@@ -75,6 +75,28 @@
   .stars{color:var(--star);font-size:13px;letter-spacing:1px;}
   .stars .off{color:var(--line-2);}
   .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--bg-4);color:var(--text-2);font-family:var(--fm);}
+  tbody tr:nth-child(even){background:rgba(255,255,255,.012);}
+  /* sector chips: neutral, amber = season starting soon, green = in season now */
+  .sec-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--fd);font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:rgba(139,147,165,.14);color:#aab2c0;margin-top:5px;}
+  .sec-chip::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .sec-chip.hot{background:rgba(242,179,77,.14);color:#f2b34d;}
+  .sec-chip.now{background:rgba(62,207,142,.13);color:#3ecf8e;}
+  .filters{margin-left:auto;display:flex;gap:5px;}
+  .tab{font-size:12.5px;padding:7px 14px;border-radius:6px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;}
+  .tab.active{background:var(--brass);color:#15171c;border-color:var(--brass);}
+  .tab .tn{font-family:var(--fm);font-size:10.5px;opacity:.75;margin-left:4px;}
+  /* sector type-ahead in the drawer */
+  .sec-box{position:relative;}
+  .sec-menu{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.5);z-index:80;max-height:210px;overflow-y:auto;display:none;}
+  .sec-menu.open{display:block;}
+  .sec-opt{padding:9px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;}
+  .sec-opt:hover{background:var(--bg-3);}
+  .sec-opt .mo{font-size:11px;color:var(--text-3);white-space:nowrap;}
+  .sec-opt.new{color:var(--brass-2);font-weight:600;}
+  .sec-months{display:none;gap:10px;margin-top:9px;}
+  .sec-months.open{display:flex;}
+  .sec-months .field{flex:1;}
+  .sec-hint{font-size:11px;color:var(--text-3);margin-top:5px;}
 
   /* drawer */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:.2s;z-index:50;}
@@ -176,7 +198,7 @@
     </header>
     <div class="content">
       <section class="panel">
-        <div class="panel-head"><h2>All Clients</h2><span class="count" id="count">—</span></div>
+        <div class="panel-head"><h2 id="list-title">All Clients</h2><span class="count" id="count">—</span><div class="filters" id="cl-tabs"></div></div>
         <div id="wrap"><div class="state">Loading…</div></div>
       </section>
     </div>
@@ -196,7 +218,21 @@ await requireAuth();
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Prince Edward Island','Quebec','Saskatchewan'];
 
-let CLIENTS=[],EDITING=null,CONTACTS=[];
+let CLIENTS=[],EDITING=null,CONTACTS=[],SECTORS=[],SECMAP={},SEC_OK=false,VIEW='all';
+const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// months until a sector's busy season starts (0 = starts this month)
+const monthsAhead=m=>{const cur=new Date().getMonth()+1;return ((m-cur)+12)%12;};
+// is the current month inside the from..to range (inclusive, wraps year-end)?
+const inSeason=(f,t)=>{const cur=new Date().getMonth()+1;return f<=t?(cur>=f&&cur<=t):(cur>=f||cur<=t);};
+const seasonLabel=s=>MONS[s.active_from_month-1]+'–'+MONS[s.active_to_month-1];
+// A client is "upcoming" when their sector's season is running or starts within 3 months.
+function secState(c){
+  const s=SECMAP[c.sector_id]; if(!s)return null;
+  if(inSeason(s.active_from_month,s.active_to_month))return {s,cls:'now',note:'Active now'};
+  const d=monthsAhead(s.active_from_month);
+  if(d>=1&&d<=3)return {s,cls:'hot',note:'Starts '+MONS[s.active_from_month-1]};
+  return {s,cls:'',note:''};
+}
 
 function stars(n){n=n||0;let s='';for(let i=1;i<=5;i++)s+=`<span class="${i<=n?'':'off'}">★</span>`;return `<span class="stars">${s}</span>`;}
 function money(n){return '$'+(Number(n)||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -221,6 +257,10 @@ async function load(){
     if(q.client_id && q.quote_date && (!lastByClient[q.client_id] || q.quote_date>lastByClient[q.client_id])) lastByClient[q.client_id]=q.quote_date;
   });
   CLIENTS.forEach(c=>{ c._balance=balByClient[c.id]||0; c._lastDate=lastByClient[c.id]||null; });
+  // Sectors are optional plumbing: if the table doesn't exist yet, everything
+  // sector-related simply stays hidden and the page works as before.
+  const {data:secs,error:secErr}=await db.from('sectors').select('*').order('name');
+  SEC_OK=!secErr; SECTORS=secs||[]; SECMAP={}; SECTORS.forEach(s=>SECMAP[s.id]=s);
   const _nc=document.getElementById('nav-clients');if(_nc)_nc.textContent=CLIENTS.length;
   render();
 }
@@ -233,28 +273,49 @@ function render(){
     const hay=((c.company_name||'')+' '+(c.bill_city||'')+' '+(c.bill_province||'')+' '+contactText).toLowerCase();
     return hay.includes(q);
   });
+  // tabs: All | Upcoming Season (sector active now or starting within 3 months)
+  const upcoming=CLIENTS.filter(c=>{const st=secState(c);return st&&(st.cls==='now'||st.cls==='hot');});
+  const tabsEl=document.getElementById('cl-tabs');
+  if(tabsEl){
+    tabsEl.innerHTML=SEC_OK?`<button class="tab ${VIEW==='all'?'active':''}" data-v="all">All</button>`
+      +`<button class="tab ${VIEW==='upcoming'?'active':''}" data-v="upcoming">Upcoming Season<span class="tn">${upcoming.length}</span></button>`:'';
+    tabsEl.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{VIEW=t.dataset.v;render();}));
+  }
+  if(VIEW==='upcoming'){
+    const ids=new Set(upcoming.map(c=>c.id));
+    rows=rows.filter(c=>ids.has(c.id));
+    // soonest season first: active-now, then by months until start
+    rows.sort((a,b)=>{const A=secState(a),B=secState(b);
+      const ka=A.cls==='now'?-1:monthsAhead(A.s.active_from_month);
+      const kb=B.cls==='now'?-1:monthsAhead(B.s.active_from_month);
+      return ka-kb;});
+  }
+  const _lt=document.getElementById('list-title');if(_lt)_lt.textContent=VIEW==='upcoming'?'Upcoming Season':'All Clients';
   document.getElementById('count').textContent=rows.length+(rows.length===1?' client':' clients');
-  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">No clients found. Click “New Client” to add one.</div>`;return;}
+  if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">${VIEW==='upcoming'?'No sectors go into season within the next 3 months.':'No clients found. Click “New Client” to add one.'}</div>`;return;}
   const body=rows.map(c=>{
     const prim=(c.contacts||[]).find(x=>x.is_primary)||(c.contacts||[])[0]||{};
     const cn=((prim.first_name||'')+' '+(prim.last_name||'')).trim();
     const bal=c._balance||0;
+    const st=secState(c);
+    const secCell=st?`<span class="sec-chip ${st.cls}" title="Busy season ${seasonLabel(st.s)}">${esc(st.s.name)}${st.note?' · '+st.note:''}</span>`:'<span style="color:var(--text-3);">—</span>';
     return `<tr data-id="${c.id}">
       <td><div class="c-name">${esc(c.company_name)}</div><div class="c-loc">${esc([c.bill_city,c.bill_province].filter(Boolean).join(', ')||'—')}</div></td>
+      <td style="vertical-align:middle;">${secCell}</td>
       <td><div class="c-contact">${esc(cn||'—')}</div><div class="c-loc">${esc(prim.designation||'')}</div></td>
       <td class="c-mono">${esc(prim.tel1||'—')}</td>
       <td class="c-mono">${esc(prim.email1||'—')}</td>
       <td><span class="q-date">${fmtD(c._lastDate)}</span></td>
       <td class="num"><span class="bal" style="color:${bal>0?'var(--unpaid,#e0883a)':'var(--text-3)'};font-family:var(--fb);font-size:13.5px;font-weight:600;">${bal>0?money(bal):'—'}</span></td>
     </tr>`;}).join('');
-  document.getElementById('wrap').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Company</th><th style="width:180px;">Primary Contact</th><th style="width:140px;white-space:nowrap;">Telephone</th><th style="width:240px;">Email</th><th style="width:150px;white-space:nowrap;">Last Transaction</th><th class="num" style="width:130px;white-space:nowrap;">Balance Due</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  document.getElementById('wrap').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Company</th><th style="width:170px;">Sector</th><th style="width:170px;">Primary Contact</th><th style="width:135px;white-space:nowrap;">Telephone</th><th style="width:220px;">Email</th><th style="width:145px;white-space:nowrap;">Last Transaction</th><th class="num" style="width:125px;white-space:nowrap;">Balance Due</th></tr></thead><tbody>${body}</tbody></table></div>`;
   document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='client.html?id='+encodeURIComponent(tr.dataset.id)));
 }
 function openDrawer(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
 function closeDrawer(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.getElementById('d-msg').textContent='';}
 
 function newClient(){EDITING=null;CONTACTS=[{first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:true}];document.getElementById('d-title').textContent='New Client';drawForm({});openDrawer();}
-function edit(id){const c=CLIENTS.find(x=>x.id===id);EDITING=c;CONTACTS=(c.contacts||[]).map(x=>({...x}));if(!CONTACTS.length)CONTACTS=[{first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:true}];document.getElementById('d-title').textContent=c.company_name;drawForm(c);openDrawer();}
+// (dead edit() removed — rows open the full client profile, editing lives there)
 
 function drawForm(c){
   const provOpts=PROV.map(p=>`<option ${c.bill_province===p?'selected':''}>${p}</option>`).join('');
@@ -262,6 +323,15 @@ function drawForm(c){
     <div class="fgroup">
       <div class="fgroup-t">Company</div>
       <div class="field" style="margin-bottom:12px;"><label>Company Name *</label><input class="in" id="company_name" value="${esc(c.company_name||'')}"></div>
+      ${SEC_OK?`<div class="field sec-box" style="margin-bottom:12px;"><label>Sector</label>
+        <input class="in" id="sector-input" placeholder="Start typing — e.g. Schools" autocomplete="off" value="${esc((SECMAP[c.sector_id]||{}).name||'')}">
+        <div class="sec-menu" id="sec-menu"></div>
+        <div class="sec-months" id="sec-months">
+          <div class="field"><label>Busy From</label><select class="in" id="sec-from">${MONS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select></div>
+          <div class="field"><label>Busy To</label><select class="in" id="sec-to">${MONS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select></div>
+        </div>
+        <div class="sec-hint" id="sec-hint"></div>
+      </div>`:''}
       <div class="frow"><div class="field"><label>Rating</label><select class="in" id="rating">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${(c.rating||0)===n?'selected':''}>${n===0?'Unrated':n+' ★'}</option>`).join('')}</select></div>
         <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
         <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
@@ -285,7 +355,54 @@ function drawForm(c){
       <div class="field"><label>Internal Notes (staff only)</label><textarea class="in" id="internal_notes">${esc(c.internal_notes||'')}</textarea></div>
     </div>`;
   drawContacts();
+  if(SEC_OK)wireSector(c.sector_id);
   document.getElementById('add-contact').addEventListener('click',()=>{CONTACTS.push({first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:CONTACTS.length===0});drawContacts();});
+}
+
+// ── Sector type-ahead: pick an existing sector (no duplicates) or create one
+//    inline with its busy-season months. Matching is case-insensitive.
+let SEC_SEL=null;   // the chosen existing sector id, when the input matches one
+function wireSector(currentId){
+  const inp=document.getElementById('sector-input'),menu=document.getElementById('sec-menu');
+  const months=document.getElementById('sec-months'),hint=document.getElementById('sec-hint');
+  SEC_SEL=currentId||null;
+  const sync=()=>{
+    const q=inp.value.trim().toLowerCase();
+    const exact=SECTORS.find(s=>s.name.toLowerCase()===q);
+    SEC_SEL=exact?exact.id:null;
+    const isNew=q&&!exact;
+    months.classList.toggle('open',isNew);
+    hint.textContent=exact?('Busy season '+seasonLabel(exact)):(isNew?'New sector — set its busy season below.':'');
+    if(!q){menu.classList.remove('open');return;}
+    const hits=SECTORS.filter(s=>s.name.toLowerCase().includes(q)).slice(0,8);
+    menu.innerHTML=hits.map(s=>`<div class="sec-opt" data-id="${s.id}"><span>${esc(s.name)}</span><span class="mo">${seasonLabel(s)}</span></div>`).join('')
+      +(exact?'':`<div class="sec-opt new" data-new="1">＋ Create “${esc(inp.value.trim())}”</div>`);
+    menu.classList.add('open');
+    menu.querySelectorAll('.sec-opt').forEach(o=>o.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      if(o.dataset.id){const s=SECMAP[o.dataset.id];inp.value=s.name;SEC_SEL=s.id;months.classList.remove('open');hint.textContent='Busy season '+seasonLabel(s);}
+      else{months.classList.add('open');hint.textContent='New sector — set its busy season below.';}
+      menu.classList.remove('open');
+    }));
+  };
+  inp.addEventListener('input',sync);
+  inp.addEventListener('focus',sync);
+  inp.addEventListener('blur',()=>setTimeout(()=>menu.classList.remove('open'),150));
+}
+// Returns the sector_id to store (creating the sector first if it's new).
+async function resolveSector(){
+  if(!SEC_OK)return undefined;                       // table not installed yet
+  const inp=document.getElementById('sector-input');
+  if(!inp)return undefined;
+  const name=inp.value.trim();
+  if(!name)return null;                              // cleared -> no sector
+  const exact=SECTORS.find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if(exact)return exact.id;
+  const payload={name,active_from_month:+document.getElementById('sec-from').value||1,active_to_month:+document.getElementById('sec-to').value||12};
+  const {data,error}=await db.from('sectors').insert(payload).select().single();
+  if(error)throw new Error('Sector: '+error.message);
+  SECTORS.push(data);SECMAP[data.id]=data;
+  return data.id;
 }
 function drawContacts(){
   document.getElementById('contacts-list').innerHTML=CONTACTS.map((ct,i)=>`
@@ -308,12 +425,14 @@ async function save(){
   const name=document.getElementById('company_name').value.trim();
   if(!name){msg.textContent='Company name is required';msg.className='msg err';return;}
   msg.textContent='Saving…';msg.className='msg';
+  let _sector; try{_sector=await resolveSector();}catch(e){msg.textContent=e.message;msg.className='msg err';return;}
   const payload={company_name:name,rating:+document.getElementById('rating').value||null,
     terms_days:+document.getElementById('terms_days').value||0,serviced_by:document.getElementById('serviced_by').value||null,
     bill_unit:document.getElementById('bill_unit').value||null,bill_address:document.getElementById('bill_address').value||null,
     bill_city:document.getElementById('bill_city').value||null,bill_postal:document.getElementById('bill_postal').value||null,
     bill_province:document.getElementById('bill_province').value||null,notes:document.getElementById('notes').value||null,
     internal_notes:document.getElementById('internal_notes').value||null};
+  if(_sector!==undefined)payload.sector_id=_sector;
   let clientId;
   if(EDITING){const {error}=await db.from('clients').update(payload).eq('id',EDITING.id);if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}clientId=EDITING.id;
     await db.from('contacts').delete().eq('client_id',clientId);

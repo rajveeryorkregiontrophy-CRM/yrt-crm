@@ -10,91 +10,77 @@
     --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
     --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
     --brass:#e7ebf3;--brass-2:#f4f6fb;
-    --art:#ff6b35;--due:#ffb627;--approved:#3ddc84;--process:#3da5ff;--invoice:#b06bff;
-    --radius:11px;--radius-sm:8px;
+    --paid:#3ecf8e;--partial:#f2b34d;--danger:#ef6a63;--invoice:#8e77d4;
+    --paid-soft:rgba(62,207,142,.12);--partial-soft:rgba(242,179,77,.13);--danger-soft:rgba(239,106,99,.13);
+    --radius:12px;--radius-sm:8px;--radius-lg:16px;
     --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'Inter',system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
-  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  body{font-feature-settings:'tnum','cv01';font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
   ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
-  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);position:relative;}
   .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
   .brand .mark .amp{color:var(--brass-2);}
   .nav{padding:14px 12px;flex:1;overflow-y:auto;}
-  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
-  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:20px 10px 8px;font-weight:700;}
-  .nav-sep{height:1px;background:var(--line);margin:14px 14px;opacity:.7;}
-  .nav-label:first-child{padding-top:8px;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;overflow:hidden;}
   .nav a:hover{background:var(--bg-3);color:#fff;}
   .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
   .nav a .ico{width:17px;height:17px;flex-shrink:0;}
+  .nav-sep{height:1px;background:var(--line);margin:14px 14px;opacity:.7;}
   .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
   .logout-btn{margin-left:auto;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-3);width:32px;height:32px;border-radius:8px;cursor:pointer;display:grid;place-items:center;transition:.13s;}
   .logout-btn:hover{border-color:var(--danger);color:var(--danger);}
   .logout-btn svg{width:16px;height:16px;}
   .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-weight:900;font-size:10px;}
-  .main{display:flex;flex-direction:column;min-width:0;}
+  .main{display:flex;flex-direction:column;min-width:0;background:radial-gradient(1200px 520px at 78% -8%,rgba(120,132,158,.07),transparent 60%),var(--bg);}
   .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;position:sticky;top:0;z-index:20;}
   .topbar h1{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
-  .content{padding:24px 26px 70px;max-width:1400px;width:100%;}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
-  .kpi{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 17px;position:relative;overflow:hidden;}
-  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brass);}
-  .kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#aab0c0;font-weight:700;}
-  .kpi .v{font-family:var(--fd);font-size:27px;font-weight:900;margin-top:7px;color:#fff;}
-  .kpi .v small{font-size:15px;color:var(--text-2);}
-  .kpi .sub{font-size:11.5px;color:var(--text-3);margin-top:2px;}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
-  @media(max-width:980px){.row{grid-template-columns:1fr;}.kpis{grid-template-columns:repeat(2,1fr);}}
-  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
-  .panel-head{padding:15px 18px;border-bottom:2px solid var(--line-2);}
-  .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
-  .panel-b{padding:18px;}
-  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:13px;}
-  .bar-row .lbl{width:120px;font-size:12.5px;color:var(--text-2);font-weight:600;flex-shrink:0;text-align:right;}
-  .bar-track{flex:1;height:24px;background:var(--bg-3);border-radius:6px;overflow:hidden;position:relative;}
-  .bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 9px;font-family:var(--fm);font-size:11px;font-weight:700;color:#15171c;min-width:30px;}
-  .stat-list .s-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);}
-  .stat-list .s-row:last-child{border-bottom:none;}
-  .stat-list .s-name{font-weight:600;}.stat-list .s-val{font-family:var(--fm);font-weight:700;color:#b9c1d2;}
-  .stat-list .s-rank{font-family:var(--fm);color:var(--text-3);width:24px;}
-  .donut-wrap{display:flex;align-items:center;gap:22px;}
-  .legend{display:flex;flex-direction:column;gap:9px;}
-  .legend .li{display:flex;align-items:center;gap:9px;font-size:12.5px;}
-  .legend .li .dot{width:11px;height:11px;border-radius:3px;}
-  .legend .li .n{margin-left:auto;font-family:var(--fm);font-weight:700;color:var(--text-2);}
-  .state{padding:40px;text-align:center;color:var(--text-3);}
+  .content{padding:22px 26px 60px;max-width:1400px;width:100%;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+  .stat{position:relative;background:linear-gradient(158deg,var(--bg-3) -10%,var(--bg-2) 60%);border:1px solid var(--line);border-radius:var(--radius-lg);padding:16px 20px;overflow:hidden;min-height:92px;box-shadow:0 12px 28px -22px rgba(0,0,0,.9);}
+  .stat::after{content:'';position:absolute;left:0;top:0;height:2px;width:100%;background:linear-gradient(90deg,rgba(230,235,243,.5),transparent 70%);}
+  .st-k{font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);}
+  .st-v{font-family:var(--fd);font-size:25px;font-weight:800;line-height:1;letter-spacing:-.02em;color:#fff;margin-top:11px;font-variant-numeric:tabular-nums;}
+  .st-v small{font-size:15px;color:var(--text-3);font-weight:800;margin-right:1px;}
+  .st-sub{font-size:11.5px;color:var(--text-3);font-weight:600;margin-top:7px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;overflow:hidden;}
+  .panel-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);}
+  .panel-head h2{font-family:var(--fd);font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#c3cad8;}
+  .panel-head .ph-sub{margin-left:auto;font-size:11px;color:var(--text-3);font-weight:600;text-align:right;}
+  .panel-b{padding:16px 18px;}
+  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:11px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-row .lbl{width:96px;font-size:12px;color:var(--text-2);font-weight:600;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{flex:1;height:22px;background:var(--bg-3);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#cfd6e3,#f4f6fb);min-width:2px;}
+  .bar-fill.red{background:linear-gradient(90deg,#c9524c,#ef6a63);}
+  .bar-fill.amber{background:linear-gradient(90deg,#caa75d,#f2b34d);}
+  .bar-val{width:92px;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--text-2);flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums;}
+  .bo-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .bo-row:last-child{border-bottom:none;}
+  .bo-desc{flex:1;color:var(--text-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bo-po{font-family:var(--fm);font-size:11.5px;color:var(--text-3);white-space:nowrap;}
+  .bo-owed{font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--invoice);background:rgba(142,119,212,.14);padding:3px 9px;border-radius:5px;white-space:nowrap;}
+  .bo-due{font-size:11.5px;color:var(--text-3);white-space:nowrap;}
+  .bo-due.late{color:var(--danger);font-weight:700;}
+  .empty{font-size:12.5px;color:var(--text-3);padding:8px 0;}
+  .state{padding:50px;text-align:center;color:var(--text-3);}
+  @media(max-width:1000px){.row{grid-template-columns:1fr;}.stats{grid-template-columns:repeat(2,1fr);}}
   @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
   .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;transition:grid-template-columns .32s cubic-bezier(.4,0,.2,1);}
   .app.collapsed{grid-template-columns:68px 1fr;}
   .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);width:240px;transition:width .32s cubic-bezier(.4,0,.2,1);z-index:50;overflow:hidden;}
   .app.collapsed .sidebar{width:68px;}
   .app.collapsed .sidebar:hover{width:240px;box-shadow:10px 0 36px -8px rgba(0,0,0,.65);}
-  /* keep inner blocks at full width so text never squishes — the sidebar clips it */
   .sidebar .brand,.sidebar .nav,.sidebar .sidebar-foot{width:240px;flex-shrink:0;}
-  /* labels/sub-text fade out only; layout width is fixed so nothing mushes */
-  .nav a span.lbl,.nav a .badge,.brand .sub,.brand .mark,.sidebar-foot .foot-text,.nav-label{transition:opacity .32s cubic-bezier(.4,0,.2,1);}
-  .app.collapsed .sidebar .brand .sub,
-  .app.collapsed .sidebar .brand .mark,
-  .app.collapsed .sidebar .nav-label,
-  .app.collapsed .sidebar .nav a span.lbl,
-  .app.collapsed .sidebar .nav a .badge,
-  .app.collapsed .sidebar .sidebar-foot .foot-text{opacity:0;pointer-events:none;}
-  .app.collapsed .sidebar:hover .brand .sub,
-  .app.collapsed .sidebar:hover .brand .mark,
-  .app.collapsed .sidebar:hover .nav-label,
-  .app.collapsed .sidebar:hover .nav a span.lbl,
-  .app.collapsed .sidebar:hover .nav a .badge,
-  .app.collapsed .sidebar:hover .sidebar-foot .foot-text{opacity:1;pointer-events:auto;}
-  /* compact "YRT" marks shown only while collapsed (and not hovered) */
+  .nav a span.lbl,.brand .mark,.sidebar-foot .foot-text{transition:opacity .32s cubic-bezier(.4,0,.2,1);}
+  .app.collapsed .sidebar .brand .mark,.app.collapsed .sidebar .nav a span.lbl,.app.collapsed .sidebar .sidebar-foot .foot-text{opacity:0;pointer-events:none;}
+  .app.collapsed .sidebar:hover .brand .mark,.app.collapsed .sidebar:hover .nav a span.lbl,.app.collapsed .sidebar:hover .sidebar-foot .foot-text{opacity:1;pointer-events:auto;}
   .brand-mini{display:none;position:absolute;top:20px;left:0;width:68px;text-align:center;font-family:var(--fd);font-weight:900;font-size:15px;color:#fff;letter-spacing:.04em;}
   .app.collapsed .sidebar .brand-mini{display:block;}
   .app.collapsed .sidebar:hover .brand-mini{display:none;}
-  .app.collapsed .sidebar:not(:hover) .nav a span.lbl,
-  .app.collapsed .sidebar:not(:hover) .brand .mark,
-  .app.collapsed .sidebar:not(:hover) .sidebar-foot .foot-text{visibility:hidden;}
-  .brand{position:relative;}
-  .nav a{overflow:hidden;}
+  .app.collapsed .sidebar:not(:hover) .nav a span.lbl,.app.collapsed .sidebar:not(:hover) .brand .mark,.app.collapsed .sidebar:not(:hover) .sidebar-foot .foot-text{visibility:hidden;}
   .app.collapsed .sidebar:not(:hover) .nav a{padding-left:14px;padding-right:14px;}
   .app.collapsed .sidebar:not(:hover) .nav a.active{background:transparent;}
   .app.collapsed .sidebar:not(:hover) .nav a.active .ico{color:#fff;}
@@ -104,7 +90,6 @@
 <body>
 <div class="app collapsed">
   <aside class="sidebar">
-
     <div class="brand"><div class="brand-mini">YRT</div><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div></div>
     <nav class="nav">
       <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Client Manager</span></a>
@@ -125,28 +110,92 @@
   </aside>
   <div class="main">
     <header class="topbar"><h1>Purchase Reports</h1></header>
-    <div class="content" id="content">
-      <div class="empty-module">
-        <div class="em-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-        </div>
-        <div class="em-title">Purchase Reports</div>
-        <div class="em-sub">This module is coming soon. Spend analysis and supplier reporting will live here.</div>
-      </div>
-    </div>
+    <div class="content" id="content"><div class="state">Building reports…</div></div>
   </div>
 </div>
-<style>
-  .empty-module{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 20px;color:var(--text-3);}
-  .em-icon{width:64px;height:64px;border-radius:16px;background:var(--bg-2);border:1px solid var(--line-2);display:grid;place-items:center;margin-bottom:20px;}
-  .em-icon svg{width:30px;height:30px;color:var(--text-3);}
-  .em-title{font-family:var(--fd);font-size:20px;font-weight:800;color:var(--text);margin-bottom:8px;}
-  .em-sub{font-size:13.5px;color:var(--text-3);max-width:380px;line-height:1.6;}
-</style>
 <script type="module">
-import { supabase as db, requireAuth, signOut } from './auth.js';
+import { supabase as db, requireAuth, signOut, isManagement } from './auth.js';
 await requireAuth();
-document.getElementById('logout-btn')?.addEventListener('click',signOut);
+if(!isManagement()){ location.replace('index.html'); throw new Error('forbidden'); }
+document.getElementById('logout-btn')?.addEventListener('click',()=>signOut());
+
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const money0=n=>'$'+Math.round(Number(n||0)).toLocaleString('en-CA');
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const ym=d=>String(d).slice(0,7);
+const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
+function lastMonths(n){const out=[];const now=new Date();for(let i=n-1;i>=0;i--){const x=new Date(now.getFullYear(),now.getMonth()-i,1);out.push({key:x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'),label:MON[x.getMonth()]+' '+String(x.getFullYear()).slice(2)});}return out;}
+function bars(rows,{cls='',fmt=money0}={}){
+  if(!rows.length||rows.every(r=>!r.v))return '<div class="empty">No data yet.</div>';
+  const max=Math.max(...rows.map(r=>r.v),1);
+  return rows.map(r=>`<div class="bar-row"><span class="lbl" title="${esc(r.l)}">${esc(r.l)}</span><div class="bar-track"><div class="bar-fill ${cls}" style="width:${Math.max(2,Math.round(r.v/max*100))}%"></div></div><span class="bar-val">${fmt(r.v)}</span></div>`).join('');
+}
+
+async function load(){
+  const [items, ap] = await Promise.all([
+    db.from('po_items').select('amount,quantity,qty_received,status,backorder_expected,product_name,description, purchase_orders!inner(po_number,order_date,status,supplier_id, suppliers(short_name,company_name))'),
+    db.rpc('ap_dashboard')
+  ]);
+  if(items.error){document.getElementById('content').innerHTML=`<div class="state">Couldn't load — ${items.error.message}</div>`;return;}
+  const IT=items.data||[], AP=(ap.data||[]);
+
+  const nowKey=ym(new Date().toISOString());
+  const spendMonth=IT.filter(i=>i.purchase_orders?.order_date&&ym(i.purchase_orders.order_date)===nowKey).reduce((s,i)=>s+Number(i.amount||0),0);
+  const openPO=IT.filter(i=>i.purchase_orders?.status==='open').reduce((s,i)=>s+Number(i.amount||0),0);
+  const apOut=AP.filter(b=>b.bucket!=='paid').reduce((s,b)=>s+Number(b.balance_due||0),0);
+  const backorders=IT.filter(i=>i.status==='backordered');
+
+  // spend by month (sent+received POs; open POs are commitments, shown separately)
+  const months=lastMonths(6);
+  const spBy={};
+  IT.forEach(i=>{const d=i.purchase_orders?.order_date;if(d){const k=ym(d);spBy[k]=(spBy[k]||0)+Number(i.amount||0);}});
+  const spendRows=months.map(m=>({l:m.label,v:spBy[m.key]||0}));
+
+  // spend by supplier
+  const bySup={};
+  IT.forEach(i=>{const s=i.purchase_orders?.suppliers;const n=(s&&(s.short_name||s.company_name))||'—';bySup[n]=(bySup[n]||0)+Number(i.amount||0);});
+  const topSup=Object.entries(bySup).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([l,v])=>({l,v}));
+
+  // AP aging from ap_dashboard buckets
+  const today=new Date(new Date().toDateString());
+  const apBuckets={'Current':0,'1–30 days':0,'31–60 days':0,'60+ days':0};
+  AP.filter(b=>b.bucket!=='paid').forEach(b=>{
+    const bal=Number(b.balance_due||0); if(bal<=0)return;
+    const od=Number(b.days_overdue||0);
+    if(od<=0)apBuckets['Current']+=bal; else if(od<=30)apBuckets['1–30 days']+=bal; else if(od<=60)apBuckets['31–60 days']+=bal; else apBuckets['60+ days']+=bal;
+  });
+
+  // open backorders detail
+  const boRows=backorders.map(i=>{
+    const owed=Math.max(0,(Number(i.quantity)||0)-(Number(i.qty_received)||0));
+    const exp=i.backorder_expected;
+    const late=exp&&new Date(exp+'T23:59:59')<today;
+    const sup=i.purchase_orders?.suppliers;
+    return `<div class="bo-row">
+      <span class="bo-desc">${esc(i.product_name||i.description||'Item')}</span>
+      <span class="bo-po">PO #${esc(String(i.purchase_orders?.po_number||'—'))} · ${esc((sup&&(sup.short_name||sup.company_name))||'')}</span>
+      <span class="bo-owed">${owed} owed</span>
+      <span class="bo-due ${late?'late':''}">${exp?(late?'was due ':'due ')+fmtD(exp):'no date'}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="st-k">Ordered this month</div><div class="st-v"><small>$</small>${Math.round(spendMonth).toLocaleString('en-CA')}</div><div class="st-sub">PO lines dated ${MON[new Date().getMonth()]} ${new Date().getFullYear()}</div></div>
+      <div class="stat"><div class="st-k">Open PO value</div><div class="st-v"><small>$</small>${Math.round(openPO).toLocaleString('en-CA')}</div><div class="st-sub">not yet sent to suppliers</div></div>
+      <div class="stat"><div class="st-k">Owed to suppliers</div><div class="st-v"><small>$</small>${Math.round(apOut).toLocaleString('en-CA')}</div><div class="st-sub">${AP.filter(b=>b.bucket!=='paid').length} open bill${AP.filter(b=>b.bucket!=='paid').length===1?'':'s'}</div></div>
+      <div class="stat"><div class="st-k">Back-ordered lines</div><div class="st-v">${backorders.length}</div><div class="st-sub">awaiting supplier balance</div></div>
+    </div>
+    <div class="row">
+      <div class="panel"><div class="panel-head"><h2>Supplier Spend by Month</h2><span class="ph-sub">all PO lines by order date</span></div><div class="panel-b">${bars(spendRows,{cls:'red'})}</div></div>
+      <div class="panel"><div class="panel-head"><h2>Spend by Supplier</h2><span class="ph-sub">all-time</span></div><div class="panel-b">${bars(topSup)}</div></div>
+    </div>
+    <div class="row">
+      <div class="panel"><div class="panel-head"><h2>Payables Aging</h2><span class="ph-sub">unpaid supplier bills by days past due</span></div><div class="panel-b">${bars(Object.entries(apBuckets).map(([l,v])=>({l,v})),{cls:'amber'})}</div></div>
+      <div class="panel"><div class="panel-head"><h2>Open Back Orders</h2><span class="ph-sub">${backorders.length||'none'}</span></div><div class="panel-b">${boRows||'<div class="empty">No back orders — everything ordered has arrived in full.</div>'}</div></div>
+    </div>`;
+}
+load();
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reports — YRT CRM</title>
+<title>Sales Reports — YRT CRM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -10,91 +10,84 @@
     --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
     --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
     --brass:#e7ebf3;--brass-2:#f4f6fb;
-    --art:#ff6b35;--due:#ffb627;--approved:#3ddc84;--process:#3da5ff;--invoice:#b06bff;
-    --radius:11px;--radius-sm:8px;
+    --paid:#3ecf8e;--partial:#f2b34d;--danger:#ef6a63;--process:#5197d6;--invoice:#8e77d4;
+    --paid-soft:rgba(62,207,142,.12);--partial-soft:rgba(242,179,77,.13);--danger-soft:rgba(239,106,99,.13);
+    --radius:12px;--radius-sm:8px;--radius-lg:16px;
     --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'Inter',system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
-  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  body{font-feature-settings:'tnum','cv01';font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
   ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
-  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);position:relative;}
   .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
   .brand .mark .amp{color:var(--brass-2);}
   .nav{padding:14px 12px;flex:1;overflow-y:auto;}
-  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
-  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:20px 10px 8px;font-weight:700;}
-  .nav-sep{height:1px;background:var(--line);margin:14px 14px;opacity:.7;}
-  .nav-label:first-child{padding-top:8px;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;overflow:hidden;}
   .nav a:hover{background:var(--bg-3);color:#fff;}
   .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
   .nav a .ico{width:17px;height:17px;flex-shrink:0;}
+  .nav-sep{height:1px;background:var(--line);margin:14px 14px;opacity:.7;}
   .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
   .logout-btn{margin-left:auto;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-3);width:32px;height:32px;border-radius:8px;cursor:pointer;display:grid;place-items:center;transition:.13s;}
   .logout-btn:hover{border-color:var(--danger);color:var(--danger);}
   .logout-btn svg{width:16px;height:16px;}
   .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-weight:900;font-size:10px;}
-  .main{display:flex;flex-direction:column;min-width:0;}
+  .main{display:flex;flex-direction:column;min-width:0;background:radial-gradient(1200px 520px at 78% -8%,rgba(120,132,158,.07),transparent 60%),var(--bg);}
   .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;position:sticky;top:0;z-index:20;}
   .topbar h1{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
-  .content{padding:24px 26px 70px;max-width:1400px;width:100%;}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
-  .kpi{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 17px;position:relative;overflow:hidden;}
-  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brass);}
-  .kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#aab0c0;font-weight:700;}
-  .kpi .v{font-family:var(--fd);font-size:27px;font-weight:900;margin-top:7px;color:#fff;}
-  .kpi .v small{font-size:15px;color:var(--text-2);}
-  .kpi .sub{font-size:11.5px;color:var(--text-3);margin-top:2px;}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
-  @media(max-width:980px){.row{grid-template-columns:1fr;}.kpis{grid-template-columns:repeat(2,1fr);}}
-  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
-  .panel-head{padding:15px 18px;border-bottom:2px solid var(--line-2);}
-  .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
-  .panel-b{padding:18px;}
-  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:13px;}
-  .bar-row .lbl{width:120px;font-size:12.5px;color:var(--text-2);font-weight:600;flex-shrink:0;text-align:right;}
-  .bar-track{flex:1;height:24px;background:var(--bg-3);border-radius:6px;overflow:hidden;position:relative;}
-  .bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 9px;font-family:var(--fm);font-size:11px;font-weight:700;color:#15171c;min-width:30px;}
-  .stat-list .s-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);}
-  .stat-list .s-row:last-child{border-bottom:none;}
-  .stat-list .s-name{font-weight:600;}.stat-list .s-val{font-family:var(--fm);font-weight:700;color:#b9c1d2;}
-  .stat-list .s-rank{font-family:var(--fm);color:var(--text-3);width:24px;}
-  .donut-wrap{display:flex;align-items:center;gap:22px;}
-  .legend{display:flex;flex-direction:column;gap:9px;}
-  .legend .li{display:flex;align-items:center;gap:9px;font-size:12.5px;}
-  .legend .li .dot{width:11px;height:11px;border-radius:3px;}
-  .legend .li .n{margin-left:auto;font-family:var(--fm);font-weight:700;color:var(--text-2);}
-  .state{padding:40px;text-align:center;color:var(--text-3);}
+  .content{padding:22px 26px 60px;max-width:1400px;width:100%;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+  .stat{position:relative;background:linear-gradient(158deg,var(--bg-3) -10%,var(--bg-2) 60%);border:1px solid var(--line);border-radius:var(--radius-lg);padding:16px 20px;overflow:hidden;min-height:92px;box-shadow:0 12px 28px -22px rgba(0,0,0,.9);}
+  .stat::after{content:'';position:absolute;left:0;top:0;height:2px;width:100%;background:linear-gradient(90deg,rgba(230,235,243,.5),transparent 70%);}
+  .st-k{font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);}
+  .st-v{font-family:var(--fd);font-size:25px;font-weight:800;line-height:1;letter-spacing:-.02em;color:#fff;margin-top:11px;font-variant-numeric:tabular-nums;}
+  .st-v small{font-size:15px;color:var(--text-3);font-weight:800;margin-right:1px;}
+  .st-sub{font-size:11.5px;color:var(--text-3);font-weight:600;margin-top:7px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;overflow:hidden;}
+  .panel-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);}
+  .panel-head h2{font-family:var(--fd);font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#c3cad8;}
+  .panel-head .ph-sub{margin-left:auto;font-size:11px;color:var(--text-3);font-weight:600;text-align:right;}
+  .panel-b{padding:16px 18px;}
+  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:11px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-row .lbl{width:96px;font-size:12px;color:var(--text-2);font-weight:600;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{flex:1;height:22px;background:var(--bg-3);border-radius:6px;overflow:hidden;position:relative;}
+  .bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#cfd6e3,#f4f6fb);min-width:2px;}
+  .bar-fill.red{background:linear-gradient(90deg,#c9524c,#ef6a63);}
+  .bar-fill.green{background:linear-gradient(90deg,#2fae76,#3ecf8e);}
+  .bar-fill.amber{background:linear-gradient(90deg,#caa75d,#f2b34d);}
+  .bar-val{width:92px;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--text-2);flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums;}
+  .duo{display:flex;flex-direction:column;gap:3px;flex:1;}
+  .duo .bar-track{height:12px;}
+  .mrg{width:56px;font-family:var(--fm);font-size:11.5px;font-weight:800;flex-shrink:0;text-align:right;}
+  .mrg.pos{color:var(--paid);} .mrg.neg{color:var(--danger);}
+  .chipline{display:flex;flex-wrap:wrap;gap:7px;}
+  .oc-chip{font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:6px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:8px;}
+  .oc-chip b{font-size:14px;}
+  .oc-won{background:var(--paid-soft);color:var(--paid);}
+  .oc-lost{background:var(--danger-soft);color:var(--danger);}
+  .oc-open{background:rgba(81,151,214,.13);color:var(--process);}
+  .reason{font-size:12.5px;color:var(--text-2);padding:8px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;}
+  .reason:last-child{border-bottom:none;}
+  .reason b{color:#fff;font-family:var(--fm);}
+  .empty{font-size:12.5px;color:var(--text-3);padding:8px 0;}
+  .state{padding:50px;text-align:center;color:var(--text-3);}
+  @media(max-width:1000px){.row{grid-template-columns:1fr;}.stats{grid-template-columns:repeat(2,1fr);}}
   @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
   .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;transition:grid-template-columns .32s cubic-bezier(.4,0,.2,1);}
   .app.collapsed{grid-template-columns:68px 1fr;}
   .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);width:240px;transition:width .32s cubic-bezier(.4,0,.2,1);z-index:50;overflow:hidden;}
   .app.collapsed .sidebar{width:68px;}
   .app.collapsed .sidebar:hover{width:240px;box-shadow:10px 0 36px -8px rgba(0,0,0,.65);}
-  /* keep inner blocks at full width so text never squishes — the sidebar clips it */
   .sidebar .brand,.sidebar .nav,.sidebar .sidebar-foot{width:240px;flex-shrink:0;}
-  /* labels/sub-text fade out only; layout width is fixed so nothing mushes */
-  .nav a span.lbl,.nav a .badge,.brand .sub,.brand .mark,.sidebar-foot .foot-text,.nav-label{transition:opacity .32s cubic-bezier(.4,0,.2,1);}
-  .app.collapsed .sidebar .brand .sub,
-  .app.collapsed .sidebar .brand .mark,
-  .app.collapsed .sidebar .nav-label,
-  .app.collapsed .sidebar .nav a span.lbl,
-  .app.collapsed .sidebar .nav a .badge,
-  .app.collapsed .sidebar .sidebar-foot .foot-text{opacity:0;pointer-events:none;}
-  .app.collapsed .sidebar:hover .brand .sub,
-  .app.collapsed .sidebar:hover .brand .mark,
-  .app.collapsed .sidebar:hover .nav-label,
-  .app.collapsed .sidebar:hover .nav a span.lbl,
-  .app.collapsed .sidebar:hover .nav a .badge,
-  .app.collapsed .sidebar:hover .sidebar-foot .foot-text{opacity:1;pointer-events:auto;}
-  /* compact "YRT" marks shown only while collapsed (and not hovered) */
+  .nav a span.lbl,.brand .mark,.sidebar-foot .foot-text{transition:opacity .32s cubic-bezier(.4,0,.2,1);}
+  .app.collapsed .sidebar .brand .mark,.app.collapsed .sidebar .nav a span.lbl,.app.collapsed .sidebar .sidebar-foot .foot-text{opacity:0;pointer-events:none;}
+  .app.collapsed .sidebar:hover .brand .mark,.app.collapsed .sidebar:hover .nav a span.lbl,.app.collapsed .sidebar:hover .sidebar-foot .foot-text{opacity:1;pointer-events:auto;}
   .brand-mini{display:none;position:absolute;top:20px;left:0;width:68px;text-align:center;font-family:var(--fd);font-weight:900;font-size:15px;color:#fff;letter-spacing:.04em;}
   .app.collapsed .sidebar .brand-mini{display:block;}
   .app.collapsed .sidebar:hover .brand-mini{display:none;}
-  .app.collapsed .sidebar:not(:hover) .nav a span.lbl,
-  .app.collapsed .sidebar:not(:hover) .brand .mark,
-  .app.collapsed .sidebar:not(:hover) .sidebar-foot .foot-text{visibility:hidden;}
-  .brand{position:relative;}
-  .nav a{overflow:hidden;}
+  .app.collapsed .sidebar:not(:hover) .nav a span.lbl,.app.collapsed .sidebar:not(:hover) .brand .mark,.app.collapsed .sidebar:not(:hover) .sidebar-foot .foot-text{visibility:hidden;}
   .app.collapsed .sidebar:not(:hover) .nav a{padding-left:14px;padding-right:14px;}
   .app.collapsed .sidebar:not(:hover) .nav a.active{background:transparent;}
   .app.collapsed .sidebar:not(:hover) .nav a.active .ico{color:#fff;}
@@ -104,7 +97,6 @@
 <body>
 <div class="app collapsed">
   <aside class="sidebar">
-
     <div class="brand"><div class="brand-mini">YRT</div><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div></div>
     <nav class="nav">
       <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Client Manager</span></a>
@@ -124,77 +116,116 @@
     <div class="sidebar-foot"><div class="avatar">YRT</div><div class="foot-text"><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
   </aside>
   <div class="main">
-    <header class="topbar"><h1>Reports</h1></header>
-    <div class="content" id="content"><div class="state">Crunching numbers…</div></div>
+    <header class="topbar"><h1>Sales Reports</h1></header>
+    <div class="content" id="content"><div class="state">Building reports…</div></div>
   </div>
 </div>
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut, isManagement } from './auth.js';
 await requireAuth();
-const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:0,maximumFractionDigits:0});
+if(!isManagement()){ location.replace('index.html'); throw new Error('forbidden'); }
+document.getElementById('logout-btn')?.addEventListener('click',()=>signOut());
+
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const money0=n=>'$'+Math.round(Number(n||0)).toLocaleString('en-CA');
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
-const STAGE_COLOR={send_art:'var(--art)',approval_due:'var(--due)',approved:'var(--approved)',in_process:'var(--process)',invoice:'var(--invoice)'};
-const STAGE_LABEL={send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice'};
-async function load(){
-  const [{data:orders},{data:invoices},{data:clients}]=await Promise.all([
-    db.from('quotes').select('*, clients(company_name)').eq('record_type','order'),
-    db.from('invoices').select('*'),
-    db.from('clients').select('id,company_name')
-  ]);
-  render(orders||[],invoices||[],clients||[]);
+const ym=d=>String(d).slice(0,7);
+function lastMonths(n){const out=[];const now=new Date();for(let i=n-1;i>=0;i--){const x=new Date(now.getFullYear(),now.getMonth()-i,1);out.push({key:x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'),label:MON[x.getMonth()]+' '+String(x.getFullYear()).slice(2)});}return out;}
+function bars(rows,{cls='',fmt=money0}={}){
+  if(!rows.length||rows.every(r=>!r.v))return '<div class="empty">No data yet.</div>';
+  const max=Math.max(...rows.map(r=>r.v),1);
+  return rows.map(r=>`<div class="bar-row"><span class="lbl" title="${esc(r.l)}">${esc(r.l)}</span><div class="bar-track"><div class="bar-fill ${cls}" style="width:${Math.max(2,Math.round(r.v/max*100))}%"></div></div><span class="bar-val">${fmt(r.v)}</span></div>`).join('');
 }
-function render(orders,invoices,clients){
-  const openVal=orders.filter(o=>o.active_status!=='completed').reduce((s,o)=>s+Number(o.grand_total||0),0);
-  const invoiced=invoices.reduce((s,i)=>s+Number(i.grand_total||0),0);
-  const collected=invoices.reduce((s,i)=>s+Number(i.amount_paid||0),0);
-  const outstanding=invoices.reduce((s,i)=>s+Number(i.balance_due||0),0);
 
-  // stage breakdown
-  const stageCounts={};orders.forEach(o=>{stageCounts[o.art_status]=(stageCounts[o.art_status]||0)+1;});
-  const totalOrders=orders.length||1;
+async function load(){
+  // Five parallel pulls — everything else derives client-side.
+  const [inv, pays, quotes, cats, spend] = await Promise.all([
+    db.from('invoices').select('invoice_date,due_date,grand_total,amount_paid,balance_due,paid_status, clients(company_name)'),
+    db.from('payments').select('pay_date,amount'),
+    db.from('quotes').select('record_type,active_status,lost_reason,quote_date'),
+    db.from('quote_items').select('category_name,net_amount, quotes!inner(record_type)').eq('quotes.record_type','invoice'),
+    db.from('po_items').select('amount, purchase_orders!inner(order_date)')
+  ]);
+  const err=inv.error||pays.error||quotes.error||cats.error||spend.error;
+  if(err){document.getElementById('content').innerHTML=`<div class="state">Couldn't load — ${err.message}</div>`;return;}
+  const INV=inv.data||[],PAYS=pays.data||[],Q=quotes.data||[],CATS=cats.data||[],SPEND=spend.data||[];
 
-  // top clients by order value
-  const byClient={};orders.forEach(o=>{const n=o.clients?.company_name||'—';byClient[n]=(byClient[n]||0)+Number(o.grand_total||0);});
-  const topClients=Object.entries(byClient).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const maxClient=topClients.length?topClients[0][1]:1;
+  const nowKey=ym(new Date().toISOString());
+  const revMonth=INV.filter(i=>i.invoice_date&&ym(i.invoice_date)===nowKey).reduce((s,i)=>s+Number(i.grand_total||0),0);
+  const colMonth=PAYS.filter(p=>p.pay_date&&ym(p.pay_date)===nowKey).reduce((s,p)=>s+Number(p.amount||0),0);
+  const openInv=INV.filter(i=>i.paid_status!=='paid');
+  const ar=openInv.reduce((s,i)=>s+Number(i.balance_due||0),0);
+  const avg=INV.length?INV.reduce((s,i)=>s+Number(i.grand_total||0),0)/INV.length:0;
+
+  // revenue vs supplier spend by month (6 mo) with gross-margin %
+  const months=lastMonths(6);
+  const revBy={},spBy={};
+  INV.forEach(i=>{if(i.invoice_date){const k=ym(i.invoice_date);revBy[k]=(revBy[k]||0)+Number(i.grand_total||0);}});
+  SPEND.forEach(p=>{const d=p.purchase_orders&&p.purchase_orders.order_date;if(d){const k=ym(d);spBy[k]=(spBy[k]||0)+Number(p.amount||0);}});
+  const maxDuo=Math.max(...months.map(m=>Math.max(revBy[m.key]||0,spBy[m.key]||0)),1);
+  const duo=months.map(m=>{
+    const r=revBy[m.key]||0,s=spBy[m.key]||0;
+    const mg=r>0?Math.round((r-s)/r*100):null;
+    return `<div class="bar-row"><span class="lbl">${m.label}</span><div class="duo">
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,Math.round(r/maxDuo*100))}%"></div></div>
+      <div class="bar-track"><div class="bar-fill red" style="width:${Math.max(2,Math.round(s/maxDuo*100))}%"></div></div>
+    </div><span class="mrg ${mg===null?'':(mg>=0?'pos':'neg')}">${mg===null?'—':mg+'%'}</span></div>`;
+  }).join('');
+
+  // receivables aging
+  const today=new Date(new Date().toDateString());
+  const buckets={'Current':0,'1–30 days':0,'31–60 days':0,'60+ days':0};
+  openInv.forEach(i=>{
+    const bal=Number(i.balance_due||0); if(bal<=0)return;
+    const od=i.due_date?Math.floor((today-new Date(i.due_date+'T00:00:00'))/86400000):0;
+    if(od<=0)buckets['Current']+=bal; else if(od<=30)buckets['1–30 days']+=bal; else if(od<=60)buckets['31–60 days']+=bal; else buckets['60+ days']+=bal;
+  });
+
+  // top clients by invoiced revenue
+  const byClient={};
+  INV.forEach(i=>{const n=i.clients?.company_name||'—';byClient[n]=(byClient[n]||0)+Number(i.grand_total||0);});
+  const topClients=Object.entries(byClient).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([l,v])=>({l,v}));
+
+  // sales mix by category (invoiced jobs only)
+  const byCat={};
+  CATS.forEach(c=>{const n=c.category_name||'Uncategorized';byCat[n]=(byCat[n]||0)+Number(c.net_amount||0);});
+  const topCats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([l,v])=>({l,v}));
+
+  // quote outcomes
+  const won=Q.filter(q=>q.record_type==='invoice'||q.record_type==='order').length;
+  const lost=Q.filter(q=>q.active_status==='lost').length;
+  const openQ=Q.filter(q=>(q.record_type==='quote'||q.record_type==='inquiry')&&q.active_status==='active').length;
+  const winRate=(won+lost)>0?Math.round(won/(won+lost)*100):null;
+  const reasons={};
+  Q.filter(q=>q.active_status==='lost').forEach(q=>{const r=(q.lost_reason||'').trim()||'No reason given';reasons[r]=(reasons[r]||0)+1;});
+  const reasonRows=Object.entries(reasons).sort((a,b)=>b[1]-a[1]).slice(0,6)
+    .map(([r,n])=>`<div class="reason"><span>${esc(r)}</span><b>${n}</b></div>`).join('');
 
   document.getElementById('content').innerHTML=`
-    <div class="kpis">
-      <div class="kpi"><div class="l">Open Order Value</div><div class="v"><small>$</small>${Math.round(openVal).toLocaleString('en-CA')}</div><div class="sub">${orders.length} active orders</div></div>
-      <div class="kpi"><div class="l">Total Invoiced</div><div class="v"><small>$</small>${Math.round(invoiced).toLocaleString('en-CA')}</div><div class="sub">${invoices.length} invoices</div></div>
-      <div class="kpi"><div class="l">Collected</div><div class="v"><small>$</small>${Math.round(collected).toLocaleString('en-CA')}</div><div class="sub">received payments</div></div>
-      <div class="kpi"><div class="l">Outstanding</div><div class="v"><small>$</small>${Math.round(outstanding).toLocaleString('en-CA')}</div><div class="sub">awaiting payment</div></div>
+    <div class="stats">
+      <div class="stat"><div class="st-k">Invoiced this month</div><div class="st-v"><small>$</small>${Math.round(revMonth).toLocaleString('en-CA')}</div><div class="st-sub">${MON[new Date().getMonth()]} ${new Date().getFullYear()}</div></div>
+      <div class="stat"><div class="st-k">Collected this month</div><div class="st-v"><small>$</small>${Math.round(colMonth).toLocaleString('en-CA')}</div><div class="st-sub">payments received</div></div>
+      <div class="stat"><div class="st-k">Outstanding A/R</div><div class="st-v"><small>$</small>${Math.round(ar).toLocaleString('en-CA')}</div><div class="st-sub">across ${openInv.length} open invoice${openInv.length===1?'':'s'}</div></div>
+      <div class="stat"><div class="st-k">Average invoice</div><div class="st-v"><small>$</small>${Math.round(avg).toLocaleString('en-CA')}</div><div class="st-sub">${INV.length} invoice${INV.length===1?'':'s'} all-time</div></div>
     </div>
     <div class="row">
-      <div class="panel"><div class="panel-head"><h2>Orders by Stage</h2></div><div class="panel-b">
-        ${Object.keys(STAGE_LABEL).map(k=>{const c=stageCounts[k]||0;const pct=Math.round(c/totalOrders*100);return `
-          <div class="bar-row"><div class="lbl">${STAGE_LABEL[k]}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(pct,4)}%;background:${STAGE_COLOR[k]}">${c}</div></div></div>`;}).join('')}
-      </div></div>
-      <div class="panel"><div class="panel-head"><h2>Top Clients by Order Value</h2></div><div class="panel-b">
-        ${topClients.length?topClients.map(([n,v])=>`
-          <div class="bar-row"><div class="lbl">${esc(n.length>16?n.slice(0,15)+'…':n)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(Math.round(v/maxClient*100),8)}%;background:linear-gradient(90deg,var(--brass-2),var(--brass))">${money(v)}</div></div></div>`).join(''):'<div class="state">No order data yet.</div>'}
-      </div></div>
+      <div class="panel"><div class="panel-head"><h2>Revenue vs Supplier Spend</h2><span class="ph-sub">6 months · white = invoiced · red = PO spend · % = margin</span></div><div class="panel-b">${duo}</div></div>
+      <div class="panel"><div class="panel-head"><h2>Receivables Aging</h2><span class="ph-sub">unpaid balances by days past due</span></div><div class="panel-b">${bars(Object.entries(buckets).map(([l,v])=>({l,v})),{cls:'amber'})}</div></div>
     </div>
     <div class="row">
-      <div class="panel"><div class="panel-head"><h2>Payment Status</h2></div><div class="panel-b">
-        <div class="stat-list">
-          <div class="s-row"><span class="s-name">Paid invoices</span><span class="s-val">${invoices.filter(i=>i.paid_status==='paid').length}</span></div>
-          <div class="s-row"><span class="s-name">Partially paid</span><span class="s-val">${invoices.filter(i=>i.paid_status==='partial').length}</span></div>
-          <div class="s-row"><span class="s-name">Unpaid</span><span class="s-val">${invoices.filter(i=>i.paid_status==='unpaid').length}</span></div>
-          <div class="s-row"><span class="s-name">Collection rate</span><span class="s-val">${invoiced>0?Math.round(collected/invoiced*100):0}%</span></div>
-        </div>
-      </div></div>
-      <div class="panel"><div class="panel-head"><h2>At a Glance</h2></div><div class="panel-b">
-        <div class="stat-list">
-          <div class="s-row"><span class="s-name">Total clients</span><span class="s-val">${clients.length}</span></div>
-          <div class="s-row"><span class="s-name">Active orders</span><span class="s-val">${orders.length}</span></div>
-          <div class="s-row"><span class="s-name">Avg order value</span><span class="s-val">${money(orders.length?openVal/orders.length:0)}</span></div>
-          <div class="s-row"><span class="s-name">Jobs needing art</span><span class="s-val">${stageCounts['send_art']||0}</span></div>
-        </div>
-      </div></div>
+      <div class="panel"><div class="panel-head"><h2>Top Clients</h2><span class="ph-sub">by invoiced revenue, all-time</span></div><div class="panel-b">${bars(topClients)}</div></div>
+      <div class="panel"><div class="panel-head"><h2>Sales by Category</h2><span class="ph-sub">invoiced line items</span></div><div class="panel-b">${bars(topCats,{cls:'green'})}</div></div>
+    </div>
+    <div class="row">
+      <div class="panel"><div class="panel-head"><h2>Quote Outcomes</h2><span class="ph-sub">${winRate===null?'no closed quotes yet':'win rate '+winRate+'%'}</span></div>
+        <div class="panel-b"><div class="chipline">
+          <span class="oc-chip oc-won"><b>${won}</b> won</span>
+          <span class="oc-chip oc-lost"><b>${lost}</b> lost</span>
+          <span class="oc-chip oc-open"><b>${openQ}</b> open</span>
+        </div></div></div>
+      <div class="panel"><div class="panel-head"><h2>Why Quotes Were Lost</h2></div><div class="panel-b">${reasonRows||'<div class="empty">No lost quotes recorded yet.</div>'}</div></div>
     </div>`;
 }
-const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
 load();
 </script>
 </body>

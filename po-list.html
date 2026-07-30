@@ -383,24 +383,8 @@ async function receiveItem(itemId,poId,qty,expected){
   render();
 }
 
-// Recompute a sales line's status from ALL its orders (allocations + direct PO lines),
-// accounting for partial ordering (ordered < order qty must not look fully done).
-async function recomputeParentLine(quoteItemId, directStatus){
-  const {data:qi}=await db.from('quote_items').select('id,quantity').eq('id',quoteItemId).single();
-  if(!qi)return;
-  const {data:allocs}=await db.from('quote_item_allocations').select('quantity,status').eq('quote_item_id',quoteItemId);
-  const {data:pis}=await db.from('po_items').select('quantity,status,source_allocation_id').eq('source_quote_item_id',quoteItemId);
-  const directPis=(pis||[]).filter(p=>!p.source_allocation_id);
-  const ordered=(allocs||[]).reduce((s,a)=>s+(Number(a.quantity)||0),0)+directPis.reduce((s,p)=>s+(Number(p.quantity)||0),0);
-  const need=Number(qi.quantity)||0;
-  const statuses=[...(allocs||[]).map(a=>a.status), ...directPis.map(p=>p.status)];
-  let fs=aggregateStatus(statuses);
-  // partial guard: can't be "received"/"issued" if the whole order qty isn't even on POs yet
-  if(ordered<need && (fs==='received'||fs==='issued')){ fs='in_po'; }
-  await db.from('quote_items').update({fulfillment_status:fs}).eq('id',quoteItemId);
-}
-
-// (aggregateStatus now lives in auth.js — one rulebook shared by every page.)
+// (Parent-line recompute now happens server-side inside receive_po_item — one atomic
+//  transaction. aggregateStatus lives in auth.js as the single shared rulebook.)
 
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   FILTER=t.dataset.f;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.f===FILTER));render();
