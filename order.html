@@ -95,12 +95,10 @@
   .summary{max-width:1400px;margin:0 auto;padding:0 28px;}
   /* ── New order layout: details+status band, then a full-width line-items sheet ── */
   .order-layout{display:flex;flex-direction:column;}
-  /* equal-height band: both cards stretch, content distributes — no ragged bottoms */
-  .ol-head{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;align-items:stretch;margin-bottom:14px;}
-  .ol-head > .card{margin-bottom:0;display:flex;flex-direction:column;}
-  .ol-head > .card > .card-b{flex:1;display:flex;flex-direction:column;}
-  .ol-details .client-block{flex:1;align-content:space-between;}
-  .ol-status .status-pick{flex:1;justify-content:space-between;}
+  /* top band: cards hug their content — fields stay tight, no stretched gaps */
+  .ol-head{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;align-items:start;margin-bottom:14px;}
+  .ol-head > .card{margin-bottom:0;}
+  .ol-details .client-block{align-content:start;}
   .ol-lines{margin-bottom:0;}
   /* fixed layout → columns fill the sheet evenly instead of dumping slack into one */
   .ol-lines table{table-layout:fixed;}
@@ -976,14 +974,20 @@ async function batchOrderToPO(){
   const supIds=[...new Set(work.map(w=>w.ln.supplier_id))];
   const {data:pos}=await db.from('purchase_orders').select('id,po_number,supplier_id').eq('status','open').in('supplier_id',supIds).order('po_number',{ascending:false});
   const poBySup={};(pos||[]).forEach(p=>{if(!poBySup[p.supplier_id])poBySup[p.supplier_id]=p;});
-  const doable=work.filter(w=>poBySup[w.ln.supplier_id]);
-  const missing=[...new Set(work.filter(w=>!poBySup[w.ln.supplier_id]).map(w=>w.ln._supplier_name||'supplier'))];
-  if(!doable.length){await alertModal('No open POs','None of these suppliers have an open PO. Create one in the Purchase Timeline first.','warn');return;}
-  const ok=await confirmModal('Order '+doable.length+' line'+(doable.length===1?'':'s')+' to open POs?',
-    doable.map(w=>esc(w.ln.description||w.ln.style_number||'Line')+' — <b>'+w.bal+'</b> → PO #'+poBySup[w.ln.supplier_id].po_number).join('<br>')
-    +(missing.length?'<br><br><span style="color:var(--due)">Skipped (no open PO): '+missing.map(esc).join(', ')+'</span>':''),
+  // suppliers with no open PO get one created automatically (bare — we place the lines)
+  const missingSups=[...new Map(work.filter(w=>!poBySup[w.ln.supplier_id])
+    .map(w=>[w.ln.supplier_id,{id:w.ln.supplier_id,name:w.ln._supplier_name||'supplier'}])).values()];
+  const ok=await confirmModal('Order '+work.length+' line'+(work.length===1?'':'s')+' to POs?',
+    work.map(w=>esc(w.ln.description||w.ln.style_number||'Line')+' — <b>'+w.bal+'</b> → '
+      +(poBySup[w.ln.supplier_id]?('PO #'+poBySup[w.ln.supplier_id].po_number):('new PO for '+esc(w.ln._supplier_name||'supplier')))).join('<br>')
+    +(missingSups.length?'<br><br><span style="color:var(--due)">A new open PO will be created for: '+missingSups.map(s=>esc(s.name)).join(', ')+'</span>':''),
     {confirmText:'Order all',cancelText:'Cancel'});
   if(!ok)return;
+  for(const ms of missingSups){
+    const {data:npo,error:pe}=await db.from('purchase_orders').insert({supplier_id:ms.id,subject:ORDER.subject||'',status:'open'}).select().single();
+    if(!pe&&npo)poBySup[ms.id]=npo;
+  }
+  const doable=work.filter(w=>poBySup[w.ln.supplier_id]);
   let placed=0;
   for(const w of doable){
     const po=poBySup[w.ln.supplier_id];
@@ -1003,9 +1007,21 @@ async function batchOrderToPO(){
   }
   await loadAllocations();
   renderLines();
-  await alertModal('Ordered','Placed '+placed+' line'+(placed===1?'':'s')+' onto open POs.'+(missing.length?' Skipped (no open PO): '+missing.join(', ')+'.':''),'info');
+  await alertModal('Ordered','Placed '+placed+' line'+(placed===1?'':'s')+' onto open POs.'
+    +(missingSups.length?' Created new open PO'+(missingSups.length===1?'':'s')+' for '+missingSups.map(s=>s.name).join(', ')+'.':''),'info');
 }
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#batch-po');if(t)batchOrderToPO();});
+
+// Create a bare open PO for the modal's supplier and select it — deliberately
+// WITHOUT po-list's auto-pull, since the user is about to place lines themselves.
+async function createOpenPOInline(){
+  if(!ORD_SUP)return;
+  const {data:npo,error}=await db.from('purchase_orders').insert({supplier_id:ORD_SUP.id,subject:ORDER.subject||'',status:'open'}).select().single();
+  if(error){await alertModal('Could not create PO',error.message,'danger');return;}
+  ORD_POS.unshift(npo);
+  renderOrderModal();
+}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#of-newpo');if(t)createOpenPOInline();});
 
 // Quote / inquiry outcome: mark lost (with an optional reason) or reactivate.
 function renderOutcome(){
@@ -1467,7 +1483,12 @@ let ORD_I=null, ORD_SUP=null, ORD_POS=[], ORD_PLACED=[], ORD_DIRECT=[];
 async function openSplit(i){
   if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Ordering items to a PO is available on Sales Orders only.','info'); return; }
   const ln=LINES[i]; if(!ln){return;}
-  if(!ln.id){ alertModal('Save first','Save the order once before ordering this line to a purchase order, so the line has a record to attach to.','info'); return; }
+  if(!ln.id){
+    // New line: quietly save so it exists in the database, then carry on into the
+    // ordering panel — no bouncing the user between popups.
+    await save(true);
+    if(!ln.id){ alertModal('Could not save','The order needs to save before this line can be placed on a PO, and the save did not go through. Check the message in the bottom bar.','warn'); return; }
+  }
   if(!ln.supplier_id){
     alertModal('Pick a supplier first','Choose the supplier for this line, then order its quantity to a purchase order.','info');
     return;
@@ -1489,7 +1510,6 @@ async function openSplit(i){
   const {data:pos}=await db.from('purchase_orders').select('id,po_number,order_date').eq('status','open').eq('supplier_id',ORD_SUP.id).order('po_number');
   ORD_POS=pos||[];
   renderOrderModal();
-  document.getElementById('split-msg').textContent='';
   document.getElementById('split-overlay').classList.add('open');
 }
 function closeSplit(){document.getElementById('split-overlay').classList.remove('open');ORD_I=null;}
@@ -1553,11 +1573,12 @@ function renderOrderModal(){
       sel.innerHTML=ORD_POS.map(p=>`<option value="${p.id}">PO #${p.po_number}${p.order_date?' · '+fmt(p.order_date):''}</option>`).join('');
       sel.disabled=false;
       document.getElementById('of-add').disabled=false;
+      document.getElementById('split-msg').innerHTML='';
     }else{
       sel.innerHTML='<option value="">No open PO for this supplier</option>';
       sel.disabled=true;
       document.getElementById('of-add').disabled=true;
-      document.getElementById('split-msg').innerHTML='<span style="color:var(--text-3)">Create an open PO for '+esc(ORD_SUP.name)+' to order the balance.</span>';
+      document.getElementById('split-msg').innerHTML='<span style="color:var(--text-3)">No open PO for '+esc(ORD_SUP.name)+' yet.</span> <button type="button" id="of-newpo" class="alloc-btn" style="margin:0 0 0 8px;">＋ Create open PO</button>';
     }
   }
   // wire remove buttons
@@ -1715,14 +1736,10 @@ load().then(startPresence);
     }
     LOADED_AT = newTs;   // we now own the latest version
   }
-  // #8 — when a supplier is assigned, supplier quantity is mandatory (0 = In Stock is allowed)
-  if(ORDER.record_type==='order'){
-    const missing=LINES.filter(l=>l.supplier_id && !(l._allocations&&l._allocations.length) && (l.supplier_quantity==null||l.supplier_quantity===''));
-    if(missing.length && !silent){
-      await alertModal('Supplier quantity required','One or more lines have a supplier but no Supplier Qty.<br><br>Enter the quantity going to the supplier, or set it to <b>0</b> if the item is already in stock.','warn');
-      return;
-    }
-  }
+  // (The old "Supplier quantity required" gate is gone: the allocation flow — Order
+  //  to PO with an explicit quantity — replaced supplier_quantity, and save() below
+  //  mirrors it from the order qty on every write. The gate referenced a field the
+  //  UI no longer has and could deadlock saving on legacy rows.)
   const msg=document.getElementById('save-msg');
   if(msg){msg.textContent=silent?'Adding to open PO…':'Saving…';msg.className='status-msg';}
   const c=ORDER._calc||{};
@@ -1789,47 +1806,25 @@ load().then(startPresence);
     }
   }
 
-  //    c) allocations: rebuild for split lines not yet committed (issued) to a PO.
-  for(let idx=0; idx<LINES.length; idx++){
-    const l=LINES[idx];
-    if(!l.id)continue;
-    if(l._allocations&&l._allocations.length){
-      // If existing allocations are already ISSUED in a PO, leave them untouched.
-      const {data:exAlloc}=await db.from('quote_item_allocations').select('id,in_po,status').eq('quote_item_id',l.id);
-      const anyIssued=(exAlloc||[]).some(a=>a.status&&a.status!=='pending'&&a.status!=='in_po');
-      if(anyIssued) continue;   // committed splits are locked
-
-      // This line is being (re)split. If the PARENT line was previously auto-added to an
-      // OPEN PO as a single po_item, remove that — only the split portions should remain.
-      // (Find po_items sourced directly from this quote_item on OPEN POs and delete them.)
-      const {data:parentPoItems}=await db.from('po_items').select('id,po_id').eq('source_quote_item_id',l.id);
-      if(parentPoItems&&parentPoItems.length){
-        const poIds=[...new Set(parentPoItems.map(p=>p.po_id))];
-        const {data:openPOs}=await db.from('purchase_orders').select('id').eq('status','open').in('id',poIds);
-        const openSet=new Set((openPOs||[]).map(p=>p.id));
-        const delIds=parentPoItems.filter(p=>openSet.has(p.po_id)).map(p=>p.id);
-        if(delIds.length) await db.from('po_items').delete().in('id',delIds);
-      }
-      // reset the parent line so it's no longer treated as wholly in a PO
-      await db.from('quote_items').update({in_po:false,po_id:null,fulfillment_status:'none'}).eq('id',l.id);
-      l.in_po=false;l.po_id=null;l.fulfillment_status='none';
-
-      // rebuild allocations from the split modal
-      await db.from('quote_item_allocations').delete().eq('quote_item_id',l.id);
-      const allocRows=l._allocations.map(a=>({quote_item_id:l.id, supplier_id:a.supplier_id||null, quantity:parseFloat(a.quantity)||0, in_po:false, po_id:a.po_id||null, status:'pending'}));
-      if(allocRows.length) await db.from('quote_item_allocations').insert(allocRows);
-    }
-  }
+  //    c) allocations are AUTHORITATIVE and owned entirely by the ordering flows
+  //       ("Order to PO", batch, receiving). Save must never rebuild them: the old
+  //       delete-and-reinsert here downgraded committed allocations to 'pending',
+  //       released the line, and orphaned PO items via the SET NULL foreign key.
 
   //    d) for lines already in an OPEN (not yet sent) PO, push supplier-qty edits
   //       through to the matching po_item so the PO stays in sync immediately.
   for(let idx=0; idx<LINES.length; idx++){
     const l=LINES[idx];
     if(!l.id || !l.in_po || !l.po_id) continue;
+    // allocation-managed lines (ordered via "Order to PO" / batch) are owned by their
+    // allocations — never touch them here, or a save could silently unlink them.
+    if(l._allocations && l._allocations.length) continue;
     // only if that PO is still open (sent POs are locked records)
     const {data:po}=await db.from('purchase_orders').select('status').eq('id',l.po_id).single();
     if(!po || po.status!=='open') continue;
-    const supQty=l.supplier_quantity!=null&&l.supplier_quantity!==''?parseFloat(l.supplier_quantity)||0:0;
+    // missing supplier qty means "mirror the order qty" (save writes it that way) —
+    // it must NOT read as 0, which released the line from its PO on every save.
+    const supQty=(l.supplier_quantity!=null&&l.supplier_quantity!=='')?(parseFloat(l.supplier_quantity)||0):(parseFloat(l.quantity)||0);
     if(supQty<=0){
       // supplier qty cleared / set to in-stock -> remove from the PO and release the line
       await db.from('po_items').delete().eq('po_id',l.po_id).eq('source_quote_item_id',l.id);
