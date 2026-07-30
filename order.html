@@ -95,19 +95,25 @@
   .summary{max-width:1400px;margin:0 auto;padding:0 28px;}
   /* ── New order layout: details+status band, then a full-width line-items sheet ── */
   .order-layout{display:flex;flex-direction:column;}
-  /* top band: left column stacks Client&Order + Deposits/Artwork so it fills
-     alongside Status — tight fields, no voids between the boxes */
-  .ol-head{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;align-items:start;margin-bottom:14px;}
-  .ol-head .card{margin-bottom:0;}
-  .ol-left{display:flex;flex-direction:column;gap:14px;min-width:0;}
+  /* Full-width stacked sections — two unequal columns always leave a hole
+     somewhere, so there are no columns: every card spans the page and hugs
+     its content. Structurally gap-proof at any record type or width. */
+  .order-layout > .card{margin-bottom:14px;}
   .ol-details .client-block{align-content:start;}
+  /* Status as a horizontal command strip */
+  #status-card .status-pick{display:flex;flex-direction:row;flex-wrap:wrap;gap:16px 30px;align-items:flex-start;}
+  #status-card .seg{min-width:170px;flex:0 0 auto;}
+  #status-card #stage-seg{flex:1 1 360px;}
+  #status-card #active-seg{min-width:220px;}
+  #status-card #outcome-seg{min-width:260px;flex:1 1 260px;max-width:420px;}
+  #status-card .seg-2{display:flex;gap:12px;min-width:330px;flex:0 1 auto;}
+  #status-card .seg-2 .seg{min-width:155px;flex:1;}
   #extras-card .card-b{padding:14px 18px 16px;}
-  .extras-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+  .extras-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 28px;align-items:start;}
   @media(max-width:1240px){.extras-grid{grid-template-columns:1fr;}}
   .ol-lines{margin-bottom:0;}
   /* fixed layout → columns fill the sheet evenly instead of dumping slack into one */
   .ol-lines table{table-layout:fixed;}
-  @media(max-width:1040px){.ol-head{grid-template-columns:1fr;}}
   @media(max-width:1040px){.ol-lines table{table-layout:auto;min-width:900px;}}
   /* topbar identity meta (replaces the old summary strip) */
   .tb-meta{display:flex;align-items:center;gap:12px;min-width:0;}
@@ -505,53 +511,25 @@
 
 <template id="tpl">
 <div class="order-layout">
-  <div class="ol-head">
-   <div class="ol-left">
     <!-- Client / order details -->
     <div class="card ol-details">
       <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><h3>Client &amp; Order</h3></div>
       <div class="card-b">
         <div class="client-block">
-          <div class="field cb-3"><label>Client <span id="i-client-blk" class="fld-blk" style="display:none;">⚠ Blacklisted</span></label><select class="input" id="i-client"></select></div>
-          <div class="field cb-3"><label>Contact</label><select class="input" id="i-contact"></select></div>
-          <div class="field cb-4"><label>Subject</label><input class="input" id="i-subject" placeholder="e.g. Trophies"></div>
+          <div class="field cb-2"><label>Client <span id="i-client-blk" class="fld-blk" style="display:none;">⚠ Blacklisted</span></label><select class="input" id="i-client"></select></div>
+          <div class="field cb-2"><label>Contact</label><select class="input" id="i-contact"></select></div>
+          <div class="field cb-2"><label>Subject</label><input class="input" id="i-subject" placeholder="e.g. Trophies"></div>
           <div class="field cb-2"><label>Serviced By</label><input class="input" id="i-staff" placeholder="Karan"></div>
           <div class="field cb-2"><label>Quote Date</label><input type="date" class="input" id="i-qdate"></div>
           <div class="field cb-2"><label>Ship Mode</label><select class="input" id="i-ship"><option value="pickup">Pick-up</option><option value="courier">Courier</option><option value="deliver">Deliver</option></select></div>
           <div class="field cb-2"><label>Client P.O. #</label><input class="input" id="i-po" placeholder="optional"></div>
-          <div class="field cb-6"><label>Billing Location</label><div class="loc-val" id="f-loc">—</div></div>
+          <div class="field cb-4"><label>Billing Location</label><div class="loc-val" id="f-loc">—</div></div>
         </div>
       </div>
     </div>
 
-    <!-- Deposits & Artwork sit under Client & Order so the band stays balanced -->
-    <div class="card mgmt-only" id="extras-card" style="display:none;">
-      <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><h3>Deposits &amp; Artwork</h3></div>
-      <div class="card-b"><div class="extras-grid">
-        <div class="seg" id="deposit-seg" style="display:none;">
-          <label>Deposits <span class="dep-tot" id="dep-total"></span></label>
-          <div class="dep-list" id="dep-list"></div>
-          <div class="dep-form">
-            <input type="date" class="input" id="dep-date">
-            <input type="number" step="0.01" class="input" id="dep-amt" placeholder="0.00">
-            <select class="input" id="dep-method"><option value="">Method</option><option>Cheque</option><option>E-transfer</option><option>Credit Card</option><option>Cash</option><option>Other</option></select>
-            <button type="button" id="dep-add" class="dep-add">Add</button>
-          </div>
-        </div>
-        <div class="seg" id="art-seg" style="display:none;">
-          <label>Artwork &amp; Approval</label>
-          <div class="art-list" id="art-list"></div>
-          <div class="art-actions">
-            <input type="file" id="art-file" accept=".pdf,image/*" style="display:none;">
-            <button type="button" class="art-act send" id="art-sent">➤ Proof sent — attach PDF</button>
-            <button type="button" class="art-act ok" id="art-approved">✓ Approved</button>
-          </div>
-        </div>
-      </div></div>
-    </div>
-   </div>
     <!-- Status -->
-    <div class="card ol-status">
+    <div class="card" id="status-card">
       <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span><h3>Status</h3></div>
       <div class="card-b">
         <div class="status-pick">
@@ -591,7 +569,32 @@
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Deposits & Artwork sit under Client & Order so the band stays balanced -->
+    <div class="card mgmt-only" id="extras-card" style="display:none;">
+      <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><h3>Deposits &amp; Artwork</h3></div>
+      <div class="card-b"><div class="extras-grid">
+        <div class="seg" id="deposit-seg" style="display:none;">
+          <label>Deposits <span class="dep-tot" id="dep-total"></span></label>
+          <div class="dep-list" id="dep-list"></div>
+          <div class="dep-form">
+            <input type="date" class="input" id="dep-date">
+            <input type="number" step="0.01" class="input" id="dep-amt" placeholder="0.00">
+            <select class="input" id="dep-method"><option value="">Method</option><option>Cheque</option><option>E-transfer</option><option>Credit Card</option><option>Cash</option><option>Other</option></select>
+            <button type="button" id="dep-add" class="dep-add">Add</button>
+          </div>
+        </div>
+        <div class="seg" id="art-seg" style="display:none;">
+          <label>Artwork &amp; Approval</label>
+          <div class="art-list" id="art-list"></div>
+          <div class="art-actions">
+            <input type="file" id="art-file" accept=".pdf,image/*" style="display:none;">
+            <button type="button" class="art-act send" id="art-sent">➤ Proof sent — attach PDF</button>
+            <button type="button" class="art-act ok" id="art-approved">✓ Approved</button>
+          </div>
+        </div>
+      </div></div>
+    </div>
 
   <!-- Line items — full width sheet -->
   <div class="card ol-lines">
