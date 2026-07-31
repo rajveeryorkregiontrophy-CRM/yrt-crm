@@ -73,7 +73,7 @@
     --st-art-bg:var(--art);--st-due-bg:var(--due);--st-approved-bg:var(--approved);--st-process-bg:var(--process);--st-invoice-bg:var(--invoice);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
+  body{font-family:var(--font-body);background:radial-gradient(120% 70% at 50% -12%,#1b202a 0%,var(--bg) 56%) no-repeat fixed var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
 
   .topbar{height:58px;background:var(--paper-2);border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:16px;padding:0 24px;position:sticky;top:0;z-index:30;}
   .back{display:inline-flex;align-items:center;gap:7px;color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;padding:7px 11px;border-radius:var(--radius-sm);border:1px solid var(--line-strong);background:var(--paper-2);}
@@ -90,69 +90,79 @@
   .btn-brass{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border-color:#f4f6fb;}
   .btn-brass:hover{background:#c3cad8;}
 
-  .wrap{max-width:1400px;margin:0 auto;padding:16px 28px 10px;flex:1 0 auto;width:100%;}
-  /* at-a-glance summary strip */
-  .summary{max-width:1400px;margin:0 auto;padding:0 28px;}
-  /* ── New order layout: details+status band, then a full-width line-items sheet ── */
-  .order-layout{display:flex;flex-direction:column;}
-  /* Full-width stacked sections — two unequal columns always leave a hole
-     somewhere, so there are no columns: every card spans the page and hugs
-     its content. Structurally gap-proof at any record type or width. */
-  .order-layout > .card{margin-bottom:14px;}
-  .ol-details .client-block{align-content:start;}
-  /* Status as a command rail: zones split by hairlines, every control 34px tall */
-  #status-card .card-b{padding:15px 18px;}
-  #status-card .status-pick{display:flex;flex-direction:row;flex-wrap:wrap;gap:14px 0;align-items:stretch;}
-  #status-card .status-pick > .seg{min-width:0;flex:0 0 auto;padding:0 26px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:8px;justify-content:flex-start;}
-  #status-card .status-pick > .seg:first-child{padding-left:0;border-left:none;}
-  html.role-process #status-card #stage-seg{border-left:none;padding-left:0;}
-  #status-card #stage-seg{flex:1 1 auto;}
-  #status-card #outcome-seg{min-width:260px;max-width:440px;flex:1 1 260px;}
-  #status-card .seg-2{display:flex;flex-direction:row;gap:14px;padding:0 0 0 26px;border-left:1px solid var(--line);}
-  #status-card .seg-2 .seg{display:flex;flex-direction:column;gap:8px;}
-  #status-card .seg-2 .input{height:34px;padding:0 11px;width:150px;}
-  @media(max-width:1080px){#status-card .status-pick{gap:16px 26px;}#status-card .status-pick > .seg,#status-card .seg-2{border-left:none;padding-left:0;}}
-  #extras-card .card-b{padding:14px 18px 16px;}
-  .extras-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 28px;align-items:start;}
-  @media(max-width:1240px){.extras-grid{grid-template-columns:1fr;}}
-  .ol-lines{margin-bottom:0;}
-  /* fixed layout → columns fill the sheet evenly instead of dumping slack into one */
-  .ol-lines table{table-layout:fixed;}
-  @media(max-width:1040px){.ol-lines table{table-layout:auto;min-width:900px;}}
-  /* topbar identity meta (replaces the old summary strip) */
+  .wrap{max-width:1400px;margin:0 auto;padding:18px 28px 12px;flex:1 0 auto;width:100%;}
+  /* ── Bench & rail ─────────────────────────────────────────────────
+     Center: one document card — order fields band + the product sheet.
+     Right: a 310px status rail — production tracker, order controls,
+     deposits, artwork — stacked ruled sections. Both columns stretch
+     to the same bottom edge; --gx is the document's shared gutter. */
+  .order-layout{--gx:22px;display:flex;align-items:stretch;gap:16px;margin-bottom:14px;}
+  .order-layout > .card{margin-bottom:0;}
+  .doc{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;}
+  .rail{flex:0 0 310px;display:flex;flex-direction:column;background:linear-gradient(180deg,#14171d,#111318);}
+  .rail::after{content:'';flex:1 1 0;}
+  .band{padding:17px var(--gx) 19px;}
+  .band + .band{border-top:1px solid var(--line);}
+  .band-flush{padding:0;}
+  .b-fields{flex:0 0 auto;}
+  .b-lines{flex:1 1 auto;display:flex;flex-direction:column;}
+  .sheet-fill{flex:1 1 0;min-height:0;margin:6px var(--gx) 0;background:repeating-linear-gradient(180deg,transparent 0 43px,var(--line) 43px 44px);opacity:.28;}
+  .b-lines .listing-foot{margin-top:auto;}
+  .cb-sp2{grid-column:span 2;}
+  .eyebrow{font-family:var(--font-display);font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#c3cad8;}
+  .eyebrow-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .b-lines .eyebrow-row{padding:15px var(--gx) 12px;}
+  .b-lines table{table-layout:fixed;}
+  /* rail sections — ruled, evenly padded, no boxes inside boxes */
+  .rs{padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);}
+  .rail > .rs:first-child{border-top:none;}
+  .rail .rtype{display:flex;width:100%;}
+  .rail .rt{flex:1;padding:0 8px;}
+  .rail .statetog{display:flex;width:100%;}
+  .rail .stog{flex:1;padding:0 8px;}
+  .rail .seg-2 .input{height:34px;padding:0 10px;}
+  #outcome-seg{min-width:0;}
+  /* quality floor */
+  .rt:focus-visible,.stog:focus-visible,.btn:focus-visible{outline:2px solid var(--brass-2);outline-offset:1px;}
+  @media(prefers-reduced-motion:reduce){.sk-card{animation:none;}}
+  /* stacked mode: rail becomes a 2-column ruled grid below the doc */
+  @media(max-width:1120px){
+    .order-layout{flex-direction:column;}
+    .rail{flex:1 1 auto;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
+    .rail::after{display:none;}
+    #extras-card{display:contents;}
+    .rail .rs,.rail > .rs:first-child{border:solid var(--line);border-width:1px 0 0 1px;margin:-1px 0 0 -1px;}
+  }
+  @media(max-width:1040px){.b-lines table{table-layout:auto;min-width:900px;}}
+  @media(max-width:980px){.b-fields .client-block{grid-template-columns:1fr 1fr;}.b-fields .client-block .cb-sp2{grid-column:auto;}}
+  @media(max-width:700px){.rail{grid-template-columns:1fr;}}
+  @media(max-width:560px){.b-fields .client-block{grid-template-columns:1fr;}}
+  /* topbar identity meta */
   .tb-meta{display:flex;align-items:center;gap:12px;min-width:0;}
   .tbm-client{font-size:13px;font-weight:700;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px;}
   .tbm-sep{width:1px;height:18px;background:var(--line-2);}
   .tbm-total{font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--brass-2);white-space:nowrap;font-variant-numeric:tabular-nums;}
   @media(max-width:900px){.tb-meta{display:none;}}
-  /* skeleton loading — mirrors the final layout so nothing looks split/broken */
-  .sk-page{display:flex;flex-direction:column;gap:14px;padding-top:2px;}
-  .sk-band{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;}
+  /* skeleton — mirrors the bench & rail */
+  .sk-page{padding-top:2px;}
+  .sk-band{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;}
   .sk-card{border-radius:var(--radius);background:linear-gradient(100deg,var(--bg-2) 35%,var(--bg-3) 50%,var(--bg-2) 65%);background-size:220% 100%;animation:sk-sh 1.3s ease-in-out infinite;border:1px solid var(--line);}
-  .sk-a,.sk-b{height:250px;}
-  .sk-sheet{height:340px;}
+  .sk-doc{height:64vh;}
+  .sk-rail{height:64vh;}
+  @media(max-width:1120px){.sk-band{grid-template-columns:1fr;}}
   @keyframes sk-sh{to{background-position:-120% 0;}}
-  @media(max-width:1040px){.sk-band{grid-template-columns:1fr;}}
-  .summary-inner{display:flex;align-items:stretch;gap:0;background:linear-gradient(158deg,var(--bg-3) -30%,var(--paper-2) 55%);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;margin-top:14px;box-shadow:0 10px 26px -22px rgba(0,0,0,.9);}
-  .sum-cell{flex:1;padding:12px 18px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;min-width:0;}
-  .sum-cell:last-child{border-right:none;}
-  .sum-cell .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:4px;}
-  .sum-cell .v{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .sum-cell.grow{flex:1.6;}
-  .sum-cell .v.accent{color:var(--brass-2);font-family:var(--fm);}
-  .grid{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start;}
-  @media(max-width:1000px){.grid{grid-template-columns:1fr;}}
 
-  .card{background:linear-gradient(165deg,var(--bg-3) -35%,var(--paper-2) 45%);border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:0 12px 28px -24px rgba(0,0,0,.9);margin-bottom:14px;overflow:visible;}
+
+  .card{background:linear-gradient(165deg,var(--bg-3) -35%,var(--paper-2) 45%);border:1px solid var(--line-2);border-radius:var(--radius);box-shadow:0 18px 44px -30px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.035);margin-bottom:14px;overflow:visible;}
   .card-h{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
   .card-h h3{font-family:var(--font-display);font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#c3cad8;}
   .card-h .ch-ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--bg-4);border:1px solid var(--line-2);color:var(--text-2);}
   .card-h .ch-ico svg{width:13px;height:13px;}
-  .card-h .ch-count{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-left:2px solid var(--line-2);padding:1px 0 1px 9px;}
+  .card-h .ch-count,.eyebrow-row .ch-count{font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-left:2px solid var(--line-2);padding:1px 0 1px 9px;}
   .card-b{padding:16px 18px;}
 
   /* client header block — one even, dense 6-col grid (no ragged columns) */
-  .client-block{display:grid;grid-template-columns:repeat(6,1fr);gap:13px 16px;}
+  .client-block{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 16px;}
   .client-block .field{margin-bottom:0;min-width:0;}
   .cb-3{grid-column:span 3;} .cb-2{grid-column:span 2;} .cb-4{grid-column:span 4;} .cb-6{grid-column:span 6;}
   .field{margin-bottom:10px;}
@@ -182,7 +192,7 @@
   .dep-row .dr-a{margin-left:auto;font-family:var(--font-mono);font-weight:700;color:var(--text);}
   .dep-applied{font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5fe3a1;background:rgba(61,220,132,.13);padding:2px 6px;border-radius:4px;}
   .dep-empty{font-size:12px;color:var(--text-3);padding:2px 1px;}
-  .dep-form{display:grid;grid-template-columns:1.1fr .9fr 1fr auto;gap:7px;margin-top:7px;}
+  .dep-form{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:2px;}
   .dep-add{background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);padding:0 14px;border-radius:var(--radius-sm);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
   .dep-add:hover{border-color:var(--brass-2);color:#fff;}
   /* artwork & approval */
@@ -196,7 +206,8 @@
   .art-row.ev-approved .ar-ico{color:#5fe3a1;}
   .art-row.ev-proof_sent .ar-ico{color:#e2b74a;}
   .art-empty{font-size:12px;color:var(--text-3);padding:2px 1px;}
-  .art-actions{display:flex;gap:7px;margin-top:7px;flex-wrap:wrap;}
+  .art-actions{display:flex;flex-direction:column;gap:7px;margin-top:2px;}
+  .art-actions .art-act{width:100%;text-align:center;}
   .art-up{flex:1;text-align:center;background:var(--bg-3);border:1px dashed var(--line-2);color:var(--text-2);padding:8px 10px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;transition:.13s;}
   .art-up:hover{border-color:var(--brass-2);color:#fff;}
   .art-act{background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-2);padding:8px 12px;border-radius:var(--radius-sm);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.13s;}
@@ -208,11 +219,11 @@
 
   /* line items — corporate sheet: banded header, zebra rows, focus rail */
   table{width:100%;border-collapse:collapse;}
-  thead th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.09em;color:#8b93a4;font-weight:700;padding:11px 10px;border-bottom:2px solid var(--line-2);background:linear-gradient(180deg,var(--bg-3),var(--bg-2));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  thead th:first-child{padding-left:18px;}
+  thead th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.09em;color:#8b93a4;font-weight:700;padding:11px 10px;border-bottom:2px solid var(--line-2);background:linear-gradient(180deg,#242a35,#1c212b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  thead th:first-child{padding-left:var(--gx);}
   thead th.num{text-align:right;}
   tbody td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
-  tbody td:first-child{padding-left:15px;}
+  tbody td:first-child{padding-left:calc(var(--gx) - 8px);}
   tbody tr{position:relative;transition:background .12s;}
   tbody tr:nth-child(even){background:rgba(255,255,255,.012);}
   tbody tr:hover{background:var(--bg-3);}
@@ -244,20 +255,20 @@
   .disc-waived{font-family:var(--fm);font-size:10.5px;color:var(--danger);margin-top:3px;}
   .disc-waived.waived-full{color:var(--brass-2);font-weight:700;font-family:var(--fd);text-transform:uppercase;letter-spacing:.03em;}
   .sup-id-tag{font-family:var(--fm);font-size:10px;color:var(--brass-2);margin-top:2px;font-weight:700;}
-  .lines-scroll{max-height:340px;overflow-y:auto;}
-  .lines-scroll::-webkit-scrollbar{width:9px;}.lines-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2);}
-  .lines-scroll thead th{position:sticky;top:0;background:var(--paper-2);z-index:2;}
+  .lines-scroll{min-height:60px;}
+  .lines-scroll thead th{position:sticky;top:58px;background:var(--paper-2);z-index:2;}
+  @media(max-width:1040px){.lines-scroll{overflow-x:auto;}.lines-scroll thead th{position:static;}}
   /* inline totals under product listing (modern CRM style) */
   /* totals — a horizontal footer bar spanning the sheet, not a floating corner box */
-  .listing-foot{display:flex;align-items:center;justify-content:space-between;gap:24px;border-top:1px solid var(--line-2);margin-top:0;padding:14px 20px;background:linear-gradient(180deg,rgba(255,255,255,.015),transparent);}
+  .listing-foot{display:flex;align-items:center;justify-content:space-between;gap:24px;border-top:1px solid var(--line-2);margin-top:0;padding:15px var(--gx);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent);}
   .listing-foot .meta-foot{border:none;background:transparent;padding:0;flex:0 0 auto;}
   .order-totals{display:flex;align-items:stretch;margin-left:auto;}
   .ot-cell{display:flex;flex-direction:column;justify-content:center;gap:5px;text-align:right;padding:2px 24px;border-left:1px solid var(--line);}
   .ot-cell .ot-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;}
   .ot-cell .ot-amt{font-family:var(--fm);font-weight:700;font-size:14px;color:var(--ink);white-space:nowrap;}
-  .ot-cell.grand{padding-right:8px;padding-left:28px;}
-  .ot-cell.grand .ot-lbl{color:var(--text-2);}
-  .ot-cell.grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:22px;color:var(--brass-2);letter-spacing:-.01em;}
+  .ot-cell.grand{margin-left:26px;padding:8px 20px;border-left:none;border-radius:9px;background:linear-gradient(155deg,#f7f9fc,#ccd4e0 60%,#e9edf4);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 3px rgba(21,23,28,.28),0 8px 18px -12px rgba(0,0,0,.8);}
+  .ot-cell.grand .ot-lbl{color:#454c5b;}
+  .ot-cell.grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:21px;color:#15171c;letter-spacing:-.01em;}
   @media(max-width:640px){.order-totals{flex-wrap:wrap;justify-content:flex-end;gap:6px 0;}.ot-cell{padding:2px 14px;}}
   .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
   .cb-sup{text-overflow:ellipsis;}
@@ -363,11 +374,11 @@
   .li-amt{text-align:right;font-family:var(--font-mono);font-weight:700;font-size:13px;padding-right:10px;white-space:nowrap;color:#fff;font-variant-numeric:tabular-nums;}
   .li-del{border:none;background:transparent;color:var(--muted-2);cursor:pointer;padding:5px;border-radius:5px;font-size:15px;line-height:1;}
   .li-del:hover{background:var(--st-art-bg);color:var(--danger);}
-  .add-line{margin:12px 18px 4px;padding:9px;width:calc(100% - 36px);border:1px dashed var(--line-strong);background:transparent;border-radius:var(--radius-sm);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
+  .add-line{margin:12px var(--gx) 14px;padding:9px;width:calc(100% - var(--gx)*2);border:1px dashed var(--line-strong);background:transparent;border-radius:var(--radius-sm);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
   .add-line:hover{border-color:var(--brass);color:var(--brass-2);}
 
   /* status sidebar */
-  .status-pick{display:flex;flex-direction:column;gap:14px;}
+  .status-pick{display:flex;flex-direction:column;gap:0;}
   .seg{display:flex;flex-direction:column;gap:6px;}
   .seg label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;}
   .seg-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -408,15 +419,17 @@
   .totals .t-grand .amt{font-family:var(--font-display);font-weight:800;font-size:21px;color:var(--brass-2);}
 
   .state{padding:60px;text-align:center;color:var(--muted);}
-  /* Production Stage — a stepper: dots on a track, done = green, current = solid pill */
-  .pipeline{display:flex;align-items:center;flex-wrap:wrap;row-gap:8px;}
-  .pip{position:relative;display:inline-flex;align-items:center;height:34px;padding:0 12px 0 27px;border-radius:8px;font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3);cursor:pointer;transition:.13s;white-space:nowrap;}
-  .pip::before{content:'';position:absolute;left:11px;width:8px;height:8px;border-radius:50%;border:2px solid var(--line-2);background:transparent;transition:.13s;}
+  /* Production Stage — a vertical tracker: dots on a rising track,
+     done = green, the current stage a solid chip (the signature) */
+  .pipeline{display:flex;flex-direction:column;}
+  .pip{position:relative;display:flex;align-items:center;min-height:34px;padding:0 12px 0 36px;border-radius:8px;font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3);cursor:pointer;transition:.13s;white-space:nowrap;}
+  .pip::before{content:'';position:absolute;left:15px;width:8px;height:8px;border-radius:50%;border:2px solid var(--line-2);background:transparent;transition:.13s;}
   .pip:hover{color:var(--text);}
-  .pip+.pip{margin-left:20px;}
-  .pip+.pip::after{content:'';position:absolute;left:-20px;top:50%;width:20px;height:2px;background:var(--line);}
+  .pip+.pip{margin-top:8px;}
+  .pip+.pip::after{content:'';position:absolute;left:20px;top:-9px;width:2px;height:10px;background:var(--line);}
   .pip.done{color:var(--text-2);}
   .pip.done::before{border-color:var(--approved);background:var(--approved);}
+  .pip.done+.pip::after{background:var(--approved);}
   .pip.on{background:var(--brass-2);color:#15171c;}
   .pip.on::before{border-color:#15171c;background:#15171c;}
   /* Record Type — one connected segmented switch */
@@ -518,77 +531,110 @@
 
 <div class="wrap" id="wrap">
   <div class="sk-page">
-    <div class="sk-band"><div class="sk-card sk-a"></div><div class="sk-card sk-b"></div></div>
-    <div class="sk-card sk-sheet"></div>
+    <div class="sk-band"><div class="sk-card sk-doc"></div><div class="sk-card sk-rail"></div></div>
   </div>
 </div>
 
 <template id="tpl">
 <div class="order-layout">
-    <!-- Client / order details -->
-    <div class="card ol-details">
-      <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><h3>Client &amp; Order</h3></div>
-      <div class="card-b">
+
+  <!-- the document: order fields + product sheet -->
+  <div class="card doc">
+    <section class="band b-fields">
         <div class="client-block">
-          <div class="field cb-2"><label>Client <span id="i-client-blk" class="fld-blk" style="display:none;">⚠ Blacklisted</span></label><select class="input" id="i-client"></select></div>
-          <div class="field cb-2"><label>Contact</label><select class="input" id="i-contact"></select></div>
-          <div class="field cb-2"><label>Subject</label><input class="input" id="i-subject" placeholder="e.g. Trophies"></div>
-          <div class="field cb-2"><label>Serviced By</label><input class="input" id="i-staff" placeholder="Karan"></div>
-          <div class="field cb-2"><label>Quote Date</label><input type="date" class="input" id="i-qdate"></div>
-          <div class="field cb-2"><label>Ship Mode</label><select class="input" id="i-ship"><option value="pickup">Pick-up</option><option value="courier">Courier</option><option value="deliver">Deliver</option></select></div>
-          <div class="field cb-2"><label>Client P.O. #</label><input class="input" id="i-po" placeholder="optional"></div>
-          <div class="field cb-4"><label>Billing Location</label><div class="loc-val" id="f-loc">—</div></div>
+          <div class="field"><label>Client <span id="i-client-blk" class="fld-blk" style="display:none;">⚠ Blacklisted</span></label><select class="input" id="i-client"></select></div>
+          <div class="field"><label>Contact</label><select class="input" id="i-contact"></select></div>
+          <div class="field"><label>Subject</label><input class="input" id="i-subject" placeholder="e.g. Trophies"></div>
+          <div class="field"><label>Serviced By</label><input class="input" id="i-staff" placeholder="Karan"></div>
+          <div class="field"><label>Quote Date</label><input type="date" class="input" id="i-qdate"></div>
+          <div class="field"><label>Ship Mode</label><select class="input" id="i-ship"><option value="pickup">Pick-up</option><option value="courier">Courier</option><option value="deliver">Deliver</option></select></div>
+          <div class="field"><label>Client P.O. #</label><input class="input" id="i-po" placeholder="optional"></div>
+          <div class="field cb-sp2"><label>Billing Location</label><div class="loc-val" id="f-loc">—</div></div>
+        </div>
+    </section>
+    <section class="band band-flush b-lines">
+      <div class="eyebrow-row"><span class="eyebrow">Product Listing</span><span class="ch-count" id="line-count">—</span><button type="button" class="batch-po sup-col" id="batch-po" title="Order every line's outstanding balance onto its supplier's open PO">⊞ Order all to PO</button>
+        <div class="legend sup-col" id="po-legend">
+          <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Not Ordered</span>
+          <span class="lg"><span class="lg-dot" style="background:#f0b34e"></span>Partly Ordered</span>
+          <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>Ordered</span>
+          <span class="lg"><span class="lg-dot" style="background:#8a92a2"></span>Issued</span>
+          <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Received</span>
+          <span class="lg"><span class="lg-dot" style="background:#b06bff"></span>Back Order</span>
         </div>
       </div>
-    </div>
-
-    <!-- Status -->
-    <div class="card" id="status-card">
-      <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span><h3>Status</h3></div>
-      <div class="card-b">
-        <div class="status-pick">
-          <div class="seg mgmt-only">
-            <label>Record Type</label>
-            <div class="rtype" id="rtype">
-              <button class="rt" data-r="inquiry">Inquiry</button>
-              <button class="rt" data-r="quote">Quotation</button>
-              <button class="rt" data-r="order">Sales Order</button>
-            </div>
-          </div>
-          <div class="seg" id="stage-seg">
-            <label>Production Stage</label>
-            <div class="pipeline" id="pipeline">
-              <div class="pip" data-s="send_art">Send Art</div>
-              <div class="pip" data-s="approval_due">Approval</div>
-              <div class="pip" data-s="approved">Approved</div>
-              <div class="pip" data-s="in_process">Process</div>
-              <div class="pip" data-s="invoice">Invoice</div>
-            </div>
-          </div>
-          <div class="seg mgmt-only" id="active-seg">
-            <label>Order State</label>
-            <div class="statetog" id="statetog">
-              <button type="button" class="stog" data-v="active">Active</button>
-              <button type="button" class="stog" data-v="inactive">Inactive</button>
-            </div>
-          </div>
-          <div class="seg mgmt-only" id="outcome-seg" style="display:none;">
-            <label>Quote Outcome</label>
-            <div id="outcome-ui"></div>
-          </div>
-          <div class="seg-2">
-            <div class="seg"><label>Pick-up Date</label><input type="date" class="input" id="i-pickup"></div>
-            <div class="seg"><label>Event Date</label><input type="date" class="input" id="i-event"></div>
-          </div>
+      <div class="lines-scroll">
+      <table>
+        <thead><tr>
+          <th style="width:10%;">Category</th>
+          <th style="width:9%;">Style #</th>
+          <th style="width:22%;">Description</th>
+          <th class="sup-col" style="width:17%;">Supplier</th>
+          <th class="num" style="width:10%;">Order Qty</th>
+          <th class="num money-col" style="width:9%;">Unit Price</th>
+          <th class="money-col" style="width:9%;">Discount</th>
+          <th class="num money-col" style="width:11%;">Amount</th>
+          <th style="width:3%;"></th>
+        </tr></thead>
+        <tbody id="lines"></tbody>
+      </table>
+      </div>
+      <button class="add-line" id="add-line">+ Add line item</button>
+      <div class="sheet-fill" aria-hidden="true"></div>
+      <div class="listing-foot">
+        <div class="meta-foot" id="meta"></div>
+        <div class="order-totals mgmt-only">
+          <div class="ot-cell"><span class="ot-lbl">Subtotal</span><span class="ot-amt" id="t-sub">$0.00</span></div>
+          <div class="ot-cell"><span class="ot-lbl">Discount</span><span class="ot-amt" id="t-disc">$0.00</span></div>
+          <div class="ot-cell"><span class="ot-lbl">HST (13%)</span><span class="ot-amt" id="t-hst">$0.00</span></div>
+          <div class="ot-cell grand"><span class="ot-lbl">Grand Total</span><span class="ot-amt" id="t-grand">$0.00</span></div>
         </div>
       </div>
-    </div>
+    </section>
+  </div>
 
-    <!-- Deposits & Artwork sit under Client & Order so the band stays balanced -->
-    <div class="card mgmt-only" id="extras-card" style="display:none;">
-      <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><h3>Deposits &amp; Artwork</h3></div>
-      <div class="card-b"><div class="extras-grid">
-        <div class="seg" id="deposit-seg" style="display:none;">
+  <!-- the status rail -->
+  <aside class="card rail">
+    <div class="rs">
+      <div class="seg" id="stage-seg">
+        <label>Production Stage</label>
+        <div class="pipeline" id="pipeline">
+          <div class="pip" data-s="send_art">Send Art</div>
+          <div class="pip" data-s="approval_due">Approval</div>
+          <div class="pip" data-s="approved">Approved</div>
+          <div class="pip" data-s="in_process">Process</div>
+          <div class="pip" data-s="invoice">Invoice</div>
+        </div>
+      </div>
+      <div class="seg mgmt-only" id="outcome-seg" style="display:none;">
+        <label>Quote Outcome</label>
+        <div id="outcome-ui"></div>
+      </div>
+    </div>
+    <div class="rs">
+      <div class="seg mgmt-only" id="rtype-seg">
+        <label>Record Type</label>
+        <div class="rtype" id="rtype">
+          <button class="rt" data-r="inquiry">Inquiry</button>
+          <button class="rt" data-r="quote">Quotation</button>
+          <button class="rt" data-r="order">Sales Order</button>
+        </div>
+      </div>
+      <div class="seg mgmt-only" id="active-seg">
+        <label>Order State</label>
+        <div class="statetog" id="statetog">
+          <button type="button" class="stog" data-v="active">Active</button>
+          <button type="button" class="stog" data-v="inactive">Inactive</button>
+        </div>
+      </div>
+      <div class="seg-2">
+        <div class="seg"><label>Pick-up Date</label><input type="date" class="input" id="i-pickup"></div>
+        <div class="seg"><label>Event Date</label><input type="date" class="input" id="i-event"></div>
+      </div>
+    </div>
+    <div id="extras-card" class="mgmt-only" style="display:none;">
+      <div class="rs" id="deposit-seg" style="display:none;">
+        <div class="seg">
           <label>Deposits <span class="dep-tot" id="dep-total"></span></label>
           <div class="dep-list" id="dep-list"></div>
           <div class="dep-form">
@@ -598,7 +644,9 @@
             <button type="button" id="dep-add" class="dep-add">Add</button>
           </div>
         </div>
-        <div class="seg" id="art-seg" style="display:none;">
+      </div>
+      <div class="rs" id="art-seg" style="display:none;">
+        <div class="seg">
           <label>Artwork &amp; Approval</label>
           <div class="art-list" id="art-list"></div>
           <div class="art-actions">
@@ -607,48 +655,10 @@
             <button type="button" class="art-act ok" id="art-approved">✓ Approved</button>
           </div>
         </div>
-      </div></div>
+      </div>
     </div>
+  </aside>
 
-  <!-- Line items — full width sheet -->
-  <div class="card ol-lines">
-    <div class="card-h"><span class="ch-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><h3>Product Listing</h3><span class="ch-count" id="line-count">—</span><button type="button" class="batch-po sup-col" id="batch-po" title="Order every line's outstanding balance onto its supplier's open PO">⊞ Order all to PO</button>
-      <div class="legend sup-col" id="po-legend">
-        <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Not Ordered</span>
-        <span class="lg"><span class="lg-dot" style="background:#f0b34e"></span>Partly Ordered</span>
-        <span class="lg"><span class="lg-dot" style="background:#ff4d4d"></span>Ordered</span>
-        <span class="lg"><span class="lg-dot" style="background:#8a92a2"></span>Issued</span>
-        <span class="lg"><span class="lg-dot" style="background:#3ddc84"></span>Received</span>
-        <span class="lg"><span class="lg-dot" style="background:#b06bff"></span>Back Order</span>
-      </div>
-    </div>
-    <div class="lines-scroll">
-    <table>
-      <thead><tr>
-        <th style="width:9%;">Category</th>
-        <th style="width:8%;">Style #</th>
-        <th style="width:27%;">Description</th>
-        <th class="sup-col" style="width:16%;">Supplier</th>
-        <th class="num" style="width:8%;">Order Qty</th>
-        <th class="num money-col" style="width:9%;">Unit Price</th>
-        <th class="money-col" style="width:9%;">Discount</th>
-        <th class="num money-col" style="width:11%;">Amount</th>
-        <th style="width:3%;"></th>
-      </tr></thead>
-      <tbody id="lines"></tbody>
-    </table>
-    </div>
-    <button class="add-line" id="add-line">+ Add line item</button>
-    <div class="listing-foot">
-      <div class="meta-foot" id="meta"></div>
-      <div class="order-totals mgmt-only">
-        <div class="ot-cell"><span class="ot-lbl">Subtotal</span><span class="ot-amt" id="t-sub">$0.00</span></div>
-        <div class="ot-cell"><span class="ot-lbl">Discount</span><span class="ot-amt" id="t-disc">$0.00</span></div>
-        <div class="ot-cell"><span class="ot-lbl">HST (13%)</span><span class="ot-amt" id="t-hst">$0.00</span></div>
-        <div class="ot-cell grand"><span class="ot-lbl">Grand Total</span><span class="ot-amt" id="t-grand">$0.00</span></div>
-      </div>
-    </div>
-  </div>
 </div>
 </template>
 
