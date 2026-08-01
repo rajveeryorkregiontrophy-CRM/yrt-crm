@@ -378,7 +378,7 @@ function editForm(){
         <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
         <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
       <div class="frow"><div class="field"><label>Shipment</label><select class="in" id="shipment_mode"><option value="pickup" ${c.shipment_mode==='pickup'?'selected':''}>Pick-up</option><option value="courier" ${c.shipment_mode==='courier'?'selected':''}>Courier</option><option value="deliver" ${c.shipment_mode==='deliver'?'selected':''}>Deliver</option></select></div>
-        <div class="field"><label>Contact Cycle (months)</label><input class="in" id="contact_cycle_months" type="number" value="${c.contact_cycle_months||''}"></div>
+        <div class="field"><label>Contact Cycle (months)</label><input class="in" id="contact_cycle_months" type="number" min="1" max="12" step="1" value="${c.contact_cycle_months||''}" oninput="if(this.value>12)this.value=12;if(this.value<0)this.value='';"></div>
         <div class="field"><label>Referred By</label><input class="in" id="referred_by" value="${esc(c.referred_by||'')}"></div></div>
       <div class="frow"><div class="field"><label>Client Since</label><input class="in" id="client_since" type="date" value="${c.client_since||''}"></div>
         <div class="field"><label>Blacklisted</label><select class="in" id="blacklisted"><option value="false" ${!c.blacklisted?'selected':''}>No</option><option value="true" ${c.blacklisted?'selected':''}>Yes</option></select></div></div>
@@ -476,9 +476,10 @@ async function save(){
   if(!name){msg.textContent='Company name required';msg.className='msg err';return;}
   msg.textContent='Saving…';msg.className='msg';
   let _sector; try{_sector=await resolveSector();}catch(e){msg.textContent=e.message;msg.className='msg err';return;}
+  const _cyc=+document.getElementById('contact_cycle_months').value||0;   // clamp to 1–12 months
   const payload={company_name:name,rating:+document.getElementById('rating').value||null,terms_days:+document.getElementById('terms_days').value||0,
     serviced_by:document.getElementById('serviced_by').value||null,shipment_mode:document.getElementById('shipment_mode').value,
-    contact_cycle_months:+document.getElementById('contact_cycle_months').value||null,referred_by:document.getElementById('referred_by').value||null,
+    contact_cycle_months:_cyc?Math.min(12,Math.max(1,_cyc)):null,referred_by:document.getElementById('referred_by').value||null,
     client_since:document.getElementById('client_since').value||null,blacklisted:document.getElementById('blacklisted').value==='true',
     bill_unit:document.getElementById('bill_unit').value||null,bill_address:document.getElementById('bill_address').value||null,
     bill_city:document.getElementById('bill_city').value||null,bill_postal:document.getElementById('bill_postal').value||null,
