@@ -279,13 +279,13 @@
   @media(max-width:1040px){.lines-scroll{overflow-x:auto;}.lines-scroll thead th{position:static;}}
   /* inline totals under product listing (modern CRM style) */
   /* totals — a horizontal footer bar spanning the sheet, not a floating corner box */
-  .listing-foot{display:flex;align-items:center;justify-content:space-between;gap:24px;border-top:1px solid var(--line-2);margin-top:0;padding:15px var(--gx);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent);}
+  .listing-foot{display:flex;align-items:center;justify-content:space-between;gap:14px 24px;flex-wrap:wrap;border-top:1px solid var(--line-2);margin-top:0;padding:15px var(--gx);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent);}
   .listing-foot .meta-foot{border:none;background:transparent;padding:0;flex:0 0 auto;}
   .order-totals{display:flex;align-items:stretch;margin-left:auto;}
-  .ot-cell{display:flex;flex-direction:column;justify-content:center;gap:5px;text-align:right;padding:2px 24px;border-left:1px solid var(--line);}
-  .ot-cell .ot-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;}
+  .ot-cell{display:flex;flex-direction:column;justify-content:center;gap:5px;text-align:right;padding:2px 18px;border-left:1px solid var(--line);}
+  .ot-cell .ot-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;white-space:nowrap;}
   .ot-cell .ot-amt{font-family:var(--fm);font-weight:700;font-size:14px;color:var(--ink);white-space:nowrap;}
-  .ot-cell.grand{margin-left:26px;padding:8px 20px;border-left:none;border-radius:9px;background:linear-gradient(155deg,#f7f9fc,#ccd4e0 60%,#e9edf4);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 3px rgba(21,23,28,.28),0 8px 18px -12px rgba(0,0,0,.8);}
+  .ot-cell.grand{margin-left:16px;padding:8px 18px;border-left:none;border-radius:9px;background:linear-gradient(155deg,#f7f9fc,#ccd4e0 60%,#e9edf4);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 3px rgba(21,23,28,.28),0 8px 18px -12px rgba(0,0,0,.8);}
   .ot-cell.grand .ot-lbl{color:#454c5b;}
   .ot-cell.grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:21px;color:#15171c;letter-spacing:-.01em;}
   @media(max-width:640px){.order-totals{flex-wrap:wrap;justify-content:flex-end;gap:6px 0;}.ot-cell{padding:2px 14px;}}
@@ -498,6 +498,16 @@
   html.embedded .order-layout{margin-bottom:10px;}
   html.embedded thead th{letter-spacing:.05em;padding-left:8px;padding-right:8px;}
   html.embedded thead th:first-child{padding-left:var(--gx);}
+  /* window hugs its content — no tall ruled filler, no forced growth */
+  html.embedded .sheet-fill{display:none;}
+  html.embedded .b-lines{flex:0 0 auto;}
+  html.embedded .b-lines .listing-foot{margin-top:0;}
+  html.embedded .lines-scroll{min-height:0;}
+  /* totals stay tidy in the narrower window */
+  html.embedded .listing-foot{gap:10px 16px;}
+  html.embedded .ot-cell{padding:2px 12px;}
+  html.embedded .ot-cell.grand{margin-left:12px;padding:7px 15px;}
+  html.embedded .ot-cell.grand .ot-amt{font-size:18px;}
   /* while loading, only the shimmer skeleton shows — no stray buttons */
   html:not(.page-ready) .topbar .actions,html:not(.page-ready) .save-bar{visibility:hidden;}
 </style>
@@ -934,7 +944,7 @@ function applyRecordType(){
   const T={inquiry:'Inquiry',quote:'Quotation',order:'Sales Order'};
   document.querySelector('.topbar .title').childNodes[0].nodeValue=(T[ORDER.record_type]||'Record')+' ';
   // stage pipeline only relevant for sales orders
-  if(EMBED) embedPost({yrt:'width', w: ORDER.record_type==='order' ? 1300 : 900});
+  if(EMBED) embedPost({yrt:'width', w: ORDER.record_type==='order' ? 1360 : 880});
   const stageSeg=document.getElementById('stage-seg');
   if(stageSeg)stageSeg.style.display=ORDER.record_type==='order'?'':'none';
   // Print Quotation: quotations only. A confirmed order converts to an invoice instead.
@@ -1267,23 +1277,23 @@ function renderLines(){
     const discOpts=[0,5,7.5,10,12.5,15,20,25,50,75,100];
     const waived=((parseFloat(ln.amount)||0)*((parseFloat(ln.discount_pct)||0)/100));
     tr.innerHTML=`
-      <td class="cb-cell il-cat" style="width:10.5%;"><span class="cl">Category</span><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
-      <td class="cb-cell il-style" style="width:10%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
-      <td class="cb-cell il-desc" style="width:19%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search or type…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
-      <td class="cb-cell il-sup sup-col ${fulfillClass(ln)}" style="width:15.5%;"><span class="cl">Supplier</span>
+      <td class="cb-cell il-cat" style="width:11%;"><span class="cl">Category</span><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
+      <td class="cb-cell il-style" style="width:11%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
+      <td class="cb-cell il-desc" style="width:16%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search or type…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
+      <td class="cb-cell il-sup sup-col ${fulfillClass(ln)}" style="width:16.5%;"><span class="cl">Supplier</span>
         ${(ln._allocations&&ln._allocations.length)
           ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn" data-alloc="${i}" title="Order this line's quantity to a purchase order">⊞ Order to PO</button>
       </td>
-      <td class="qty-cell il-n" style="width:9.5%;"><span class="cl">Order Qty</span><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></td>
-      <td class="money-col il-n" style="width:9.5%;"><span class="cl">Unit Price</span><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
-      <td class="disc-cell money-col il-n" style="width:9%;">
+      <td class="qty-cell il-n" style="width:10%;"><span class="cl">Order Qty</span><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></td>
+      <td class="money-col il-n" style="width:10%;"><span class="cl">Unit Price</span><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
+      <td class="disc-cell money-col il-n" style="width:9.5%;">
         <span class="cl">Discount</span><select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
         ${parseFloat(ln.discount_pct)===100?`<div class="disc-waived waived-full">Charges Waived</div>`:(waived>0?`<div class="disc-waived">−${money(waived)}</div>`:'')}
       </td>
       <td class="money-col il-amtcell" style="width:12.5%;"><span class="cl">Amount</span><div class="li-amt">${money(ln.net_amount)}</div></td>
-      <td class="td-del" style="width:4.5%;"><button class="li-del" data-del="${i}" title="Remove line">×</button></td>`;
+      <td class="td-del" style="width:3.5%;"><button class="li-del" data-del="${i}" title="Remove line">×</button></td>`;
     tb.appendChild(tr);
   });
   // plain inputs (description, qty, unit, price)
