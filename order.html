@@ -1854,6 +1854,15 @@ async function save(silent){
 
   // Ordering to a PO is now manual (via "Order to PO"), so save no longer
   // auto-pushes line items into POs.
+
+  // The quotes UPDATE above re-bumped modified_at via the touch_modified
+  // trigger, so the timestamp claim_save handed us is already stale.
+  // Re-read it, or the NEXT save in this session false-conflicts with
+  // our own write ("Someone else changed this order").
+  if(ORDER_ID){
+    const {data:_fresh}=await db.from('quotes').select('modified_at').eq('id',ORDER_ID).single();
+    if(_fresh && _fresh.modified_at) LOADED_AT=_fresh.modified_at;
+  }
   DIRTY=false;
   if(msg){msg.textContent='Saved ✓';msg.className='status-msg saved';}
   // reload to reflect current fulfillment state
