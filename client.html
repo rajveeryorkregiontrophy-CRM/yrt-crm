@@ -154,7 +154,7 @@
   .sec-months .field{flex:1;}
   .sec-hint{font-size:11px;color:var(--text-3,#9098a8);margin-top:5px;}
 </style>
-<link rel="stylesheet" href="theme.css?v=4">
+<link rel="stylesheet" href="theme.css?v=5">
 </head>
 <body>
 <header class="topbar">
@@ -205,7 +205,10 @@ const inSeason=(f,t)=>{const cur=new Date().getMonth()+1;return f<=t?(cur>=f&&cu
 const seasonLabel=s=>MON[s.active_from_month-1]+'–'+MON[s.active_to_month-1];
 function secChipFor(sectorId){
   const s=SEC_OK&&SECMAP[sectorId]; if(!s)return '';
-  const cls=inSeason(s.active_from_month,s.active_to_month)?'now':(monthsAhead(s.active_from_month)<=3&&monthsAhead(s.active_from_month)>=1?'hot':'');
+  // lead time before the season = this client's Contact Cycle (default 3 months)
+  const lead=Math.min(12,Math.max(1,(CLIENT&&CLIENT.contact_cycle_months)||3));
+  const d=monthsAhead(s.active_from_month);
+  const cls=inSeason(s.active_from_month,s.active_to_month)?'now':(d>=1&&d<=lead?'hot':'');
   return `<span class="sec-chip ${cls}" title="Busy season ${seasonLabel(s)}">${esc(s.name)}</span>`;
 }
 let INQ=[],QUOTE=[],SALES=[],HTAB='inquiry';

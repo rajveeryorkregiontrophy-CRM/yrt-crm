@@ -10,10 +10,10 @@
   --bg-3:#1f232b;
   --bg-4:#2c313b;
   --sidebar:#08090c;
-  /* brighter, clearly-visible borders */
-  --line:#3d434f;
-  --line-2:#576070;
-  --line-strong:#576070;
+  /* bright, clearly-visible borders */
+  --line:#525c6e;
+  --line-2:#727e94;
+  --line-strong:#727e94;
   /* accents are white now */
   --brass:#f0f3f8;
   --brass-2:#ffffff;
@@ -57,10 +57,11 @@ body{background:radial-gradient(120% 70% at 50% -12%,#191c22 0%,#0c0d11 56%) no-
 /* report bars */
 .bar-fill{background:linear-gradient(90deg,#7d838f,#f0f3f8);}
 
-/* ── slightly thicker lines throughout ── */
+/* ── thicker, brighter lines throughout ── */
 .card,.panel,.hero,.stats,.stat,.drawer,.topbar,#htab-body .contact,.contact{border-width:2px;}
 thead th{border-bottom-width:2px !important;}
-tbody td{border-bottom-width:1.5px !important;}
+/* record-separating row lines: thicker AND brighter so they clearly stand out */
+tbody td{border-bottom-width:2px !important;border-bottom-color:var(--line-2) !important;}
 
 /* ── brighter, bolder headers & labels across the CRM ── */
 .card-h h3,.panel-head h2,.panel-head h3,.eyebrow,.topbar .title,.drawer-head h3{color:#ffffff;}

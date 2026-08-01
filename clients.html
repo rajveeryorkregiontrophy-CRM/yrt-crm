@@ -52,7 +52,7 @@
   .content{padding:24px 26px;max-width:1560px;width:100%;flex:1;min-height:0;display:flex;flex-direction:column;}
   .panel{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;flex:1;min-height:0;}
   .panel-head{flex-shrink:0;}
-  #wrap{flex:1;min-height:0;overflow-y:auto;}
+  #wrap{flex:1;min-height:0;overflow:auto;}
   #wrap::-webkit-scrollbar{width:9px;}#wrap::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--bg-2);}
   .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
   .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
@@ -174,11 +174,11 @@
   .cstat .s{font-size:11px;color:var(--text-3);margin-top:2px;}
   @media(max-width:900px){.cl-stats{grid-template-columns:repeat(2,1fr);}}
   /* clients directory — a proper centred table */
-  .ctable-wrap{padding:4px 6px 8px;overflow-x:auto;}
+  .ctable-wrap{padding:0 6px 8px;}
   .ctable{width:100%;border-collapse:collapse;min-width:820px;}
   /* .ctable thead th (0,1,2) beats theme.css's .ctable th (0,1,1), so the
      header styling wins instead of falling back to the value colour */
-  .ctable thead th{text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#ffffff !important;font-weight:800 !important;padding:15px 22px;background:var(--bg-4);border-bottom:2px solid var(--line-2);white-space:nowrap;}
+  .ctable thead th{text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#ffffff !important;font-weight:800 !important;padding:15px 22px;background:var(--bg-4);border-bottom:2px solid var(--line-2);white-space:nowrap;position:sticky;top:0;z-index:6;}
   .ctable tbody td{text-align:center;vertical-align:middle;padding:15px 22px;border-bottom:1.5px solid var(--line);font-size:13px;color:var(--text-2);font-weight:400;}
   /* the Client name is the row's anchor — left-align it for a clean left edge */
   .ctable thead th:first-child,.ctable tbody td:first-child{text-align:left;padding-left:26px;}
@@ -206,7 +206,7 @@
   .cc-bal{font-weight:700;color:#3ddc84;}
   .cc-bal.ow{color:#e0883a;}
 </style>
-<link rel="stylesheet" href="theme.css?v=4">
+<link rel="stylesheet" href="theme.css?v=5">
 </head>
 <body>
 <div class="app collapsed">
@@ -272,7 +272,10 @@ function secState(c){
   const s=SECMAP[c.sector_id]; if(!s)return null;
   if(inSeason(s.active_from_month,s.active_to_month))return {s,cls:'now',note:'Active now'};
   const d=monthsAhead(s.active_from_month);
-  if(d>=1&&d<=3)return {s,cls:'hot',note:'Starts '+MONS[s.active_from_month-1]};
+  // lead time = this client's Contact Cycle (months). Flag the season as
+  // upcoming that many months ahead. Unset falls back to 3 months.
+  const lead=Math.min(12,Math.max(1,c.contact_cycle_months||3));
+  if(d>=1&&d<=lead)return {s,cls:'hot',note:'Starts '+MONS[s.active_from_month-1]};
   return {s,cls:'',note:''};
 }
 
