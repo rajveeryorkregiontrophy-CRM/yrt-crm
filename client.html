@@ -108,8 +108,14 @@
   /* drawer (edit) */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:.2s;z-index:50;}
   .overlay.open{opacity:1;pointer-events:auto;}
-  .drawer{position:fixed;top:0;right:0;height:100vh;width:520px;max-width:94vw;background:var(--bg-2);border-left:1px solid var(--line-2);transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1);z-index:60;display:flex;flex-direction:column;}
-  .drawer.open{transform:translateX(0);}
+  .drawer{position:fixed;top:50%;left:50%;width:min(780px,94vw);max-height:88vh;background:var(--bg-2);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 32px 80px -24px rgba(0,0,0,.9);transform:translate(-50%,-50%) scale(.97);opacity:0;pointer-events:none;transition:.18s;z-index:60;display:flex;flex-direction:column;overflow:hidden;}
+  .drawer.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto;}
+  .ew-tabs{display:flex;gap:2px;padding:0 22px;border-bottom:1px solid var(--line-2);background:var(--bg-3);}
+  .ewt{font-family:'Archivo',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:12px 4px;margin-right:18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-3);cursor:pointer;}
+  .ewt.on{color:#fff;border-bottom-color:var(--brass-2);}
+  .esec{display:none;}
+  .esec.on{display:block;}
+  .frow-2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
   .drawer-head{padding:18px 22px;border-bottom:2px solid var(--line-2);display:flex;align-items:center;}
   .drawer-head h3{font-family:var(--fd);font-size:16px;font-weight:800;text-transform:uppercase;}
   .drawer-head .x{margin-left:auto;background:var(--bg-4);border:none;color:var(--text-2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;}
@@ -338,6 +344,13 @@ function editForm(){
   const c=CLIENT;EDIT_CONTACTS=CONTACTS.map(x=>({...x}));if(!EDIT_CONTACTS.length)EDIT_CONTACTS=[{first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:true}];
   const provOpts=PROV.map(p=>`<option ${c.bill_province===p?'selected':''}>${p}</option>`).join('');
   document.getElementById('d-body').innerHTML=`
+    <div class="ew-tabs" id="ew-tabs" style="margin:-22px -22px 18px;">
+      <button type="button" class="ewt on" data-s="details">Details</button>
+      <button type="button" class="ewt" data-s="billing">Billing</button>
+      <button type="button" class="ewt" data-s="contacts">Contacts</button>
+      <button type="button" class="ewt" data-s="notes">Notes</button>
+    </div>
+    <div class="esec on" data-esec="details">
     <div class="fgroup"><div class="fgroup-t">Company</div>
       <div class="field"><label>Company Name *</label><input class="in" id="company_name" value="${esc(c.company_name||'')}"></div>
       ${SEC_OK?`<div class="field sec-box"><label>Sector</label>
@@ -358,6 +371,8 @@ function editForm(){
       <div class="frow"><div class="field"><label>Client Since</label><input class="in" id="client_since" type="date" value="${c.client_since||''}"></div>
         <div class="field"><label>Blacklisted</label><select class="in" id="blacklisted"><option value="false" ${!c.blacklisted?'selected':''}>No</option><option value="true" ${c.blacklisted?'selected':''}>Yes</option></select></div></div>
     </div>
+    </div>
+    <div class="esec" data-esec="billing">
     <div class="fgroup"><div class="fgroup-t">Billing Address</div>
       <div class="frow"><div class="field" style="max-width:90px;"><label>Unit</label><input class="in" id="bill_unit" value="${esc(c.bill_unit||'')}"></div>
         <div class="field"><label>Address</label><input class="in" id="bill_address" value="${esc(c.bill_address||'')}"></div></div>
@@ -365,11 +380,20 @@ function editForm(){
         <div class="field" style="max-width:120px;"><label>Postal</label><input class="in" id="bill_postal" value="${esc(c.bill_postal||'')}"></div></div>
       <div class="field"><label>Province</label><select class="in" id="bill_province">${provOpts}</select></div>
     </div>
+    </div>
+    <div class="esec" data-esec="contacts">
     <div class="fgroup"><div class="fgroup-t">Contacts</div><div id="ec-list"></div><button class="add-contact" id="ec-add">+ Add contact</button></div>
+    </div>
+    <div class="esec" data-esec="notes">
     <div class="fgroup"><div class="fgroup-t">Notes</div>
       <div class="field"><label>General Notes</label><textarea class="in" id="notes">${esc(c.notes||'')}</textarea></div>
       <div class="field"><label>Internal Notes</label><textarea class="in" id="internal_notes">${esc(c.internal_notes||'')}</textarea></div>
+    </div>
     </div>`;
+  document.querySelectorAll('#ew-tabs .ewt').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('#ew-tabs .ewt').forEach(x=>x.classList.toggle('on',x===t));
+    document.querySelectorAll('.esec').forEach(sec=>sec.classList.toggle('on',sec.dataset.esec===t.dataset.s));
+  }));
   drawEditContacts();
   if(SEC_OK)wireSector(c.sector_id);
   document.getElementById('ec-add').addEventListener('click',()=>{EDIT_CONTACTS.push({first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:EDIT_CONTACTS.length===0});drawEditContacts();});

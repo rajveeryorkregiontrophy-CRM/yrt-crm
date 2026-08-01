@@ -113,6 +113,7 @@
   .eyebrow-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .b-lines .eyebrow-row{padding:15px var(--gx) 12px;}
   .b-lines table{table-layout:fixed;}
+  .b-lines .eyebrow-row{border-bottom:1px solid var(--line);}
   /* rail sections — ruled, evenly padded, no boxes inside boxes */
   .rs{padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);}
   .rail > .rs:first-child{border-top:none;}
@@ -224,18 +225,19 @@
   .batch-po:hover{border-color:var(--brass-2);color:#fff;}
 
   /* line items — corporate sheet: banded header, zebra rows, focus rail */
-  table{width:100%;border-collapse:collapse;}
-  thead th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:#8b93a4;font-weight:700;padding:11px 10px;border-bottom:2px solid var(--line-2);background:linear-gradient(180deg,#242a35,#1c212b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  thead th:first-child{padding-left:var(--gx);}
-  thead th.num{text-align:right;}
-  tbody td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
-  tbody td:first-child{padding-left:calc(var(--gx) - 8px);}
-  tbody tr{position:relative;transition:background .12s;}
-  tbody tr:nth-child(even){background:rgba(255,255,255,.012);}
-  tbody tr:hover{background:var(--bg-3);}
-  /* editing rail: the row you're typing in gets a brass left edge */
-  tbody tr:focus-within{background:var(--bg-3);box-shadow:inset 3px 0 0 var(--brass-2);}
-  tbody tr:last-child td{border-bottom:none;}
+  /* line cards: no header row — every cell carries its own label,
+     every line is a self-contained card. Nothing to misalign. */
+  table{width:100%;border-collapse:separate;border-spacing:0 9px;}
+  .b-lines .lines-scroll{padding:2px var(--gx) 0;}
+  tbody td{padding:9px 10px 11px;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:top;transition:border-color .13s;}
+  tbody td:first-child{border-left:1px solid var(--line);border-radius:11px 0 0 11px;padding-left:14px;}
+  tbody td:last-child{border-right:1px solid var(--line);border-radius:0 11px 11px 0;}
+  tbody tr:hover td{border-color:var(--line-2);}
+  tbody tr:focus-within td{border-color:var(--brass-2);}
+  .cl{display:block;font-family:var(--font-display);font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin:0 0 3px 8px;}
+  .money-col .cl{margin-left:0;}
+  .td-del{vertical-align:middle;text-align:center;}
+  .li-amt{padding-top:7px;}
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:7px 8px;border-radius:6px;font-size:13px;font-family:inherit;color:var(--ink);transition:border-color .12s,background .12s;}
   .li-desc{resize:none;overflow:hidden;line-height:1.4;min-height:30px;white-space:pre-wrap;word-break:break-word;}
   .cb-cell{position:relative;}
@@ -581,17 +583,6 @@
       </div>
       <div class="lines-scroll">
       <table>
-        <thead><tr>
-          <th style="width:9.5%;">Category</th>
-          <th style="width:8.5%;">Style #</th>
-          <th style="width:19%;">Description</th>
-          <th class="sup-col" style="width:17.5%;">Supplier</th>
-          <th class="num" style="width:10%;">Order Qty</th>
-          <th class="num money-col" style="width:9.5%;">Unit Price</th>
-          <th class="money-col" style="width:10%;">Discount</th>
-          <th class="num money-col" style="width:12%;">Amount</th>
-          <th style="width:4%;"></th>
-        </tr></thead>
         <tbody id="lines"></tbody>
       </table>
       </div>
@@ -1265,23 +1256,23 @@ function renderLines(){
     const discOpts=[0,5,7.5,10,12.5,15,20,25,50,75,100];
     const waived=((parseFloat(ln.amount)||0)*((parseFloat(ln.discount_pct)||0)/100));
     tr.innerHTML=`
-      <td class="cb-cell"><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Category" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
-      <td class="cb-cell"><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Style #" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
-      <td class="cb-cell"><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search a product, or type freely…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
-      <td class="cb-cell sup-col ${fulfillClass(ln)}">
+      <td class="cb-cell" style="width:9.5%;"><span class="cl">Category</span><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Category" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
+      <td class="cb-cell" style="width:8.5%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Style #" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
+      <td class="cb-cell" style="width:19%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search a product, or type freely…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
+      <td class="cb-cell sup-col ${fulfillClass(ln)}" style="width:17.5%;"><span class="cl">Supplier</span>
         ${(ln._allocations&&ln._allocations.length)
           ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn" data-alloc="${i}" title="Order this line's quantity to a purchase order">⊞ Order to PO</button>
       </td>
-      <td class="qty-cell"><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></td>
-      <td><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
-      <td class="disc-cell">
-        <select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
+      <td class="qty-cell" style="width:10%;"><span class="cl">Order Qty</span><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></td>
+      <td class="money-col" style="width:9.5%;"><span class="cl">Unit Price</span><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
+      <td class="disc-cell money-col" style="width:10%;">
+        <span class="cl">Discount</span><select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
         ${parseFloat(ln.discount_pct)===100?`<div class="disc-waived waived-full">Charges Waived</div>`:(waived>0?`<div class="disc-waived">−${money(waived)}</div>`:'')}
       </td>
-      <td class="li-amt">${money(ln.net_amount)}</td>
-      <td><button class="li-del" data-del="${i}">×</button></td>`;
+      <td class="money-col" style="width:12%;"><span class="cl" style="text-align:right;">Amount</span><div class="li-amt">${money(ln.net_amount)}</div></td>
+      <td class="td-del" style="width:4%;"><button class="li-del" data-del="${i}">×</button></td>`;
     tb.appendChild(tr);
   });
   // plain inputs (description, qty, unit, price)
