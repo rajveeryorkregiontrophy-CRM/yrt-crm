@@ -173,6 +173,19 @@
   .cstat .v.warn{color:#e0883a;}
   .cstat .s{font-size:11px;color:var(--text-3);margin-top:2px;}
   @media(max-width:900px){.cl-stats{grid-template-columns:repeat(2,1fr);}}
+  /* clients directory — a proper centred table */
+  .ctable-wrap{padding:4px 6px 8px;overflow-x:auto;}
+  .ctable{width:100%;border-collapse:collapse;min-width:820px;}
+  .ctable th{text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);font-weight:700;padding:13px 14px;border-bottom:1px solid var(--line-2);white-space:nowrap;}
+  .ctable td{text-align:center;vertical-align:middle;padding:13px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--text-2);}
+  .ctable tbody tr{cursor:pointer;transition:background .12s;}
+  .ctable tbody tr:hover{background:var(--bg-3);}
+  .ctable tbody tr:last-child td{border-bottom:none;}
+  .ctable .c-id{font-family:var(--fm),monospace;font-size:11.5px;font-weight:700;color:var(--brass);letter-spacing:.04em;}
+  .ctable .c-name-cell{font-weight:700;color:var(--text);}
+  .ctable .c-mono{font-family:var(--fm),monospace;font-size:12px;}
+  .ctable .c-dash{color:var(--text-3);}
+  .ctable .sec-chip{display:inline-block;}
   .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;padding:16px;}
   .ccard{background:var(--bg-2);border:1px solid var(--line-2);border-radius:12px;padding:16px;cursor:pointer;transition:.14s;display:flex;flex-direction:column;gap:11px;}
   .ccard:hover{border-color:var(--brass-2);transform:translateY(-1px);}
@@ -331,29 +344,23 @@ function render(){
     <div class="cstat"><div class="l">Top Client</div><div class="v" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(topName)}</div><div class="s">${top&&top._spend>0?money0(top._spend)+' billed':'no invoices yet'}</div></div>`;
   document.getElementById('count').textContent=rows.length+(rows.length===1?' client':' clients');
   if(!rows.length){document.getElementById('wrap').innerHTML=`<div class="state">${VIEW==='upcoming'?'No sectors go into season within the next 3 months.':'No clients found. Click “New Client” to add one.'}</div>`;return;}
-  const initials=n=>(n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
   const body=rows.map(c=>{
     const prim=(c.contacts||[]).find(x=>x.is_primary)||(c.contacts||[])[0]||{};
     const cn=((prim.first_name||'')+' '+(prim.last_name||'')).trim();
-    const bal=c._balance||0;
     const st=secState(c);
-    return `<div class="ccard" data-id="${c.id}">
-      <div class="cc-top">
-        <div class="cc-av">${esc(initials(c.company_name))}</div>
-        <div class="cc-id"><div class="cc-name">${esc(c.company_name)}</div><div class="cc-loc">${esc([c.bill_city,c.bill_province].filter(Boolean).join(', ')||'—')}</div></div>
-        ${st?`<span class="sec-chip ${st.cls}" title="Busy season ${seasonLabel(st.s)}">${esc(st.s.name)}${st.note?' · '+st.note:''}</span>`:''}
-      </div>
-      <div class="cc-mid">
-        <div class="cc-person">${esc(cn||'No contact on file')}${prim.designation?' · <span style="color:var(--text-3);font-weight:400;">'+esc(prim.designation)+'</span>':''}</div>
-        <div class="cc-meta">${esc(prim.tel1||'')}${prim.tel1&&prim.email1?' · ':''}${esc(prim.email1||'')}</div>
-      </div>
-      <div class="cc-foot">
-        <span>Last ${fmtD(c._lastDate)}</span>
-        <span class="cc-bal ${bal>0?'ow':''}">${bal>0?money(bal)+' due':'Clear'}</span>
-      </div>
-    </div>`;}).join('');
-  document.getElementById('wrap').innerHTML=`<div class="cgrid">${body}</div>`;
-  document.querySelectorAll('.ccard[data-id]').forEach(el=>el.addEventListener('click',()=>location.href='client.html?id='+encodeURIComponent(el.dataset.id)));
+    const cid=String(c.id).replace(/[^a-z0-9]/gi,'').slice(0,6).toUpperCase();
+    const secCell=st?`<span class="sec-chip ${st.cls}" title="Busy season ${seasonLabel(st.s)}">${esc(st.s.name)}</span>`:(SEC_OK&&SECMAP[c.sector_id]?esc(SECMAP[c.sector_id].name):'<span class="c-dash">—</span>');
+    return `<tr data-id="${c.id}">
+      <td class="c-id">${cid}</td>
+      <td class="c-name-cell">${esc(c.company_name)}</td>
+      <td>${secCell}</td>
+      <td>${esc(cn)||'<span class="c-dash">—</span>'}</td>
+      <td class="c-mono">${esc(prim.tel1)||'<span class="c-dash">—</span>'}</td>
+      <td class="c-mono">${esc(prim.email1)||'<span class="c-dash">—</span>'}</td>
+      <td>${fmtD(c._lastDate)}</td>
+    </tr>`;}).join('');
+  document.getElementById('wrap').innerHTML=`<div class="ctable-wrap"><table class="ctable"><thead><tr><th>Client ID</th><th>Client</th><th>Sector</th><th>Primary Contact</th><th>Telephone</th><th>Email</th><th>Last Transaction</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  document.querySelectorAll('.ctable tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='client.html?id='+encodeURIComponent(tr.dataset.id)));
 }
 function openDrawer(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
 function closeDrawer(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.getElementById('d-msg').textContent='';}
