@@ -3,353 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Engraving Studio — Artwork Generator</title>
+<title>Artwork — Batch Duplicate</title>
 <style>
   :root{
-    --paper:#ffffff; --ink:#16181d; --panel:#f6f7f4; --panel-2:#eceee8;
-    --line:#dadcd5; --muted:#6c716a; --accent:#d8352a; --accent-soft:#f3d9d6;
-    --stage:#e6e8e2; --field:#ffffff; --shadow:0 8px 30px rgba(20,22,26,.14);
+    --bg:#0f1115;--card:#16181d;--card-2:#1f2229;--line:#323a48;--line-2:#414a5c;
+    --text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;--accent:#ff6b35;--good:#3ddc84;
+    --danger:#ff4d4d;--r:11px;--r-sm:8px;
     --font-ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --font-mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,"Liberation Mono",monospace;
-    --r:9px;
+    --font-mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
   }
-  @media (prefers-color-scheme:dark){
-    :root{ --paper:#0f1116; --ink:#e7e9ec; --panel:#171a20; --panel-2:#1f232c;
-      --line:#2b303a; --muted:#99a0a9; --accent:#ef5a4f; --accent-soft:#3b201d;
-      --stage:#0a0c10; --field:#12151b; --shadow:0 10px 34px rgba(0,0,0,.5); }
-  }
-  :root[data-theme="light"]{ --paper:#ffffff; --ink:#16181d; --panel:#f6f7f4; --panel-2:#eceee8;
-    --line:#dadcd5; --muted:#6c716a; --accent:#d8352a; --accent-soft:#f3d9d6;
-    --stage:#e6e8e2; --field:#ffffff; --shadow:0 8px 30px rgba(20,22,26,.14); }
-  :root[data-theme="dark"]{ --paper:#0f1116; --ink:#e7e9ec; --panel:#171a20; --panel-2:#1f232c;
-    --line:#2b303a; --muted:#99a0a9; --accent:#ef5a4f; --accent-soft:#3b201d;
-    --stage:#0a0c10; --field:#12151b; --shadow:0 10px 34px rgba(0,0,0,.5); }
-
   *{box-sizing:border-box}
-  body{margin:0;font-family:var(--font-ui);color:var(--ink);background:var(--panel);
-    -webkit-font-smoothing:antialiased;line-height:1.45}
-  .topbar{display:flex;align-items:center;gap:16px;justify-content:space-between;
-    padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
-  .brand{display:flex;align-items:baseline;gap:10px}
-  .brand b{font-size:15px;letter-spacing:.02em}
-  .brand span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
-  .readout{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
-  .readout b{color:var(--ink);font-weight:600}
-  .readout .dot{color:var(--accent)}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);
+    font-family:var(--font-ui);display:flex;align-items:center;justify-content:center;padding:20px;line-height:1.45}
 
-  .app{display:grid;grid-template-columns:344px 1fr;min-height:calc(100vh - 54px)}
-  .rail{border-right:1px solid var(--line);background:var(--panel);padding:18px 18px 40px;overflow-y:auto;max-height:calc(100vh - 54px)}
-  .stage{background:var(--stage);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px}
+  .pop{width:100%;max-width:480px;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--r);box-shadow:0 18px 60px rgba(0,0,0,.5);padding:22px 22px 24px}
+  .pop h1{font-size:16px;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+  .pop h1 svg{width:18px;height:18px;stroke:var(--accent)}
+  .sub{font-size:12px;color:var(--text-3);margin:0 0 18px}
 
-  .grp{margin-bottom:22px}
-  .grp>h3{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin:0 0 10px;font-weight:600}
-  label.f{display:block;margin-bottom:11px}
-  label.f>span{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
-  input[type=text],select,textarea{width:100%;font-family:var(--font-ui);font-size:13px;color:var(--ink);
-    background:var(--field);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
-  input[type=text]:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .hint{font-size:11.5px;color:var(--muted);margin:2px 0 0}
+  .step{margin-bottom:16px}
+  .step[hidden]{display:none}
+  .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--text-3);
+    font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+  .lbl .n{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+    border-radius:50%;background:var(--card-2);border:1px solid var(--line);font-size:10px;color:var(--text-2)}
 
-  .seg{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-  .seg label{flex:1;text-align:center;font-size:12.5px;padding:8px 6px;cursor:pointer;color:var(--muted)}
-  .seg input{position:absolute;opacity:0;pointer-events:none}
-  .seg label:has(input:checked){background:var(--ink);color:var(--paper)}
-  .chk{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:10px;cursor:pointer}
-  .chk input{accent-color:var(--accent);width:15px;height:15px}
-
-  .drop{border:1.5px dashed var(--line);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;background:var(--field);display:block}
+  .drop{border:1.5px dashed var(--line-2);border-radius:var(--r-sm);padding:18px 14px;text-align:center;
+    cursor:pointer;display:block;background:var(--card-2)}
   .drop:hover{border-color:var(--accent)}
   .drop input{display:none}
-  .drop .big{font-size:13px;font-weight:600}
-  .logostat{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px}
-  .logostat[hidden]{display:none}
-  .logostat .badge{font-family:var(--font-mono);font-size:10.5px;padding:2px 7px;border-radius:20px;background:var(--accent-soft);color:var(--accent)}
-  .logostat button{margin-left:auto;font-size:11.5px;background:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--ink)}
+  .drop b{font-size:13px}
+  .drop .hint{font-size:11.5px;color:var(--text-3);margin-top:3px}
+  .filerow{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:8px}
+  .filerow[hidden]{display:none}
+  .filerow .ok{color:var(--good)}
+  .filerow button{margin-left:auto;font-size:11.5px;background:none;border:1px solid var(--line);
+    border-radius:6px;padding:3px 9px;cursor:pointer;color:var(--text-2)}
 
-  button.act{width:100%;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;margin-top:2px}
-  button.act:hover{filter:brightness(1.06)}
-  button.act.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
-  details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
-  details summary{font-size:12px;color:var(--muted);cursor:pointer}
-  textarea.src{margin-top:8px;height:120px;font-family:var(--font-mono);font-size:10.5px;resize:vertical}
+  .fields{display:flex;flex-direction:column;gap:6px;max-height:150px;overflow-y:auto;
+    border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;background:var(--card-2)}
+  .fields label{display:flex;align-items:center;gap:9px;font-size:12.5px;cursor:pointer;
+    padding:4px 6px;border-radius:6px}
+  .fields label:hover{background:var(--card)}
+  .fields input{accent-color:var(--accent);width:14px;height:14px;flex:none}
+  .fields .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .warn{font-size:12px;color:var(--danger);margin-top:8px}
 
-  .proof{background:transparent;box-shadow:var(--shadow);border-radius:6px;overflow:hidden;max-height:calc(100vh - 160px)}
-  .proof svg{display:block;height:min(74vh,720px);width:auto}
-  .stage-note{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:center;max-width:460px}
-  .stage-note b{color:var(--ink)}
+  input[type=number],textarea{width:100%;font-family:var(--font-ui);font-size:13px;color:var(--text);
+    background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px}
+  input[type=number]:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+  textarea{font-family:var(--font-mono);font-size:12px;resize:vertical;min-height:74px}
+  .vhint{font-size:11.5px;color:var(--text-3);margin-top:4px}
+  .vhint b{color:var(--text-2)}
 
-  @media (max-width:860px){
-    .app{grid-template-columns:1fr}
-    .rail{max-height:none;border-right:none;border-bottom:1px solid var(--line);order:2}
-    .stage{order:1;min-height:60vh}
-    .proof svg{height:52vh}
-  }
+  .gen{width:100%;border:none;border-radius:var(--r-sm);padding:12px;font-size:13.5px;font-weight:700;
+    cursor:pointer;background:var(--accent);color:#1a0f08;margin-top:4px}
+  .gen:hover{filter:brightness(1.07)}
+  .gen:disabled{opacity:.45;cursor:not-allowed}
+  .done{font-size:12.5px;color:var(--good);margin-top:10px;text-align:center}
+  .done[hidden],.warn[hidden]{display:none}
+
+  .prev{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .prev[hidden]{display:none}
+  .prev .lbl{margin-bottom:8px}
+  .thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .thumb{flex:none;width:104px;background:#fff;border-radius:6px;border:1px solid var(--line-2);padding:3px}
+  .thumb img{display:block;width:100%;height:130px;object-fit:contain}
+  .thumb .cap{font-size:10px;color:#333;text-align:center;font-family:var(--font-mono);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 2px 1px}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <div class="brand"><b>Engraving Studio</b><span>Artwork generator · experiment</span></div>
-  <div class="readout">
-    <span>PART <b>CRY96548X-X</b></span><span class="dot">·</span>
-    <span>PRODUCT <b>5⅛ × 8 in</b></span><span class="dot">·</span>
-    <span>SAFE AREA <b>3.53 × 5.20 in</b></span><span class="dot">·</span>
-    <span>SCALE <b>1:1</b></span>
+
+<div class="pop">
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="13" height="13" rx="2"/><path d="M8 21h11a2 2 0 0 0 2-2V8"/></svg>
+    Batch duplicate</h1>
+  <p class="sub">Upload a finished design. Get copies where only what you choose changes — the design itself stays exactly the same.</p>
+
+  <!-- 1 · master design -->
+  <div class="step">
+    <div class="lbl"><span class="n">1</span>Master design</div>
+    <label class="drop" id="dropzone">
+      <b>Upload the design (SVG)</b>
+      <div class="hint">From CorelDRAW: File → Export → SVG (keep text as text, not curves)</div>
+      <input type="file" id="file" accept=".svg,image/svg+xml">
+    </label>
+    <div class="filerow" id="filerow" hidden>
+      <span class="ok">●</span><span id="filename"></span>
+      <button type="button" id="clear">Change</button>
+    </div>
+    <div class="warn" id="nowarn" hidden>No editable text found in this file. Re-export from Corel with text kept as text (not converted to curves), then upload again.</div>
+  </div>
+
+  <!-- 2 · what changes -->
+  <div class="step" id="step2" hidden>
+    <div class="lbl"><span class="n">2</span>What changes? <span style="color:var(--text-3);text-transform:none;letter-spacing:0;font-weight:500">tick the text that differs per copy</span></div>
+    <div class="fields" id="fields"></div>
+  </div>
+
+  <!-- 3 · how many -->
+  <div class="step" id="step3" hidden>
+    <div class="lbl"><span class="n">3</span>How many copies?</div>
+    <input type="number" id="count" min="1" max="200" value="5">
+  </div>
+
+  <!-- 4 · values -->
+  <div class="step" id="step4" hidden>
+    <div class="lbl"><span class="n">4</span>New values — one line per copy</div>
+    <div id="valueboxes"></div>
+  </div>
+
+  <button class="gen" id="gen" disabled>Generate copies</button>
+  <div class="done" id="done" hidden></div>
+
+  <div class="prev" id="prev" hidden>
+    <div class="lbl">Preview</div>
+    <div class="thumbs" id="thumbs"></div>
   </div>
 </div>
 
-<div class="app">
-  <aside class="rail">
-    <div class="grp">
-      <h3>Template</h3>
-      <label class="f"><span>Award blank (from supplier template PDF)</span>
-        <select id="tpl"><option value="delta">Delta Optic Crystal — CRY96548X-X (5⅛ × 8 in)</option></select>
-      </label>
-      <p class="hint">More templates are added by extracting the red safe-area from each supplier PDF. This one is live.</p>
-    </div>
-
-    <div class="grp">
-      <h3>Wording</h3>
-      <label class="f"><span>Award title</span><input type="text" id="title" value="AWARD OF EXCELLENCE"></label>
-      <label class="f"><span>Lead-in line</span><input type="text" id="plabel" value="presented to"></label>
-      <label class="f"><span>Recipient name</span><input type="text" id="name" value="Jennifer A. Caldwell"></label>
-      <label class="f"><span>Recognition line 1</span><input type="text" id="body1" value="in recognition of outstanding achievement"></label>
-      <label class="f"><span>Recognition line 2</span><input type="text" id="body2" value="and dedication to the highest standard"></label>
-      <div class="row2">
-        <label class="f"><span>Year</span><input type="text" id="year" value="2026"></label>
-        <label class="f"><span>Organization</span><input type="text" id="org" value="NORTHGATE FINANCIAL GROUP"></label>
-      </div>
-    </div>
-
-    <div class="grp">
-      <h3>Logo</h3>
-      <label class="drop" for="logo">
-        <div class="big">Upload a logo</div>
-        <div class="hint">SVG stays vector · PNG/JPG is auto-traced to vector</div>
-        <input type="file" id="logo" accept=".svg,image/svg+xml,image/png,image/jpeg">
-      </label>
-      <div class="logostat" id="logostat" hidden>
-        <span class="badge" id="logobadge">vector</span>
-        <span id="logoname" style="color:var(--muted)"></span>
-        <button id="logoremove" type="button">Remove</button>
-      </div>
-      <p class="hint">Engraving is single-colour, so the logo is flattened to one colour automatically. Replaces the placeholder emblem.</p>
-    </div>
-
-    <div class="grp">
-      <h3>Type — use your own fonts</h3>
-      <label class="f"><span>Titles &amp; caps</span><select id="fontHead"></select></label>
-      <label class="f"><span>Recipient name (script)</span><select id="fontName"></select></label>
-      <label class="f"><span>Body text</span><select id="fontBody"></select></label>
-      <p class="hint">Renders in the fonts installed on <b>this</b> computer — on Windows it uses your real Corel fonts.</p>
-    </div>
-
-    <div class="grp">
-      <h3>View</h3>
-      <div class="seg">
-        <label><input type="radio" name="mode" value="artwork" checked>Artwork (B&amp;W)</label>
-        <label><input type="radio" name="mode" value="proof">On crystal</label>
-      </div>
-      <label class="chk"><input type="checkbox" id="guide" checked>Show safe-area boundary (design only — off = production)</label>
-    </div>
-
-    <div class="grp">
-      <h3>Export</h3>
-      <button class="act" id="dl">Download SVG (vector, engraving-ready)</button>
-      <details>
-        <summary>Or copy the SVG code</summary>
-        <textarea class="src" id="src" readonly spellcheck="false"></textarea>
-        <button class="act ghost" id="copy" style="margin-top:8px">Copy to clipboard</button>
-      </details>
-    </div>
-  </aside>
-
-  <main class="stage">
-    <div class="proof" id="proof"></div>
-    <div class="stage-note">Everything sits inside the <b>exact</b> red safe-area extracted from <b>CRY96548X-X.pdf</b>. Auto-fit keeps text within the border on any font.</div>
-  </main>
-</div>
-
-<script src="imagetracer.js"></script>
 <script>
-const FONTS = {
-  heads:["Georgia","Palatino Linotype","Book Antiqua","Times New Roman","Garamond","Cambria","Constantia","Trajan Pro"],
-  names:["Monotype Corsiva","Brush Script MT","Segoe Script","Palace Script MT","Lucida Handwriting","Vladimir Script","Edwardian Script ITC"],
-  body:["Georgia","Times New Roman","Cambria","Garamond","Palatino Linotype","Book Antiqua"]
-};
-const STACK = {
-  "Georgia":"Georgia,'Times New Roman',serif","Palatino Linotype":"'Palatino Linotype',Palatino,'Book Antiqua',serif",
-  "Book Antiqua":"'Book Antiqua',Palatino,Georgia,serif","Times New Roman":"'Times New Roman',Times,serif",
-  "Garamond":"Garamond,'EB Garamond',Georgia,serif","Cambria":"Cambria,Georgia,serif","Constantia":"Constantia,Georgia,serif",
-  "Trajan Pro":"'Trajan Pro','Trajan Pro 3',Cinzel,Georgia,serif",
-  "Monotype Corsiva":"'Monotype Corsiva','Snell Roundhand','Brush Script MT',cursive",
-  "Brush Script MT":"'Brush Script MT','Segoe Script',cursive","Segoe Script":"'Segoe Script','Brush Script MT',cursive",
-  "Palace Script MT":"'Palace Script MT','Snell Roundhand',cursive","Lucida Handwriting":"'Lucida Handwriting','Segoe Script',cursive",
-  "Vladimir Script":"'Vladimir Script','Brush Script MT',cursive","Edwardian Script ITC":"'Edwardian Script ITC','Snell Roundhand',cursive"
-};
-const DELTA = {
-  viewBox:"415 72 390 576", wIn:5.42, hIn:8.0,
-  safe:"484.9,407.2 581.6,567.0 642.4,567.0 739.1,407.2 612.0,192.8",
-  fills:[
-    "M441.0 369.4L425.2 396.0 M425.2 396.0L425.2 472.5 M425.2 472.5L493.4 585.0 M493.4 585.0L571.5 585.0 M571.5 585.0L441.0 369.4",
-    "M783.0 369.4L798.8 396.0 M798.8 396.0L798.8 472.5 M798.8 472.5L730.6 585.0 M730.6 585.0L652.5 585.0 M652.5 585.0L783.0 369.4"
-  ],
-  strokes:[
-    "M612.0 81.0L783.0 369.4 M783.0 369.4L652.5 585.0 M652.5 585.0L571.5 585.0 M571.5 585.0L441.0 369.4 M441.0 369.4L612.0 81.0",
-    "M612.0 81.0L798.8 396.0 M798.8 396.0L798.8 472.5 M798.8 472.5L730.6 585.0 M730.6 585.0L493.4 585.0 M493.4 585.0L425.2 472.5 M425.2 472.5L425.2 396.0 M425.2 396.0L612.0 81.0",
-    "M684.3 585.0L798.8 396.0","M425.2 396.0L539.7 585.0","M798.8 472.5L612.0 157.5 M612.0 157.5L425.2 472.5",
-    "M612.0 157.5L612.0 81.0","M438.8 625.5h346.5v13.5h-346.5Z"
-  ]
-};
-const EMBLEM = `
-  <ellipse cx="611.2" cy="308.5" rx="6.4" ry="2.5" transform="rotate(-178 611.2 308.5)"/>
-  <ellipse cx="612.8" cy="308.5" rx="6.4" ry="2.5" transform="rotate(178 612.8 308.5)"/>
-  <ellipse cx="602.8" cy="306.6" rx="6.4" ry="2.5" transform="rotate(-156 602.8 306.6)"/>
-  <ellipse cx="621.2" cy="306.6" rx="6.4" ry="2.5" transform="rotate(156 621.2 306.6)"/>
-  <ellipse cx="595.8" cy="301.6" rx="6.4" ry="2.5" transform="rotate(-134 595.8 301.6)"/>
-  <ellipse cx="628.2" cy="301.6" rx="6.4" ry="2.5" transform="rotate(134 628.2 301.6)"/>
-  <ellipse cx="591.1" cy="294.4" rx="6.4" ry="2.5" transform="rotate(-112 591.1 294.4)"/>
-  <ellipse cx="632.9" cy="294.4" rx="6.4" ry="2.5" transform="rotate(112 632.9 294.4)"/>
-  <ellipse cx="589.5" cy="286.0" rx="6.4" ry="2.5" transform="rotate(-90 589.5 286.0)"/>
-  <ellipse cx="634.5" cy="286.0" rx="6.4" ry="2.5" transform="rotate(90 634.5 286.0)"/>
-  <ellipse cx="591.1" cy="277.6" rx="6.4" ry="2.5" transform="rotate(-68 591.1 277.6)"/>
-  <ellipse cx="632.9" cy="277.6" rx="6.4" ry="2.5" transform="rotate(68 632.9 277.6)"/>
-  <ellipse cx="595.8" cy="270.4" rx="6.4" ry="2.5" transform="rotate(-46 595.8 270.4)"/>
-  <ellipse cx="628.2" cy="270.4" rx="6.4" ry="2.5" transform="rotate(46 628.2 270.4)"/>
-  <polygon points="612.0 273.0 608.9 281.8 599.6 282.0 607.1 287.6 604.4 296.5 612.0 291.2 619.6 296.5 616.9 287.6 624.4 282.0 615.1 281.8"/>`;
+"use strict";
+let MASTER=null;          // original svg text
+let TEXTNODES=[];         // [{el, original}] from parsed doc (kept for listing only)
+let PARSED=null;          // parsed Document (master)
 
-const S = { title:"AWARD OF EXCELLENCE", plabel:"presented to", name:"Jennifer A. Caldwell",
-  body1:"in recognition of outstanding achievement", body2:"and dedication to the highest standard",
-  year:"2026", org:"NORTHGATE FINANCIAL GROUP", fontHead:"Georgia", fontName:"Monotype Corsiva", fontBody:"Georgia",
-  mode:"artwork", guide:true };
-let LOGO = null;  // { inner, w, h, minx, miny }
+const $=id=>document.getElementById(id);
 
-const esc = s => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-function isLight(color){
-  if(!color) return false;
-  let r,g,b, m=color.match(/rgb\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i);
-  if(m){ r=+m[1];g=+m[2];b=+m[3]; }
-  else if(color[0]==="#"){ let c=color.slice(1); if(c.length===3)c=c.split("").map(x=>x+x).join("");
-    r=parseInt(c.slice(0,2),16); g=parseInt(c.slice(2,4),16); b=parseInt(c.slice(4,6),16); }
-  else return false;
-  return (0.299*r+0.587*g+0.114*b) > 208;
-}
-function recolorStyle(style){
-  return style.replace(/(fill|stroke)\s*:\s*([^;]+)/gi,(mm,prop,val)=>{
-    val=val.trim(); if(val==="none") return prop+":none";
-    return prop+":"+(isLight(val)?"none":"currentColor");
-  });
-}
-function normalizeLogo(svgString){
-  try{
-    const doc=new DOMParser().parseFromString(svgString,"image/svg+xml");
-    const svg=doc.querySelector("svg"); if(!svg) return null;
-    svg.querySelectorAll("script,image,foreignObject,style").forEach(n=>n.remove());
-    let minx=0,miny=0,w=0,h=0, vb=svg.getAttribute("viewBox");
-    if(vb){ const p=vb.split(/[ ,]+/).map(Number); minx=p[0]; miny=p[1]; w=p[2]; h=p[3]; }
-    else { w=parseFloat(svg.getAttribute("width"))||100; h=parseFloat(svg.getAttribute("height"))||100; }
-    svg.querySelectorAll("*").forEach(el=>{
-      ["fill","stroke"].forEach(a=>{ const v=el.getAttribute(a);
-        if(v && v!=="none") el.setAttribute(a, isLight(v)?"none":"currentColor"); });
-      const st=el.getAttribute("style"); if(st) el.setAttribute("style", recolorStyle(st));
-    });
-    let inner=""; svg.childNodes.forEach(n=>{ if(n.nodeType===1) inner+=n.outerHTML; });
-    if(!w||!h) return null;
-    return { inner, w, h, minx, miny };
-  }catch(e){ return null; }
-}
-function logoGroup(ink){
-  const s=Math.min(120/LOGO.w, 82/LOGO.h);
-  const tx=612-(LOGO.w*s)/2, ty=286-(LOGO.h*s)/2;
-  return `<g style="color:${ink}" transform="translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${s.toFixed(4)}) translate(${-LOGO.minx} ${-LOGO.miny})">${LOGO.inner}</g>`;
-}
-function buildSVG(){
-  const proof=S.mode==="proof";
-  const paper=proof?"#15171c":"#ffffff", ink=proof?"#f2f0ec":"#111111";
-  const cStroke=proof?"#565d6b":"#c2c2c2", cFill=proof?"#20242c":"#ededed";
-  const fh=STACK[S.fontHead], fn=STACK[S.fontName], fb=STACK[S.fontBody];
-  const showGuide=S.guide && !proof;
-  const fills=DELTA.fills.map(d=>`<path d="${d}" fill="${cFill}" stroke="none"/>`).join("");
-  const strokes=DELTA.strokes.map(d=>`<path d="${d}" fill="none" stroke="${cStroke}" stroke-width="1"/>`).join("");
-  const guide=showGuide?`<polygon points="${DELTA.safe}" fill="none" stroke="#e23b3b" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.9"/>`:"";
-  const emblem=LOGO?logoGroup(ink):`<g fill="${ink}">${EMBLEM}</g>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${DELTA.wIn}in" height="${DELTA.hIn}in" viewBox="${DELTA.viewBox}">
-  <rect x="415" y="72" width="390" height="576" fill="${paper}"/>
-  <g>${fills}${strokes}</g>
-  ${guide}
-  ${emblem}
-  <g fill="${ink}">
-    <text x="612" y="352" text-anchor="middle" font-family="${fh}" font-size="15" letter-spacing="1.6" textLength="170" lengthAdjust="spacingAndGlyphs">${esc(S.title)}</text>
-    <g stroke="${ink}" stroke-width="0.7" fill="${ink}">
-      <line x1="560" y1="368" x2="596" y2="368"/><line x1="628" y1="368" x2="664" y2="368"/>
-      <path d="M612 364 L616 368 L612 372 L608 368 Z"/>
-    </g>
-    <text x="612" y="392" text-anchor="middle" font-family="${fb}" font-style="italic" font-size="9">${esc(S.plabel)}</text>
-    <text x="612" y="420" text-anchor="middle" font-family="${fn}" font-size="27" textLength="196" lengthAdjust="spacingAndGlyphs">${esc(S.name)}</text>
-    <line x1="547" y1="432" x2="677" y2="432" stroke="${ink}" stroke-width="0.5"/>
-    <g font-family="${fb}" font-size="8.4" text-anchor="middle">
-      <text x="612" y="454" textLength="160" lengthAdjust="spacingAndGlyphs">${esc(S.body1)}</text>
-      <text x="612" y="468" textLength="140" lengthAdjust="spacingAndGlyphs">${esc(S.body2)}</text>
-    </g>
-    <text x="612" y="500" text-anchor="middle" font-family="${fh}" font-size="10" letter-spacing="4" textLength="70" lengthAdjust="spacingAndGlyphs">${esc(S.year)}</text>
-    <text x="612" y="534" text-anchor="middle" font-family="${fh}" font-size="6.6" letter-spacing="1.6" textLength="78" lengthAdjust="spacingAndGlyphs">${esc(S.org)}</text>
-  </g>
-</svg>`;
-}
-function render(){ const svg=buildSVG(); document.getElementById("proof").innerHTML=svg; document.getElementById("src").value=svg; }
-
-function fillSel(id,list,val){ document.getElementById(id).innerHTML=list.map(f=>`<option value="${f}"${f===val?" selected":""}>${f}</option>`).join(""); }
-fillSel("fontHead",FONTS.heads,S.fontHead); fillSel("fontName",FONTS.names,S.fontName); fillSel("fontBody",FONTS.body,S.fontBody);
-
-const bind=(id,key)=>{const el=document.getElementById(id);el.addEventListener("input",()=>{S[key]=el.value;render();});};
-["title","plabel","name","body1","body2","year","org","fontHead","fontName","fontBody"].forEach(k=>bind(k,k));
-document.getElementById("guide").addEventListener("change",e=>{S.guide=e.target.checked;render();});
-document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener("change",e=>{if(e.target.checked){S.mode=e.target.value;render();}}));
-
-// ---- Logo upload: SVG stays vector, PNG/JPG auto-traced to vector ----
-function showLogoStatus(name,kind){
-  document.getElementById("logoname").textContent=name;
-  document.getElementById("logobadge").textContent=kind;
-  document.getElementById("logostat").hidden=false;
-}
-document.getElementById("logo").addEventListener("change",e=>{
+/* ---------- 1 · load master ---------- */
+$("file").addEventListener("change",e=>{
   const f=e.target.files[0]; if(!f) return;
-  const isSVG = f.type==="image/svg+xml" || /\.svg$/i.test(f.name);
-  const isRaster = /png|jpe?g/i.test(f.type) || /\.(png|jpe?g)$/i.test(f.name);
-  if(isSVG){
-    f.text().then(txt=>{ LOGO=normalizeLogo(txt);
-      if(LOGO) showLogoStatus(f.name,"vector kept"); else alert("Could not read that SVG.");
-      render(); });
-  } else if(isRaster){
-    showLogoStatus(f.name,"tracing…");
-    const r=new FileReader();
-    r.onload=()=>{
-      try{
-        ImageTracer.imageToSVG(r.result,(svgstr)=>{ LOGO=normalizeLogo(svgstr);
-          showLogoStatus(f.name, LOGO?"raster → vector":"trace failed"); render(); },
-          { numberofcolors:2, colorquantcycles:3, pathomit:8, ltres:1, qtres:1, rightangleenhance:true });
-      }catch(err){ showLogoStatus(f.name,"trace error"); }
-    };
-    r.readAsDataURL(f);
-  } else { alert("Please upload an SVG, PNG or JPG."); }
+  f.text().then(txt=>{
+    MASTER=txt;
+    PARSED=new DOMParser().parseFromString(txt,"image/svg+xml");
+    if(PARSED.querySelector("parsererror")||!PARSED.querySelector("svg")){ alert("That file could not be read as an SVG."); return; }
+    // collect distinct text units (leaf text: tspans without child tspans, or bare text els)
+    TEXTNODES=[];
+    const seen=new Set();
+    PARSED.querySelectorAll("text").forEach(t=>{
+      const leaves=t.querySelectorAll("tspan").length? [...t.querySelectorAll("tspan")].filter(ts=>!ts.querySelector("tspan")) : [t];
+      leaves.forEach(el=>{
+        const s=(el.textContent||"").trim();
+        if(s && !seen.has(s)){ seen.add(s); TEXTNODES.push(s); }
+      });
+    });
+    $("filename").textContent=f.name;
+    $("filerow").hidden=false; $("dropzone").style.display="none";
+    if(TEXTNODES.length===0){ $("nowarn").hidden=false; return; }
+    $("nowarn").hidden=true;
+    $("fields").innerHTML=TEXTNODES.map((s,i)=>
+      `<label><input type="checkbox" data-i="${i}"><span class="txt">${s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</span></label>`).join("");
+    $("step2").hidden=false; $("step3").hidden=false;
+    $("fields").querySelectorAll("input").forEach(c=>c.addEventListener("change",buildValueBoxes));
+    $("count").addEventListener("input",buildValueBoxes);
+    buildValueBoxes();
+  });
 });
-document.getElementById("logoremove").addEventListener("click",()=>{
-  LOGO=null; document.getElementById("logo").value=""; document.getElementById("logostat").hidden=true; render();
-});
+$("clear").addEventListener("click",()=>location.reload());
 
-document.getElementById("dl").addEventListener("click",()=>{
-  const blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+buildSVG()],{type:"image/svg+xml"});
-  const url=URL.createObjectURL(blob), a=document.createElement("a");
-  a.href=url; a.download=("CRY96548X-X_"+(S.name||"artwork")).replace(/[^a-z0-9_\-]+/gi,"-")+".svg";
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
-});
-document.getElementById("copy").addEventListener("click",async()=>{
-  const t=document.getElementById("src"); t.select();
-  try{ await navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand("copy"); }
-  const b=document.getElementById("copy"), o=b.textContent; b.textContent="Copied ✓"; setTimeout(()=>b.textContent=o,1400);
-});
+/* ---------- 2-4 · value boxes ---------- */
+function chosen(){ return [...$("fields").querySelectorAll("input:checked")].map(c=>TEXTNODES[+c.dataset.i]); }
+function buildValueBoxes(){
+  const picks=chosen(), n=Math.max(1,Math.min(200, +$("count").value||1));
+  $("step4").hidden=picks.length===0;
+  $("gen").disabled=picks.length===0;
+  $("valueboxes").innerHTML=picks.map((s,k)=>
+    `<div style="margin-bottom:10px">
+       <div class="vhint" style="margin:0 0 4px">Replaces “<b>${s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</b>”</div>
+       <textarea data-k="${k}" rows="${Math.min(n,8)}" placeholder="${Array.from({length:Math.min(n,4)},(_,i)=>"copy "+(i+1)).join("\n")}${n>4?"\n…":""}"></textarea>
+     </div>`).join("")
+    + `<div class="vhint">Line <b>1</b> → copy 1, line <b>2</b> → copy 2… A blank line keeps the original text for that copy.</div>`;
+}
 
-render();
+/* ---------- generate ---------- */
+function makeCopy(picks, values, i){
+  // fresh parse each copy; replace ALL text nodes whose trimmed content equals the picked string
+  const doc=new DOMParser().parseFromString(MASTER,"image/svg+xml");
+  picks.forEach((orig,k)=>{
+    const val=(values[k][i]??"").trim();
+    if(!val) return;
+    doc.querySelectorAll("text, text tspan").forEach(el=>{
+      if(el.children.length===0 && (el.textContent||"").trim()===orig) el.textContent=val;
+    });
+  });
+  return new XMLSerializer().serializeToString(doc.documentElement);
+}
+const sanitize=s=>(s||"").replace(/[^A-Za-z0-9 _\-]/g,"").trim().replace(/\s+/g,"_")||null;
+
+/* store-only ZIP (no compression) */
+function crc32(buf){let t=crc32.t;if(!t){t=crc32.t=new Int32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?(c>>>1)^0xEDB88320:c>>>1;t[n]=c;}}
+  let c=-1;for(let i=0;i<buf.length;i++)c=(c>>>8)^t[(c^buf[i])&255];return (c^-1)>>>0;}
+function buildZip(files){ // files: [{name, data:Uint8Array}]
+  const enc=new TextEncoder(), chunks=[], central=[]; let off=0;
+  const u16=v=>[v&255,v>>8&255], u32=v=>[v&255,v>>8&255,v>>16&255,v>>>24&255];
+  files.forEach(f=>{
+    const nm=enc.encode(f.name), crc=crc32(f.data);
+    const head=new Uint8Array([80,75,3,4,...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+      ...u32(crc),...u32(f.data.length),...u32(f.data.length),...u16(nm.length),...u16(0)]);
+    chunks.push(head,nm,f.data);
+    central.push({nm,crc,size:f.data.length,off});
+    off+=head.length+nm.length+f.data.length;
+  });
+  const cdStart=off; let cdLen=0;
+  central.forEach(c=>{
+    const rec=new Uint8Array([80,75,1,2,...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+      ...u32(c.crc),...u32(c.size),...u32(c.size),...u16(c.nm.length),...u16(0),...u16(0),
+      ...u16(0),...u16(0),...u32(0),...u32(c.off)]);
+    chunks.push(rec,c.nm); cdLen+=rec.length+c.nm.length;
+  });
+  chunks.push(new Uint8Array([80,75,5,6,...u16(0),...u16(0),...u16(files.length),...u16(files.length),
+    ...u32(cdLen),...u32(cdStart),...u16(0)]));
+  return new Blob(chunks,{type:"application/zip"});
+}
+
+$("gen").addEventListener("click",()=>{
+  const picks=chosen(); if(!picks.length) return;
+  const n=Math.max(1,Math.min(200,+$("count").value||1));
+  const values=[...$("valueboxes").querySelectorAll("textarea")].map(t=>t.value.split("\n"));
+  const enc=new TextEncoder(), files=[], used=new Set();
+  const copies=[];
+  for(let i=0;i<n;i++){
+    const svg=makeCopy(picks,values,i);
+    let base=sanitize(values[0]?.[i]) || ("copy-"+(i+1));
+    let name=base, j=2; while(used.has(name)){ name=base+"_"+j++; } used.add(name);
+    files.push({name:name+".svg", data:enc.encode('<?xml version="1.0" encoding="UTF-8"?>\n'+svg)});
+    copies.push({name, svg});
+  }
+  // download zip
+  const zip=buildZip(files), url=URL.createObjectURL(zip), a=document.createElement("a");
+  a.href=url; a.download="artwork_batch_"+n+".zip"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  $("done").textContent="Done — "+n+" file"+(n>1?"s":"")+" downloaded as a ZIP. Design untouched; only your chosen text changed.";
+  $("done").hidden=false;
+  // previews (first 8)
+  $("prev").hidden=false;
+  $("thumbs").innerHTML=copies.slice(0,8).map(c=>{
+    const u=URL.createObjectURL(new Blob([c.svg],{type:"image/svg+xml"}));
+    return `<div class="thumb"><img src="${u}" alt=""><div class="cap">${c.name}</div></div>`;
+  }).join("");
+});
 </script>
 </body>
 </html>
