@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engraving Studio — Artwork Generator</title>
+<style>
+  :root{
+    --paper:#ffffff; --ink:#16181d; --panel:#f6f7f4; --panel-2:#eceee8;
+    --line:#dadcd5; --muted:#6c716a; --accent:#d8352a; --accent-soft:#f3d9d6;
+    --stage:#e6e8e2; --field:#ffffff; --shadow:0 8px 30px rgba(20,22,26,.14);
+    --font-ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+    --r:9px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --paper:#0f1116; --ink:#e7e9ec; --panel:#171a20; --panel-2:#1f232c;
+      --line:#2b303a; --muted:#99a0a9; --accent:#ef5a4f; --accent-soft:#3b201d;
+      --stage:#0a0c10; --field:#12151b; --shadow:0 10px 34px rgba(0,0,0,.5); }
+  }
+  :root[data-theme="light"]{ --paper:#ffffff; --ink:#16181d; --panel:#f6f7f4; --panel-2:#eceee8;
+    --line:#dadcd5; --muted:#6c716a; --accent:#d8352a; --accent-soft:#f3d9d6;
+    --stage:#e6e8e2; --field:#ffffff; --shadow:0 8px 30px rgba(20,22,26,.14); }
+  :root[data-theme="dark"]{ --paper:#0f1116; --ink:#e7e9ec; --panel:#171a20; --panel-2:#1f232c;
+    --line:#2b303a; --muted:#99a0a9; --accent:#ef5a4f; --accent-soft:#3b201d;
+    --stage:#0a0c10; --field:#12151b; --shadow:0 10px 34px rgba(0,0,0,.5); }
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-ui);color:var(--ink);background:var(--panel);
+    -webkit-font-smoothing:antialiased;line-height:1.45}
+  .topbar{display:flex;align-items:center;gap:16px;justify-content:space-between;
+    padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand b{font-size:15px;letter-spacing:.02em}
+  .brand span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+  .readout{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);
+    display:flex;gap:14px;flex-wrap:wrap}
+  .readout b{color:var(--ink);font-weight:600}
+  .readout .dot{color:var(--accent)}
+
+  .app{display:grid;grid-template-columns:344px 1fr;min-height:calc(100vh - 54px)}
+  .rail{border-right:1px solid var(--line);background:var(--panel);
+    padding:18px 18px 40px;overflow-y:auto;max-height:calc(100vh - 54px)}
+  .stage{background:var(--stage);display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:16px;padding:28px}
+
+  .grp{margin-bottom:22px}
+  .grp>h3{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);
+    margin:0 0 10px;font-weight:600}
+  label.f{display:block;margin-bottom:11px}
+  label.f>span{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+  input[type=text],select,textarea{width:100%;font-family:var(--font-ui);font-size:13px;
+    color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:var(--r);
+    padding:8px 10px}
+  input[type=text]:focus,select:focus,textarea:focus{outline:2px solid var(--accent);
+    outline-offset:1px;border-color:var(--accent)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  .seg{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .seg label{flex:1;text-align:center;font-size:12.5px;padding:8px 6px;cursor:pointer;color:var(--muted)}
+  .seg input{position:absolute;opacity:0;pointer-events:none}
+  .seg label:has(input:checked){background:var(--ink);color:var(--paper)}
+  .chk{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:10px;cursor:pointer}
+  .chk input{accent-color:var(--accent);width:15px;height:15px}
+
+  button.act{width:100%;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;
+    background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:11px;margin-top:2px}
+  button.act:hover{filter:brightness(1.06)}
+  button.act.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+  details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  details summary{font-size:12px;color:var(--muted);cursor:pointer}
+  textarea{margin-top:8px;height:120px;font-family:var(--font-mono);font-size:10.5px;resize:vertical}
+
+  .proof{background:transparent;box-shadow:var(--shadow);border-radius:6px;overflow:hidden;
+    max-height:calc(100vh - 160px)}
+  .proof svg{display:block;height:min(74vh,720px);width:auto}
+  .stage-note{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:center;max-width:440px}
+  .stage-note b{color:var(--ink)}
+
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr}
+    .rail{max-height:none;border-right:none;border-bottom:1px solid var(--line);order:2}
+    .stage{order:1;min-height:60vh}
+    .proof svg{height:52vh}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><b>Engraving Studio</b><span>Artwork generator · experiment</span></div>
+  <div class="readout">
+    <span>PART <b id="r-part">CRY96548X-X</b></span>
+    <span class="dot">·</span>
+    <span>PRODUCT <b id="r-prod">5⅛ × 8 in</b></span>
+    <span class="dot">·</span>
+    <span>SAFE AREA <b id="r-safe">3.53 × 5.20 in</b></span>
+    <span class="dot">·</span>
+    <span>SCALE <b>1:1</b></span>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="rail">
+    <div class="grp">
+      <h3>Template</h3>
+      <label class="f"><span>Award blank (from supplier template PDF)</span>
+        <select id="tpl">
+          <option value="delta">Delta Optic Crystal — CRY96548X-X (5⅛ × 8 in)</option>
+        </select>
+      </label>
+      <p style="font-size:11.5px;color:var(--muted);margin:2px 0 0">More templates get added by extracting the red safe-area from each supplier PDF. This one is live.</p>
+    </div>
+
+    <div class="grp">
+      <h3>Wording</h3>
+      <label class="f"><span>Award title</span><input type="text" id="title" value="AWARD OF EXCELLENCE"></label>
+      <label class="f"><span>Lead-in line</span><input type="text" id="plabel" value="presented to"></label>
+      <label class="f"><span>Recipient name</span><input type="text" id="name" value="Jennifer A. Caldwell"></label>
+      <label class="f"><span>Recognition line 1</span><input type="text" id="body1" value="in recognition of outstanding achievement"></label>
+      <label class="f"><span>Recognition line 2</span><input type="text" id="body2" value="and dedication to the highest standard"></label>
+      <div class="row2">
+        <label class="f"><span>Year</span><input type="text" id="year" value="2026"></label>
+        <label class="f"><span>Organization</span><input type="text" id="org" value="NORTHGATE FINANCIAL GROUP"></label>
+      </div>
+    </div>
+
+    <div class="grp">
+      <h3>Type — use your own fonts</h3>
+      <label class="f"><span>Titles &amp; caps</span><select id="fontHead"></select></label>
+      <label class="f"><span>Recipient name (script)</span><select id="fontName"></select></label>
+      <label class="f"><span>Body text</span><select id="fontBody"></select></label>
+      <p style="font-size:11.5px;color:var(--muted);margin:2px 0 0">Renders in the fonts installed on <b>this</b> computer — so on your Windows machine it uses your real Corel fonts. Your licensed fonts get added to these lists.</p>
+    </div>
+
+    <div class="grp">
+      <h3>View</h3>
+      <div class="seg">
+        <label><input type="radio" name="mode" value="artwork" checked>Artwork (B&amp;W)</label>
+        <label><input type="radio" name="mode" value="proof">On crystal</label>
+      </div>
+      <label class="chk"><input type="checkbox" id="guide" checked>Show safe-area boundary (design only — off = production)</label>
+    </div>
+
+    <div class="grp">
+      <h3>Export for Corel</h3>
+      <button class="act" id="dl">Download SVG (opens editable in Corel)</button>
+      <details>
+        <summary>Or copy the SVG code</summary>
+        <textarea id="src" readonly spellcheck="false"></textarea>
+        <button class="act ghost" id="copy" style="margin-top:8px">Copy to clipboard</button>
+      </details>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="proof" id="proof"></div>
+    <div class="stage-note">Everything sits inside the <b>exact</b> red safe-area extracted from <b>CRY96548X-X.pdf</b>. Auto-fit keeps text within the border on any font.</div>
+  </main>
+</div>
+
+<script>
+const FONTS = {
+  heads:["Georgia","Palatino Linotype","Book Antiqua","Times New Roman","Garamond","Cambria","Constantia","Trajan Pro"],
+  names:["Monotype Corsiva","Brush Script MT","Segoe Script","Palace Script MT","Lucida Handwriting","Vladimir Script","Edwardian Script ITC"],
+  body:["Georgia","Times New Roman","Cambria","Garamond","Palatino Linotype","Book Antiqua"]
+};
+const STACK = {
+  "Georgia":"Georgia,'Times New Roman',serif",
+  "Palatino Linotype":"'Palatino Linotype',Palatino,'Book Antiqua',serif",
+  "Book Antiqua":"'Book Antiqua',Palatino,Georgia,serif",
+  "Times New Roman":"'Times New Roman',Times,serif",
+  "Garamond":"Garamond,'EB Garamond',Georgia,serif",
+  "Cambria":"Cambria,Georgia,serif",
+  "Constantia":"Constantia,Georgia,serif",
+  "Trajan Pro":"'Trajan Pro','Trajan Pro 3',Cinzel,Georgia,serif",
+  "Monotype Corsiva":"'Monotype Corsiva','Snell Roundhand','Brush Script MT',cursive",
+  "Brush Script MT":"'Brush Script MT','Segoe Script',cursive",
+  "Segoe Script":"'Segoe Script','Brush Script MT',cursive",
+  "Palace Script MT":"'Palace Script MT','Snell Roundhand',cursive",
+  "Lucida Handwriting":"'Lucida Handwriting','Segoe Script',cursive",
+  "Vladimir Script":"'Vladimir Script','Brush Script MT',cursive",
+  "Edwardian Script ITC":"'Edwardian Script ITC','Snell Roundhand',cursive"
+};
+
+const DELTA = {
+  viewBox:"415 72 390 576", wIn:5.42, hIn:8.0,
+  safe:"484.9,407.2 581.6,567.0 642.4,567.0 739.1,407.2 612.0,192.8",
+  fills:[
+    "M441.0 369.4L425.2 396.0 M425.2 396.0L425.2 472.5 M425.2 472.5L493.4 585.0 M493.4 585.0L571.5 585.0 M571.5 585.0L441.0 369.4",
+    "M783.0 369.4L798.8 396.0 M798.8 396.0L798.8 472.5 M798.8 472.5L730.6 585.0 M730.6 585.0L652.5 585.0 M652.5 585.0L783.0 369.4"
+  ],
+  strokes:[
+    "M612.0 81.0L783.0 369.4 M783.0 369.4L652.5 585.0 M652.5 585.0L571.5 585.0 M571.5 585.0L441.0 369.4 M441.0 369.4L612.0 81.0",
+    "M612.0 81.0L798.8 396.0 M798.8 396.0L798.8 472.5 M798.8 472.5L730.6 585.0 M730.6 585.0L493.4 585.0 M493.4 585.0L425.2 472.5 M425.2 472.5L425.2 396.0 M425.2 396.0L612.0 81.0",
+    "M684.3 585.0L798.8 396.0","M425.2 396.0L539.7 585.0",
+    "M798.8 472.5L612.0 157.5 M612.0 157.5L425.2 472.5","M612.0 157.5L612.0 81.0",
+    "M438.8 625.5h346.5v13.5h-346.5Z"
+  ]
+};
+const EMBLEM = `
+  <ellipse cx="611.2" cy="308.5" rx="6.4" ry="2.5" transform="rotate(-178 611.2 308.5)"/>
+  <ellipse cx="612.8" cy="308.5" rx="6.4" ry="2.5" transform="rotate(178 612.8 308.5)"/>
+  <ellipse cx="602.8" cy="306.6" rx="6.4" ry="2.5" transform="rotate(-156 602.8 306.6)"/>
+  <ellipse cx="621.2" cy="306.6" rx="6.4" ry="2.5" transform="rotate(156 621.2 306.6)"/>
+  <ellipse cx="595.8" cy="301.6" rx="6.4" ry="2.5" transform="rotate(-134 595.8 301.6)"/>
+  <ellipse cx="628.2" cy="301.6" rx="6.4" ry="2.5" transform="rotate(134 628.2 301.6)"/>
+  <ellipse cx="591.1" cy="294.4" rx="6.4" ry="2.5" transform="rotate(-112 591.1 294.4)"/>
+  <ellipse cx="632.9" cy="294.4" rx="6.4" ry="2.5" transform="rotate(112 632.9 294.4)"/>
+  <ellipse cx="589.5" cy="286.0" rx="6.4" ry="2.5" transform="rotate(-90 589.5 286.0)"/>
+  <ellipse cx="634.5" cy="286.0" rx="6.4" ry="2.5" transform="rotate(90 634.5 286.0)"/>
+  <ellipse cx="591.1" cy="277.6" rx="6.4" ry="2.5" transform="rotate(-68 591.1 277.6)"/>
+  <ellipse cx="632.9" cy="277.6" rx="6.4" ry="2.5" transform="rotate(68 632.9 277.6)"/>
+  <ellipse cx="595.8" cy="270.4" rx="6.4" ry="2.5" transform="rotate(-46 595.8 270.4)"/>
+  <ellipse cx="628.2" cy="270.4" rx="6.4" ry="2.5" transform="rotate(46 628.2 270.4)"/>
+  <polygon points="612.0 273.0 608.9 281.8 599.6 282.0 607.1 287.6 604.4 296.5 612.0 291.2 619.6 296.5 616.9 287.6 624.4 282.0 615.1 281.8"/>`;
+
+const S = {
+  title:"AWARD OF EXCELLENCE", plabel:"presented to", name:"Jennifer A. Caldwell",
+  body1:"in recognition of outstanding achievement", body2:"and dedication to the highest standard",
+  year:"2026", org:"NORTHGATE FINANCIAL GROUP",
+  fontHead:"Georgia", fontName:"Monotype Corsiva", fontBody:"Georgia",
+  mode:"artwork", guide:true
+};
+const esc = s => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function buildSVG(){
+  const proof = S.mode==="proof";
+  const paper = proof ? "#15171c" : "#ffffff";
+  const ink   = proof ? "#f2f0ec" : "#111111";
+  const cStroke = proof ? "#565d6b" : "#c2c2c2";
+  const cFill   = proof ? "#20242c" : "#ededed";
+  const fh = STACK[S.fontHead], fn = STACK[S.fontName], fb = STACK[S.fontBody];
+  const showGuide = S.guide && !proof;
+
+  const fills = DELTA.fills.map(d=>`<path d="${d}" fill="${cFill}" stroke="none"/>`).join("");
+  const strokes = DELTA.strokes.map(d=>`<path d="${d}" fill="none" stroke="${cStroke}" stroke-width="1"/>`).join("");
+  const guide = showGuide ? `<polygon points="${DELTA.safe}" fill="none" stroke="#e23b3b" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.9"/>` : "";
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${DELTA.wIn}in" height="${DELTA.hIn}in" viewBox="${DELTA.viewBox}">
+  <rect x="415" y="72" width="390" height="576" fill="${paper}"/>
+  <g>${fills}${strokes}</g>
+  ${guide}
+  <g fill="${ink}">
+    ${EMBLEM}
+    <text x="612" y="352" text-anchor="middle" font-family="${fh}" font-size="15" letter-spacing="1.6" textLength="170" lengthAdjust="spacingAndGlyphs">${esc(S.title)}</text>
+    <g stroke="${ink}" stroke-width="0.7" fill="${ink}">
+      <line x1="560" y1="368" x2="596" y2="368"/><line x1="628" y1="368" x2="664" y2="368"/>
+      <path d="M612 364 L616 368 L612 372 L608 368 Z"/>
+    </g>
+    <text x="612" y="392" text-anchor="middle" font-family="${fb}" font-style="italic" font-size="9">${esc(S.plabel)}</text>
+    <text x="612" y="420" text-anchor="middle" font-family="${fn}" font-size="27" textLength="196" lengthAdjust="spacingAndGlyphs">${esc(S.name)}</text>
+    <line x1="547" y1="432" x2="677" y2="432" stroke="${ink}" stroke-width="0.5"/>
+    <g font-family="${fb}" font-size="8.4" text-anchor="middle">
+      <text x="612" y="454" textLength="160" lengthAdjust="spacingAndGlyphs">${esc(S.body1)}</text>
+      <text x="612" y="468" textLength="140" lengthAdjust="spacingAndGlyphs">${esc(S.body2)}</text>
+    </g>
+    <text x="612" y="500" text-anchor="middle" font-family="${fh}" font-size="10" letter-spacing="4" textLength="70" lengthAdjust="spacingAndGlyphs">${esc(S.year)}</text>
+    <text x="612" y="534" text-anchor="middle" font-family="${fh}" font-size="6.6" letter-spacing="1.6" textLength="78" lengthAdjust="spacingAndGlyphs">${esc(S.org)}</text>
+  </g>
+</svg>`;
+}
+
+function render(){
+  const svg = buildSVG();
+  document.getElementById("proof").innerHTML = svg;
+  document.getElementById("src").value = svg;
+}
+
+// populate font selects
+function fillSel(id, list, val){
+  const sel=document.getElementById(id);
+  sel.innerHTML = list.map(f=>`<option value="${f}"${f===val?" selected":""}>${f}</option>`).join("");
+}
+fillSel("fontHead",FONTS.heads,S.fontHead);
+fillSel("fontName",FONTS.names,S.fontName);
+fillSel("fontBody",FONTS.body,S.fontBody);
+
+// wiring
+const bind=(id,key)=>{const el=document.getElementById(id);el.addEventListener("input",()=>{S[key]=el.value;render();});};
+["title","plabel","name","body1","body2","year","org"].forEach(k=>bind(k,k));
+["fontHead","fontName","fontBody"].forEach(k=>bind(k,k));
+document.getElementById("guide").addEventListener("change",e=>{S.guide=e.target.checked;render();});
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener("change",e=>{if(e.target.checked){S.mode=e.target.value;render();}}));
+
+document.getElementById("dl").addEventListener("click",()=>{
+  const blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+buildSVG()],{type:"image/svg+xml"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const fn=("CRY96548X-X_"+(S.name||"artwork")).replace(/[^a-z0-9_\-]+/gi,"-");
+  a.href=url; a.download=fn+".svg"; document.body.appendChild(a); a.click();
+  a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+});
+document.getElementById("copy").addEventListener("click",async()=>{
+  const t=document.getElementById("src"); t.select();
+  try{ await navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand("copy"); }
+  const b=document.getElementById("copy"); const o=b.textContent; b.textContent="Copied ✓"; setTimeout(()=>b.textContent=o,1400);
+});
+
+render();
+</script>
+</body>
+</html>
