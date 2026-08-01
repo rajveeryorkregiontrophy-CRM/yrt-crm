@@ -709,6 +709,9 @@ const confirmModal=(title,msg,opts={})=>showModal({type:opts.danger?'danger':'wa
 const alertModal=(title,msg,type='info')=>showModal({type,title,msg,confirmText:'Got it'});
 
 // multi-option modal — returns the key of the button clicked (or null)
+function smAlert(msg,title,type){
+  return showModal({type:(type==='danger'||type==='warn')?type:'info',title:title||'Notice',msg:msg||'',confirmText:'Got it',danger:type==='danger'});
+}
 function choiceModal(title,msg,buttons){
   return new Promise(resolve=>{
     const ov=document.getElementById('modal-overlay');
@@ -1741,46 +1744,7 @@ async function save(silent){
       const msg = lockErr.message || '';
       if(/CONFLICT/i.test(msg)){
         await smAlert(msg.replace(/^.*CONFLICT:\s*/,''), 'Someone else changed this order', 'warn');
-        location.re
-// ── Presence: who else is in this record right now ────────────────
-let PRESENCE_TIMER=null;
-async function startPresence(){
-  if(!ORDER_ID || !MGMT) return;
-  const beat=async()=>{
-    try{
-      await db.rpc('touch_presence',{p_quote:ORDER_ID});
-      const {data}=await db.rpc('who_is_editing',{p_quote:ORDER_ID});
-      showPresence((data||[]).map(x=>x.full_name));
-    }catch(e){ /* presence is advisory; never block the page on it */ }
-  };
-  await beat();
-  PRESENCE_TIMER=setInterval(beat, 30000);   // rows go stale after 90s
-}
-function showPresence(names){
-  let bar=document.getElementById('presence-bar');
-  if(!names.length){ if(bar) bar.remove(); return; }
-  if(!bar){
-    bar=document.createElement('div'); bar.id='presence-bar'; bar.className='presence-bar';
-    const w=document.getElementById('wrap'); if(w) w.prepend(bar); else return;
-  }
-  const who=names.join(' and ');
-  bar.innerHTML='<span class="pb-dot"></span><span class="pb-t"><strong>'+esc(who)+'</strong> '
-    +(names.length>1?'are':'is')+' editing this order right now. Save last and you may be asked to reload.</span>';
-}
-window.addEventListener('beforeunload',()=>{
-  if(PRESENCE_TIMER) clearInterval(PRESENCE_TIMER);
-  if(ORDER_ID && MGMT){ try{ db.rpc('clear_presence',{p_quote:ORDER_ID}); }catch(e){} }
-});
-
-// Ctrl/Cmd+S saves instead of triggering the browser's save-page dialog.
-document.addEventListener('keydown',e=>{
-  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){
-    e.preventDefault();
-    if(MGMT&&DIRTY) save();
-  }
-});
-
-load().then(startPresence);
+        location.reload();
         return;
       }
       await smAlert(msg || 'Could not save.', 'Save failed', 'danger');
@@ -2195,7 +2159,45 @@ async function guardedLeave(dest){
 
 // (native "Leave site?" beforeunload prompt intentionally removed — the in-app
 //  navigation guard above handles unsaved changes with a styled three-option prompt.)
-load();
+// ── Presence: who else is in this record right now ────────────────
+let PRESENCE_TIMER=null;
+async function startPresence(){
+  if(!ORDER_ID || !MGMT) return;
+  const beat=async()=>{
+    try{
+      await db.rpc('touch_presence',{p_quote:ORDER_ID});
+      const {data}=await db.rpc('who_is_editing',{p_quote:ORDER_ID});
+      showPresence((data||[]).map(x=>x.full_name));
+    }catch(e){ /* presence is advisory; never block the page on it */ }
+  };
+  await beat();
+  PRESENCE_TIMER=setInterval(beat, 30000);   // rows go stale after 90s
+}
+function showPresence(names){
+  let bar=document.getElementById('presence-bar');
+  if(!names.length){ if(bar) bar.remove(); return; }
+  if(!bar){
+    bar=document.createElement('div'); bar.id='presence-bar'; bar.className='presence-bar';
+    const w=document.getElementById('wrap'); if(w) w.prepend(bar); else return;
+  }
+  const who=names.join(' and ');
+  bar.innerHTML='<span class="pb-dot"></span><span class="pb-t"><strong>'+esc(who)+'</strong> '
+    +(names.length>1?'are':'is')+' editing this order right now. Save last and you may be asked to reload.</span>';
+}
+window.addEventListener('beforeunload',()=>{
+  if(PRESENCE_TIMER) clearInterval(PRESENCE_TIMER);
+  if(ORDER_ID && MGMT){ try{ db.rpc('clear_presence',{p_quote:ORDER_ID}); }catch(e){} }
+});
+
+// Ctrl/Cmd+S saves instead of triggering the browser's save-page dialog.
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){
+    e.preventDefault();
+    if(MGMT&&DIRTY) save();
+  }
+});
+
+load().then(startPresence);
 // live sync: if another screen changes this order's fulfillment, refresh the line
 // colours — but never while the user has unsaved edits (would clobber their work).
 subscribeFulfillment(async()=>{
