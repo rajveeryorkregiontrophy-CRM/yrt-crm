@@ -276,11 +276,12 @@ function analyzeSVG(text){
     if(s) fields.push({label:s, index:i});
   });
   // linked (non-embedded) bitmaps: this is what makes logos vanish
-  let extImg = false;
+  const extImgs = [];
   svg.querySelectorAll("image").forEach(im=>{
     const href = im.getAttribute("href") || im.getAttribute("xlink:href") || "";
-    if(href && !href.startsWith("data:")) extImg = true;
+    if(href && !href.startsWith("data:")) extImgs.push(href);
   });
+  const extImg = extImgs.length > 0;
   // physical size + viewBox
   let vb = svg.getAttribute("viewBox");
   const wAttr = svg.getAttribute("width")||"", hAttr = svg.getAttribute("height")||"";
@@ -288,7 +289,7 @@ function analyzeSVG(text){
   let vw, vh;
   if(vb){ const p = vb.split(/[ ,]+/).map(Number); vw=p[2]; vh=p[3]; }
   else { vw = num(wAttr)||1000; vh = num(hAttr)||1000; }
-  return {fields, extImg, vw, vh, wAttr, hAttr, unit: unit(hAttr), hNum: num(hAttr)};
+  return {fields, extImg, extImgs, vw, vh, wAttr, hAttr, unit: unit(hAttr), hNum: num(hAttr)};
 }
 
 /* one stacked SVG: N copies in a column, each an editable group; text recentred */
@@ -327,6 +328,33 @@ function generateSVG(picks, values, n){
   return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${Hn}${u}" viewBox="0 0 ${M.vw} ${M.vh*n}">\n${outParts.join("\n")}\n</svg>`;
 }
 
+/* embed an uploaded image into the master's linked <image> slot(s).
+   Matches by filename when possible; if only one link exists, any image fits. */
+function fixLinkedImages(dataURL, fname){
+  const doc = new DOMParser().parseFromString(M.text, "image/svg+xml");
+  const linked = [...doc.querySelectorAll("image")].filter(im=>{
+    const href = im.getAttribute("href") || im.getAttribute("xlink:href") || "";
+    return href && !href.startsWith("data:");
+  });
+  if(!linked.length) return 0;
+  const base = (fname||"").split(/[\\\/]/).pop().toLowerCase();
+  let targets = linked.filter(im=>{
+    const href = im.getAttribute("href") || im.getAttribute("xlink:href") || "";
+    return href.split(/[\\\/]/).pop().toLowerCase() === base;
+  });
+  if(!targets.length && linked.length===1) targets = linked;   // one slot: any image fits
+  targets.forEach(im=>{
+    im.setAttribute("xlink:href", dataURL);
+    im.setAttribute("href", dataURL);
+  });
+  if(targets.length){
+    M.text = new XMLSerializer().serializeToString(doc.documentElement);
+    const a = analyzeSVG(M.text);                              // refresh link state
+    M.extImg = a.extImg; M.extImgs = a.extImgs;
+  }
+  return targets.length;
+}
+
 /* ================= UI WIRING ================= */
 $("file").addEventListener("change", async e=>{
   const f = e.target.files[0]; if(!f) return;
@@ -350,7 +378,7 @@ $("file").addEventListener("change", async e=>{
       const img = document.createElement("img");
       img.src = URL.createObjectURL(new Blob([text],{type:"image/svg+xml"}));
       $("master").innerHTML=""; $("master").appendChild(img); $("master").hidden=false;
-      if(a.extImg) showWarn("This SVG links to an image file it doesn't contain (Corel exported the logo as a separate file) — the logo will be missing. Use <b>Publish to PDF</b> instead, or re-export SVG with bitmaps embedded.");
+      if(a.extImg) showLinkedImageWarn();
       $("fontwrap").hidden = true;
     }
     $("filename").textContent = f.name;
@@ -372,6 +400,33 @@ $("file").addEventListener("change", async e=>{
 });
 function showErr(m){ $("err").innerHTML=m; $("err").hidden=false; }
 function showWarn(m){ $("warnbox").innerHTML=m; $("warnbox").hidden=false; }
+function showLinkedImageWarn(){
+  const names = (M.extImgs||[]).map(h=>h.split(/[\\\/]/).pop()).join(", ");
+  showWarn("The logo isn't inside this SVG — Corel saved it as a separate file ("+esc(names)+") and only linked to it, so it can't travel with the upload.<br>"
+    + "<b>Fix it right here:</b> attach that image file and I'll embed it into the design.<br>"
+    + '<button type="button" id="fiximg" style="margin-top:7px;font-size:12px;background:none;border:1px solid var(--warnc);color:var(--warnc);border-radius:6px;padding:5px 12px;cursor:pointer">Attach the logo file…</button>'
+    + '<input type="file" id="fiximgfile" hidden accept="image/png,image/jpeg,image/gif,image/webp,image/bmp">'
+    + '<br><span style="color:var(--text-3)">Long-term fix in Corel: convert the logo to curves (vector) before exporting — then this never happens.</span>');
+  $("fiximg").addEventListener("click", ()=>$("fiximgfile").click());
+  $("fiximgfile").addEventListener("change", e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{
+      const nFixed = fixLinkedImages(r.result, f.name);
+      if(!nFixed){
+        showWarn("That file name doesn't match any linked image in the design ("+esc((M.extImgs||[]).map(h=>h.split(/[\\\/]/).pop()).join(", "))+"). Rename the file to match, or re-export from Corel with the logo converted to curves.");
+        return;
+      }
+      // refresh master preview with the embedded logo
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(new Blob([M.text],{type:"image/svg+xml"}));
+      $("master").innerHTML=""; $("master").appendChild(img);
+      if(M.extImg) showLinkedImageWarn();          // more links still missing
+      else showWarn('<span style="color:var(--good)">Logo embedded ✓ — it will appear in every copy.</span>');
+    };
+    r.readAsDataURL(f);
+  });
+}
 $("clear").addEventListener("click", ()=>location.reload());
 
 function chosen(){ return [...$("fields").querySelectorAll("input:checked")].map(c=>M.fields[+c.dataset.i]); }
@@ -455,7 +510,7 @@ function generateSVGSingle(picks, values, i){
 }
 
 /* expose internals for automated testing */
-window.__art = {analyzePDF, analyzeSVG, generatePDF, generateSVG, sampleColors,
+window.__art = {analyzePDF, analyzeSVG, generatePDF, generateSVG, sampleColors, fixLinkedImages,
   setMaster: m => { M = m; }, getMaster: () => M};
 </script>
 </body>
