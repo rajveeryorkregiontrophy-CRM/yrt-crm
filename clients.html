@@ -284,18 +284,17 @@ async function load(){
   const {data:invs}=await db.from('invoices').select('client_id,balance_due,invoice_date,grand_total');
   // last activity per client (most recent quote/order/invoice date on the quotes table)
   const {data:qs}=await db.from('quotes').select('client_id,quote_date');
-  const balByClient={}, lastByClient={}, spendByClient={};
+  const balByClient={}, lastByClient={}, firstByClient={}, spendByClient={};
+  const mark=(id,d)=>{ if(!id||!d)return; if(!lastByClient[id]||d>lastByClient[id])lastByClient[id]=d; if(!firstByClient[id]||d<firstByClient[id])firstByClient[id]=d; };
   (invs||[]).forEach(iv=>{
     if(iv.client_id){
       balByClient[iv.client_id]=(balByClient[iv.client_id]||0)+Number(iv.balance_due||0);
       spendByClient[iv.client_id]=(spendByClient[iv.client_id]||0)+Number(iv.grand_total||0);
-      if(iv.invoice_date && (!lastByClient[iv.client_id] || iv.invoice_date>lastByClient[iv.client_id])) lastByClient[iv.client_id]=iv.invoice_date;
+      mark(iv.client_id,iv.invoice_date);
     }
   });
-  (qs||[]).forEach(q=>{
-    if(q.client_id && q.quote_date && (!lastByClient[q.client_id] || q.quote_date>lastByClient[q.client_id])) lastByClient[q.client_id]=q.quote_date;
-  });
-  CLIENTS.forEach(c=>{ c._balance=balByClient[c.id]||0; c._spend=spendByClient[c.id]||0; c._lastDate=lastByClient[c.id]||null; });
+  (qs||[]).forEach(q=>{ mark(q.client_id,q.quote_date); });
+  CLIENTS.forEach(c=>{ c._balance=balByClient[c.id]||0; c._spend=spendByClient[c.id]||0; c._lastDate=lastByClient[c.id]||null; c._firstDate=firstByClient[c.id]||(c.created_at?String(c.created_at).slice(0,10):null); });
   // Sectors are optional plumbing: if the table doesn't exist yet, everything
   // sector-related simply stays hidden and the page works as before.
   const {data:secs,error:secErr}=await db.from('sectors').select('*').order('name');
@@ -352,18 +351,17 @@ function render(){
     const emN=[prim.email1,prim.email2].filter(Boolean).length;
     const more=n=>n>1?`<span class="c-more">+${n-1}</span>`:'';
     const st=secState(c);
-    const cid=String(c.id).replace(/[^a-z0-9]/gi,'').slice(0,6).toUpperCase();
     const secCell=st?`<span class="sec-chip ${st.cls}" title="Busy season ${seasonLabel(st.s)}">${esc(st.s.name)}</span>`:(SEC_OK&&SECMAP[c.sector_id]?esc(SECMAP[c.sector_id].name):'<span class="c-dash">—</span>');
     return `<tr data-id="${c.id}">
-      <td class="c-id">${cid}</td>
       <td class="c-name-cell">${esc(c.company_name)}</td>
       <td>${secCell}</td>
       <td>${esc(cn)||'<span class="c-dash">—</span>'}</td>
       <td class="c-mono">${prim.tel1?esc(prim.tel1)+more(telN):'<span class="c-dash">—</span>'}</td>
       <td class="c-mono">${prim.email1?esc(prim.email1)+more(emN):'<span class="c-dash">—</span>'}</td>
+      <td>${fmtD(c._firstDate)}</td>
       <td>${fmtD(c._lastDate)}</td>
     </tr>`;}).join('');
-  document.getElementById('wrap').innerHTML=`<div class="ctable-wrap"><table class="ctable"><thead><tr><th>Client ID</th><th>Client</th><th>Sector</th><th>Primary Contact</th><th>Telephone</th><th>Email</th><th>Last Transaction</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  document.getElementById('wrap').innerHTML=`<div class="ctable-wrap"><table class="ctable"><thead><tr><th>Client</th><th>Sector</th><th>Primary Contact</th><th>Telephone</th><th>Email</th><th>Client Since</th><th>Last Transaction</th></tr></thead><tbody>${body}</tbody></table></div>`;
   document.querySelectorAll('.ctable tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='client.html?id='+encodeURIComponent(tr.dataset.id)));
 }
 function openDrawer(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}

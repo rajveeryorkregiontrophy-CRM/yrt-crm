@@ -148,6 +148,7 @@ export async function requireAuth(){
   // Remember whose token this page was rendered against, then watch for a swap.
   _watchedUserId = data.session?.user?.id || null;
   watchSession();
+  startIdleTimeout();
 
   // Show the signed-in person's name in the sidebar foot on EVERY page (not just
   // index). Runs here so no page has to wire it individually.
@@ -187,6 +188,23 @@ function hideAuthLoader(){
 export async function currentUser(){
   const { data } = await supabase.auth.getUser();
   return data?.user || null;
+}
+
+// ── Idle auto sign-out ──────────────────────────────────────────────
+// After 20 minutes with no activity the person is signed out. Any
+// mouse / keyboard / scroll / touch on the page resets the clock.
+const IDLE_MS = 20 * 60 * 1000;
+let _idleTimer = null;
+function startIdleTimeout(){
+  if(_idleTimer !== null) return;                 // already armed on this page
+  const reset = () => {
+    clearTimeout(_idleTimer);
+    _idleTimer = setTimeout(() => { signOut(); }, IDLE_MS);
+  };
+  ['mousemove','mousedown','keydown','scroll','touchstart','click','wheel']
+    .forEach(ev => window.addEventListener(ev, reset, { passive:true }));
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) reset(); });
+  reset();
 }
 
 export async function signOut(){
