@@ -79,6 +79,11 @@
   .pobadge{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:4px 10px;border-radius:6px;font-family:var(--fd);}
   .pob-open{background:rgba(202,167,93,.2);color:var(--brass-2);}
   .pob-sent{background:rgba(61,165,255,.18);color:var(--process);}
+  /* ── Embed mode: running inside an overlay window ── */
+  html.embedded body{min-height:0;background:var(--bg-2);display:block;}
+  html.embedded .topbar,html.embedded .wrap,html.embedded .save-bar{max-width:none;width:100%;margin:0;border-left:none;border-right:none;border-radius:0;box-shadow:none;}
+  html.embedded .topbar{border-top:none;margin-top:0;}
+  html.embedded .save-bar{border-bottom:none;}
 </style>
 </head>
 <body>
@@ -138,6 +143,34 @@ await requireAuth();
 const money=n=>'$'+Number(n||0).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const PO_ID=new URLSearchParams(location.search).get('id');
+
+// ── Embed mode: this page can run inside an overlay window (overlay.js) ──
+const EMBED = window.self !== window.top;
+if (EMBED) {
+  document.documentElement.classList.add('embedded');
+  const report = () => { try { parent.postMessage({ yrt: 'height', h: document.body.scrollHeight + 2 }, '*'); } catch (e) {} };
+  new ResizeObserver(report).observe(document.body);
+  window.addEventListener('load', report);
+  window.addEventListener('message', e => {
+    const d = e.data || {};
+    if (d.yrt === 'requestClose') leavePO();
+  });
+}
+function embedPost(m) { try { parent.postMessage(m, '*'); } catch (e) {} }
+async function leavePO(){
+  if(DIRTY){
+    const choice=await pChoice('Unsaved changes','You have unsaved changes on this purchase order. What would you like to do?',[
+      {key:'save',label:'Save changes & leave',primary:true},
+      {key:'leave',label:'Leave without saving'},
+      {key:'stay',label:'Stay on this page',plain:true}
+    ]);
+    if(choice==='stay'||choice==null) return;
+    if(choice==='save'){ const ok=await save(); if(ok===false) return; }
+    DIRTY=false;
+  }
+  if(EMBED){ embedPost({yrt:'close',refresh:true}); return; }
+  location.href='po-list.html';
+}
 let PO=null,LINES=[],SUP=[],QUOTES=[],DIRTY=false;
 const dirty=()=>{DIRTY=true;const m=document.getElementById('msg');m.textContent='Unsaved changes';m.className='msg';};
 
@@ -357,7 +390,7 @@ async function savePDF(){
       const allocIds=LINES.map(l=>l.source_allocation_id).filter(Boolean);
       if(allocIds.length) await db.from('quote_item_allocations').update({status:'issued'}).in('id',allocIds);
       document.getElementById('msg').textContent='PO marked sent ✓';document.getElementById('msg').className='msg ok';
-      setTimeout(()=>location.href='po-list.html',700);
+      setTimeout(()=>{ if(EMBED){ embedPost({yrt:'close',refresh:true}); } else { location.href='po-list.html'; } },700);
       return;
     }
     // "Not yet" -> loop and re-open the save dialog
@@ -367,18 +400,7 @@ async function savePDF(){
 // (native "Leave site?" beforeunload prompt intentionally removed — we guard the
 //  in-app Back navigation with a styled confirm instead.)
 const _backLink=document.getElementById('back-link');
-if(_backLink) _backLink.addEventListener('click',async e=>{
-  if(!DIRTY) return;
-  e.preventDefault();
-  const choice=await pChoice('Unsaved changes','You have unsaved changes on this purchase order. What would you like to do?',[
-    {key:'save',label:'Save changes & leave',primary:true},
-    {key:'leave',label:'Leave without saving'},
-    {key:'stay',label:'Stay on this page',plain:true}
-  ]);
-  if(choice==='stay'||choice==null) return;
-  if(choice==='save'){ const ok=await save(); if(ok===false) return; }
-  DIRTY=false; location.href='po-list.html';
-});
+if(_backLink) _backLink.addEventListener('click',e=>{ e.preventDefault(); leavePO(); });
 load();
 // live sync: refresh this PO if it changes elsewhere, unless mid-edit
 subscribeFulfillment(async()=>{ if(!DIRTY) await load(); });

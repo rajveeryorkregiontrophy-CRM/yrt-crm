@@ -416,6 +416,7 @@
 </div>
 <script type="module">
 import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, isManagement, getProfile, aggregateStatus, todayLocal } from './auth.js';
+import { openWindow } from './overlay.js';
 await requireAuth();
 const PROFILE = await getProfile();
 const MGMT = isManagement();
@@ -723,7 +724,7 @@ function render(){
         return;
       }
     }
-    location.href='order.html?id='+encodeURIComponent(id);
+    openWindow('order.html?id='+encodeURIComponent(id),{onClose:load});
   }));
   // fulfillment pill -> open status popup instead of navigating
   document.querySelectorAll('.fs-pill').forEach(p=>p.addEventListener('click',e=>{e.stopPropagation();openFulfillPopup(p.dataset.fs);}));
@@ -795,7 +796,7 @@ function openReusePicker(records){
   m.querySelector('.sp-x').addEventListener('click',close);
   document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){close();document.removeEventListener('keydown',esc);}});
   m.querySelectorAll('.sp-row').forEach(btn=>btn.addEventListener('click',()=>{
-    location.href='order.html?id='+encodeURIComponent(btn.dataset.id);
+    openWindow('order.html?id='+encodeURIComponent(btn.dataset.id),{onClose:load});
   }));
   m.querySelector('#sp-create-new').addEventListener('click',()=>{
     close();
@@ -846,7 +847,7 @@ function openStagePicker(){
       subject:'',serviced_by:'',client_id:null};
     const {data,error}=await db.from('quotes').insert(payload).select().single();
     if(error){close();await smAlert('Could not create: '+error.message,'Error','danger');return;}
-    location.href='order.html?id='+encodeURIComponent(data.id);
+    openWindow('order.html?id='+encodeURIComponent(data.id),{onClose:load});
   }));
 }
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());

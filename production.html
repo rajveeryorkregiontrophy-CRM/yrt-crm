@@ -166,6 +166,7 @@
 </div>
 <script type="module">
 import { supabase as db, requireAuth, signOut, currentUser, isManagement } from './auth.js';
+import { openWindow } from './overlay.js';
 await requireAuth();
 if(!isManagement()){ location.replace('index.html'); throw new Error('forbidden'); }
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -261,7 +262,7 @@ function render(){
         ${jobs.length?`<div class="cards">${jobs.map(jobCard).join('')}</div>`:`<div class="empty-lane">Nothing here.</div>`}</div>`;
     }).join('');
   }
-  document.querySelectorAll('.job[data-id]').forEach(j=>j.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(j.dataset.id)));
+  document.querySelectorAll('.job[data-id]').forEach(j=>j.addEventListener('click',()=>openWindow('order.html?id='+encodeURIComponent(j.dataset.id),{onClose:load})));
   document.querySelectorAll('[data-assign]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openAssign(b.dataset.assign);}));
 }
 document.querySelectorAll('.seg-toggle .t').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.seg-toggle .t').forEach(x=>x.classList.remove('active'));t.classList.add('active');VIEW=t.dataset.v;render();}));

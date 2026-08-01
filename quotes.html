@@ -144,6 +144,7 @@
 </div>
 <script type="module">
 import { supabase as db, requireAuth, signOut, currentUser, todayLocal } from './auth.js';
+import { openWindow } from './overlay.js';
 await requireAuth();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
@@ -191,7 +192,7 @@ function render(){
       <td class="num"><span class="money">${money(o.grand_total)}</span></td>
       <td><button class="btn-convert" data-conv="${o.id}">→ Order</button></td>
     </tr>`;}).join('')}</tbody></table>`;
-  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',e=>{if(e.target.classList.contains('btn-convert'))return;location.href='order.html?id='+encodeURIComponent(tr.dataset.id);}));
+  document.querySelectorAll('tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',e=>{if(e.target.classList.contains('btn-convert'))return;openWindow('order.html?id='+encodeURIComponent(tr.dataset.id),{onClose:load});}));
   document.querySelectorAll('[data-conv]').forEach(b=>b.addEventListener('click',async e=>{
     e.stopPropagation();
     if(!await smConfirm('Convert this inquiry/quote into an active order? It will move to the Sales Timeline.','Convert to order?',{confirmText:'Convert'}))return;
@@ -206,7 +207,7 @@ document.getElementById('new-quote').addEventListener('click',async()=>{
   const {data:cl}=await db.from('clients').select('id').order('company_name').limit(1);
   const {data,error}=await db.from('quotes').insert({record_type:'quote',art_status:'approval_due',sent_status:'not_sent',active_status:'active',quote_date:todayLocal(),subject:'New quote',client_id:cl&&cl[0]?cl[0].id:null}).select().single();
   if(error){await smAlert('Could not create quote: '+error.message,'Error','danger');return;}
-  location.href='order.html?id='+encodeURIComponent(data.id);
+  openWindow('order.html?id='+encodeURIComponent(data.id),{onClose:load});
 });
 const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
 load();

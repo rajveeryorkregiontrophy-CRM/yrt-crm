@@ -153,6 +153,7 @@
 
 <script type="module">
 import { supabase as db, requireAuth, signOut, currentUser, todayLocal } from './auth.js';
+import { openWindow } from './overlay.js';
 await requireAuth();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
@@ -314,7 +315,7 @@ function renderHistoryTab(){
     body.innerHTML=INVOICES.length?`<table><thead><tr><th>Invoice</th><th>Date</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>${INVOICES.map(i=>`
       <tr data-inv="${i.id}"><td><span class="stage-id">#${i.invoice_number||'—'}</span></td><td>${fmtD(i.invoice_date)}</td><td class="num"><span class="money">${money(i.grand_total)}</span></td><td class="num" style="color:${i.balance_due>0?'var(--art)':'var(--approved)'};font-family:var(--fm);font-weight:700;">${money(i.balance_due)}</td><td><span class="mini-st pay-${i.paid_status}">${i.paid_status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="state">No invoices for this client.</div>';
   }
-  body.querySelectorAll('tr[data-order]').forEach(tr=>tr.addEventListener('click',()=>location.href='order.html?id='+encodeURIComponent(tr.dataset.order)));
+  body.querySelectorAll('tr[data-order]').forEach(tr=>tr.addEventListener('click',()=>openWindow('order.html?id='+encodeURIComponent(tr.dataset.order),{onClose:load})));
   body.querySelectorAll('tr[data-inv]').forEach(tr=>tr.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(tr.dataset.inv)));
 }
 
@@ -449,7 +450,7 @@ document.getElementById('d-save').addEventListener('click',save);
 document.getElementById('btn-new-order').addEventListener('click',async()=>{
   const {data,error}=await db.from('quotes').insert({record_type:'order',art_status:'send_art',sent_status:'not_sent',active_status:'active',quote_date:todayLocal(),subject:'New order',client_id:CID}).select().single();
   if(error){await smAlert('Could not create order: '+error.message,'Error','danger');return;}
-  location.href='order.html?id='+encodeURIComponent(data.id);
+  openWindow('order.html?id='+encodeURIComponent(data.id),{onClose:load});
 });
 load();
 </script>

@@ -472,6 +472,14 @@
   .modal-foot.stacked .btn,.modal-foot.stacked .modal-btn-primary{width:100%;}
   .modal-plain{background:transparent;border-color:transparent;color:var(--text-3);}
   .modal-plain:hover{color:var(--text);border-color:transparent;}
+  /* ── Embed mode: running inside an overlay window ── */
+  html.embedded body{min-height:0;background:var(--bg-2);}
+  html.embedded .wrap{max-width:none;padding:14px 18px 6px;}
+  html.embedded .topbar{padding:0 18px;background:var(--bg-2);}
+  html.embedded .save-bar{padding:12px 18px;background:var(--bg-2);}
+  html.embedded .order-layout{margin-bottom:10px;}
+  html.embedded thead th{letter-spacing:.05em;padding-left:8px;padding-right:8px;}
+  html.embedded thead th:first-child{padding-left:var(--gx);}
 </style>
 </head>
 <body>
@@ -721,6 +729,22 @@ function choiceModal(title,msg,buttons){
 const params=new URLSearchParams(location.search);
 const ORDER_ID=params.get('id');
 
+// ── Embed mode: this page can run inside an overlay window (overlay.js).
+// Detection is by framing, not the ?embed param, so in-frame navigation
+// (e.g. reactivating another order) stays in the window automatically.
+const EMBED = window.self !== window.top;
+if (EMBED) {
+  document.documentElement.classList.add('embedded');
+  const report = () => { try { parent.postMessage({ yrt: 'height', h: document.body.scrollHeight + 2 }, '*'); } catch (e) {} };
+  new ResizeObserver(report).observe(document.body);
+  window.addEventListener('load', report);
+  window.addEventListener('message', e => {
+    const d = e.data || {};
+    if (d.yrt === 'requestClose') guardedLeave('index.html');
+  });
+}
+function embedPost(m) { try { parent.postMessage(m, '*'); } catch (e) {} }
+
 let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[], SUPPLIERS=[], DEPOSITS=[], ART=[], ART_OK=false;
 
 function markDirty(){DIRTY=true;const m=document.getElementById('save-msg');m.textContent='Unsaved changes';m.className='status-msg';}
@@ -900,6 +924,7 @@ function applyRecordType(){
   const T={inquiry:'Inquiry',quote:'Quotation',order:'Sales Order'};
   document.querySelector('.topbar .title').childNodes[0].nodeValue=(T[ORDER.record_type]||'Record')+' ';
   // stage pipeline only relevant for sales orders
+  if(EMBED) embedPost({yrt:'width', w: ORDER.record_type==='order' ? 1300 : 900});
   const stageSeg=document.getElementById('stage-seg');
   if(stageSeg)stageSeg.style.display=ORDER.record_type==='order'?'':'none';
   // Print Quotation: quotations only. A confirmed order converts to an invoice instead.
@@ -2129,7 +2154,9 @@ async function convertToInvoice(){
   // (the timeline only shows inquiry/quote/order) and mark it completed.
   const {error:upErr}=await db.from('quotes').update({record_type:'invoice',art_status:'invoice',active_status:'completed'}).eq('id',ORDER_ID);
   if(upErr){ await alertModal('Invoice created, but…','The invoice was created but the order could not be moved off the timeline: '+upErr.message,'warn'); }
-  location.href='invoices.html?open='+encodeURIComponent(inv.id);
+  const dest='invoices.html?open='+encodeURIComponent(inv.id);
+  if(EMBED){ embedPost({yrt:'navigate',href:dest}); return; }
+  location.href=dest;
 }
 
 function label(s){return {send_art:'Send Art',approval_due:'Approval Due',approved:'Approved',in_process:'In Process',invoice:'Invoice',no_data:'No Data'}[s]||s;}
@@ -2147,6 +2174,7 @@ async function guardedLeave(dest){
     if(choice==='save'){ await save(); }      // auto-save then leave
     DIRTY=false;
   }
+  if(EMBED&&dest==='index.html'){ embedPost({yrt:'close',refresh:true}); return; }
   location.href=dest;
 }
 {
