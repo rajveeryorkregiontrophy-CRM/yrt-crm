@@ -143,7 +143,7 @@
   </div>
 </div>
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, todayLocal } from './auth.js';
 await requireAuth();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
@@ -204,7 +204,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{doc
 document.getElementById('search').addEventListener('input',render);
 document.getElementById('new-quote').addEventListener('click',async()=>{
   const {data:cl}=await db.from('clients').select('id').order('company_name').limit(1);
-  const {data,error}=await db.from('quotes').insert({record_type:'quote',art_status:'approval_due',sent_status:'not_sent',active_status:'active',quote_date:new Date().toISOString().slice(0,10),subject:'New quote',client_id:cl&&cl[0]?cl[0].id:null}).select().single();
+  const {data,error}=await db.from('quotes').insert({record_type:'quote',art_status:'approval_due',sent_status:'not_sent',active_status:'active',quote_date:todayLocal(),subject:'New quote',client_id:cl&&cl[0]?cl[0].id:null}).select().single();
   if(error){await smAlert('Could not create quote: '+error.message,'Error','danger');return;}
   location.href='order.html?id='+encodeURIComponent(data.id);
 });

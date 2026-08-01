@@ -415,7 +415,7 @@
   </div>
 </div>
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, isManagement, getProfile, aggregateStatus } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, isManagement, getProfile, aggregateStatus, todayLocal } from './auth.js';
 await requireAuth();
 const PROFILE = await getProfile();
 const MGMT = isManagement();
@@ -842,7 +842,7 @@ function openStagePicker(){
     btn.classList.add('sp-busy');
     const stage=btn.dataset.stage, art=btn.dataset.art;
     const payload={record_type:stage,art_status:art,sent_status:'not_sent',active_status:'active',
-      quote_date:new Date().toISOString().slice(0,10),
+      quote_date:todayLocal(),
       subject:'',serviced_by:'',client_id:null};
     const {data,error}=await db.from('quotes').insert(payload).select().single();
     if(error){close();await smAlert('Could not create: '+error.message,'Error','danger');return;}

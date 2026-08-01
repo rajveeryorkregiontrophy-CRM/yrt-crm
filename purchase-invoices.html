@@ -318,7 +318,7 @@
 </div>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut, isManagement, getProfile } from './auth.js';
+import { supabase as db, requireAuth, signOut, isManagement, getProfile, todayLocal } from './auth.js';
 await requireAuth();
 const PROFILE = await getProfile();
 const MGMT = isManagement();
@@ -494,7 +494,7 @@ function renderDraw(){
   payBtn.onclick=()=>{
     const pf=document.getElementById('d-payform');
     if(pf){pf.style.display=pf.style.display==='none'?'':'none';
-      if(pf.style.display!=='none'){const a=document.getElementById('d-amt');a.value=bal.toFixed(2);document.getElementById('d-date').value=new Date().toISOString().slice(0,10);a.focus();
+      if(pf.style.display!=='none'){const a=document.getElementById('d-amt');a.value=bal.toFixed(2);document.getElementById('d-date').value=todayLocal();a.focus();
         document.getElementById('d-record').onclick=()=>doRecord(b.id);}}
   };
 }
@@ -535,7 +535,7 @@ document.getElementById('new-bill').addEventListener('click',async()=>{
   document.getElementById('nb-po').disabled=true;
   document.getElementById('nb-number').value='';
   document.getElementById('nb-amount').value='';
-  document.getElementById('nb-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('nb-date').value=todayLocal();
   document.getElementById('nb-due').value='';
   document.getElementById('nb-notes').value='';
   document.getElementById('nb-msg').textContent='';document.getElementById('nb-msg').className='d-msg';
@@ -553,7 +553,7 @@ document.getElementById('nb-supplier').addEventListener('change',async()=>{
   const sup=SUPPLIERS.find(s=>s.id===sid);
   const due=document.getElementById('nb-due');
   if(sup&&sup.terms_days&&!due.value){
-    const bd=document.getElementById('nb-date').value||new Date().toISOString().slice(0,10);
+    const bd=document.getElementById('nb-date').value||todayLocal();
     const d=new Date(bd+'T00:00:00');d.setDate(d.getDate()+Number(sup.terms_days));
     due.value=d.toISOString().slice(0,10);
   }

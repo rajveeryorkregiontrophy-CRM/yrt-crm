@@ -645,17 +645,6 @@
           </div>
         </div>
       </div>
-      <div class="rs" id="art-seg" style="display:none;">
-        <div class="seg">
-          <label>Artwork &amp; Approval</label>
-          <div class="art-list" id="art-list"></div>
-          <div class="art-actions">
-            <input type="file" id="art-file" accept=".pdf,image/*" style="display:none;">
-            <button type="button" class="art-act send" id="art-sent">➤ Proof sent — attach PDF</button>
-            <button type="button" class="art-act ok" id="art-approved">✓ Approved</button>
-          </div>
-        </div>
-      </div>
     </div>
   </aside>
 
@@ -669,7 +658,7 @@
 </div>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, isManagement, getProfile } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, subscribeFulfillment, isManagement, getProfile, todayLocal, addDaysLocal, tsDateLocal } from './auth.js';
 await requireAuth();
 const PROFILE = await getProfile();
 const MGMT = isManagement();
@@ -946,7 +935,7 @@ function renderDeposits(){
     : '<div class="dep-empty">No deposits taken.</div>';
   const add=document.getElementById('dep-add');
   if(add)add.onclick=async()=>{
-    const date=document.getElementById('dep-date').value||new Date().toISOString().slice(0,10);
+    const date=document.getElementById('dep-date').value||todayLocal();
     const amt=parseFloat(document.getElementById('dep-amt').value);
     const method=document.getElementById('dep-method').value||null;
     if(!(amt>0)){await alertModal('Deposit','Enter a deposit amount greater than 0.','warn');return;}
@@ -1073,7 +1062,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 function renderOutcome(){
   const el=document.getElementById('outcome-ui'); if(!el) return;
   if(ORDER.active_status==='lost'){
-    const when=ORDER.lost_at?String(ORDER.lost_at).slice(0,10):null;
+    const when=tsDateLocal(ORDER.lost_at);
     el.innerHTML=`<div class="lost-box">
       <div class="lost-head"><span class="lost-badge">Lost</span>${when?`<span class="lost-when">${fmtD(when)}</span>`:''}</div>
       <input class="input" id="i-lostreason" placeholder="Reason (optional)" value="${esc(ORDER.lost_reason||'')}">
@@ -1187,8 +1176,8 @@ function render(){
 
   // meta footer
   document.getElementById('meta').innerHTML=
-    `<span><b>Created</b> ${fmtD(ORDER.created_at?.slice(0,10))} ${ORDER.created_by?'· '+esc(ORDER.created_by):''}</span>
-     <span><b>Modified</b> ${fmtD(ORDER.modified_at?.slice(0,10))}</span>
+    `<span><b>Created</b> ${fmtD(tsDateLocal(ORDER.created_at))} ${ORDER.created_by?'· '+esc(ORDER.created_by):''}</span>
+     <span><b>Modified</b> ${fmtD(tsDateLocal(ORDER.modified_at))}</span>
      <span><b>Record</b> ${esc(ORDER.record_type)}</span>`;
 
   renderLines();
@@ -2119,12 +2108,12 @@ async function convertToInvoice(){
   let invNum=null;
   if(se||seq==null){ const {data:mx}=await db.from('invoices').select('invoice_number').order('invoice_number',{ascending:false}).limit(1); invNum=(mx&&mx[0]&&mx[0].invoice_number?mx[0].invoice_number:20000)+1; }
   else invNum=seq;
-  const invDate=new Date();
-  const dueDate=new Date(invDate.getTime()+30*86400000);   // Net 30 by default
+  const invDate=todayLocal();
+  const dueDate=addDaysLocal(invDate,30);   // Net 30 by default
   const {data:inv,error}=await db.from('invoices').insert({
     invoice_number:invNum, quote_id:ORDER_ID, client_id:ORDER.client_id, subject:ORDER.subject,
-    serviced_by:ORDER.serviced_by, invoice_date:invDate.toISOString().slice(0,10),
-    terms:'net_30', due_date:dueDate.toISOString().slice(0,10),
+    serviced_by:ORDER.serviced_by, invoice_date:invDate,
+    terms:'net_30', due_date:dueDate,
     subtotal:c.subtotal||0, discount_total:c.discount_total||0, hst:c.hst||0, grand_total:c.grand_total||0,
     balance_due:c.grand_total||0, paid_status:'unpaid'
   }).select().single();

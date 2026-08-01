@@ -236,3 +236,18 @@ export function aggregateStatus(statuses){
   for(const st of order){ if(uniq.includes(st))return st; }
   return uniq[0];
 }
+
+// ── Dates in shop-local time (America/Toronto) ──────────────────────
+// new Date().toISOString() is UTC: after ~8pm Toronto it returns
+// TOMORROW's date. Every "today" default must go through these.
+export function todayLocal(){
+  return new Date().toLocaleDateString('en-CA',{timeZone:'America/Toronto'});
+}
+export function addDaysLocal(ymd,days){
+  const [y,m,d]=ymd.split('-').map(Number);
+  const t=new Date(y,m-1,d+Number(days));
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+}
+export function tsDateLocal(ts){
+  return ts?new Date(ts).toLocaleDateString('en-CA',{timeZone:'America/Toronto'}):null;
+}

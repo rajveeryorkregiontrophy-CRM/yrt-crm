@@ -274,7 +274,7 @@
 </template>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, todayLocal } from './auth.js';
 await requireAuth();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
@@ -406,7 +406,7 @@ function render(){
     if(isPaid){
       payForm.innerHTML='<div class="paid-lock"><div class="pl-check">✓</div><div class="pl-t">Paid in full</div><div class="pl-s">This invoice is settled and locked. No further changes can be made.</div></div>';
     }else{
-      const pd=document.getElementById('pay-date'); if(pd) pd.value=new Date().toISOString().slice(0,10);
+      const pd=document.getElementById('pay-date'); if(pd) pd.value=todayLocal();
       const ap=document.getElementById('add-pay'); if(ap) ap.onclick=addPayment;
     }
   }

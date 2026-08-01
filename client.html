@@ -152,7 +152,7 @@
 </aside>
 
 <script type="module">
-import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { supabase as db, requireAuth, signOut, currentUser, todayLocal } from './auth.js';
 await requireAuth();
 
 // ---- shared styled modal (replaces native alert/confirm) ----
@@ -447,7 +447,7 @@ document.getElementById('d-cancel').addEventListener('click',closeD);
 document.getElementById('overlay').addEventListener('click',closeD);
 document.getElementById('d-save').addEventListener('click',save);
 document.getElementById('btn-new-order').addEventListener('click',async()=>{
-  const {data,error}=await db.from('quotes').insert({record_type:'order',art_status:'send_art',sent_status:'not_sent',active_status:'active',quote_date:new Date().toISOString().slice(0,10),subject:'New order',client_id:CID}).select().single();
+  const {data,error}=await db.from('quotes').insert({record_type:'order',art_status:'send_art',sent_status:'not_sent',active_status:'active',quote_date:todayLocal(),subject:'New order',client_id:CID}).select().single();
   if(error){await smAlert('Could not create order: '+error.message,'Error','danger');return;}
   location.href='order.html?id='+encodeURIComponent(data.id);
 });
