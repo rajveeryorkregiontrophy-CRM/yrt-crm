@@ -96,18 +96,21 @@
      Right: a 310px status rail — production tracker, order controls,
      deposits, artwork — stacked ruled sections. Both columns stretch
      to the same bottom edge; --gx is the document's shared gutter. */
-  .order-layout{--gx:22px;display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+  .order-layout{--gx:22px;display:flex;align-items:stretch;gap:16px;margin-bottom:14px;}
+  /* a smooth fade that fills empty space at the top & bottom; it shrinks
+     to nothing as line items / rail content fill the column */
+  .space-fade{flex:1 1 0;min-height:0;pointer-events:none;background:linear-gradient(180deg,rgba(124,58,237,.10) 0%,rgba(124,58,237,0) 30%,rgba(124,58,237,0) 70%,rgba(124,58,237,.10) 100%);}
   .order-layout > .card{margin-bottom:0;}
   .doc{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;}
   .rail{flex:0 0 310px;display:flex;flex-direction:column;background:linear-gradient(180deg,#14171d,#111318);}
-  .rail::after{content:none;}
+  .rail::after{content:'';flex:1 1 0;min-height:0;pointer-events:none;background:linear-gradient(180deg,rgba(124,58,237,.10) 0%,rgba(124,58,237,0) 30%,rgba(124,58,237,0) 70%,rgba(124,58,237,.10) 100%);}
   .band{padding:17px var(--gx) 19px;}
   .band + .band{border-top:1px solid var(--line);}
   .band-flush{padding:0;}
   .b-fields{flex:0 0 auto;}
   .b-lines{flex:1 1 auto;display:flex;flex-direction:column;}
-  .sheet-fill{flex:1 1 0;min-height:0;margin:6px var(--gx) 0;background:repeating-linear-gradient(180deg,transparent 0 43px,var(--line) 43px 44px);opacity:.28;}
-  .b-lines .listing-foot{margin-top:auto;}
+  .sheet-fill{flex:1 1 0;min-height:0;pointer-events:none;background:linear-gradient(180deg,rgba(124,58,237,.10) 0%,rgba(124,58,237,0) 30%,rgba(124,58,237,0) 70%,rgba(124,58,237,.10) 100%);}
+  .b-lines .listing-foot{margin-top:0;}
   .cb-sp2{grid-column:span 2;}
   .eyebrow{font-family:var(--font-display);font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#c3cad8;}
   .eyebrow-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
@@ -281,12 +284,14 @@
      (centred). Two tidy centred lines, never a tall stack. */
   .il-sup .sup-input-wrap{flex:0 1 auto;position:relative;display:inline-block;}
   .il-sup .cb-sup{width:48px;text-align:center;padding:5px 4px;font-size:12px;}
-  .il-sup .alloc-summary{flex:0 1 auto;display:inline-flex;flex-direction:column;align-items:center;gap:0;}
+  .il-sup .alloc-summary{flex:0 1 auto;cursor:pointer;font-size:12.5px;font-weight:600;}
   .il-sup .sup-meta{display:inline-flex;align-items:center;gap:4px;margin:0;}
   .il-sup .sup-meta .sup-id-tag{display:none;}   /* drop #100 inline — minor, frees the row */
   .il-sup .fs-pill{font-size:8px;padding:2px 5px;letter-spacing:0;}
+  .il-sup .il-status{flex:0 1 auto;font-size:8px;font-weight:800;letter-spacing:0;text-transform:uppercase;padding:2px 6px;border-radius:4px;white-space:nowrap;}
+  .il-sup .il-status.full-tag{color:#3ddc84;background:rgba(61,220,132,.14);}
+  .il-sup .il-status.partial-tag{color:#e0883a;background:rgba(224,136,58,.14);}
   /* name + status share line 1; the PO action drops to its own line 2 */
-  .il-sup .partial-tag,.il-sup .full-tag,.il-sup .instock-tag{flex:0 0 100%;}
   .il-sup .alloc-btn{flex:0 0 100%;margin:3px 0 0;padding:3px 11px;font-size:10.5px;justify-content:center;}
   .td-del{position:relative;}
   .li-amt{padding-top:7px;}
@@ -551,7 +556,7 @@
   html.embedded thead th{letter-spacing:.05em;padding-left:8px;padding-right:8px;}
   html.embedded thead th:first-child{padding-left:var(--gx);}
   /* window hugs its content — no tall ruled filler, no forced growth */
-  html.embedded .sheet-fill{display:none;}
+  html.embedded .sheet-fill{display:block;}
   html.embedded .b-lines{flex:0 0 auto;}
   html.embedded .b-lines .listing-foot{margin-top:0;}
   html.embedded .lines-scroll{min-height:0;max-height:320px;}
@@ -1370,9 +1375,8 @@ function renderLines(){
       <td class="cb-cell il-sup sup-col ${fulfillClass(ln)}" style="width:18%;"><span class="cl">Supplier</span>
         <div class="sup-body">
         ${(ln._allocations&&ln._allocations.length)
-          ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
-          : `<span class="cb-cell sup-input-wrap"><input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div></span>${ln.supplier_id&&ln._supplier_number?`<span class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</span>`:''}`}
-        <button class="alloc-btn" data-alloc="${i}" title="Order this line to a purchase order">⊞ Order to PO</button>
+          ? `<span class="alloc-summary alloc-count" data-alloc="${i}" title="Manage orders">${esc(ln._supplier_name||'Supplier')}</span>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.quantity)||0;const bal=need-ordered;return bal>0?`<span class="il-status partial-tag">${ordered}/${need} ordered</span>`:`<span class="il-status full-tag">${ordered} ordered ✓</span>`;})()}<button class="alloc-btn" data-alloc="${i}" title="Manage this line's purchase orders">⊞ Manage orders</button>`
+          : `<span class="cb-cell sup-input-wrap"><input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div></span>${ln.supplier_id&&ln._supplier_number?`<span class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</span>`:''}<button class="alloc-btn" data-alloc="${i}" title="Order this line to a purchase order">⊞ Order to PO</button>`}
         </div>
       </td>
       <td class="qty-cell il-n" style="width:10%;"><span class="cl">Order Qty</span><span class="qtywrap"><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></span></td>
