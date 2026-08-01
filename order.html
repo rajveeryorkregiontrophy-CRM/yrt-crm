@@ -308,7 +308,10 @@
   .disc-waived{font-family:var(--fm);font-size:10.5px;color:var(--danger);margin-top:3px;}
   .disc-waived.waived-full{color:var(--brass-2);font-weight:700;font-family:var(--fd);text-transform:uppercase;letter-spacing:.03em;}
   .sup-id-tag{font-family:var(--fm);font-size:10px;color:var(--brass-2);margin-top:2px;font-weight:700;}
-  .lines-scroll{min-height:60px;scroll-behavior:smooth;}
+  .lines-scroll{min-height:60px;max-height:min(46vh,380px);overflow-y:auto;scroll-behavior:smooth;}
+  .lines-scroll::-webkit-scrollbar{width:9px;}
+  .lines-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper-2);}
+  .lines-scroll::-webkit-scrollbar-track{background:transparent;}
   @keyframes rowIn{from{opacity:0;}to{opacity:1;}}
   tbody tr.row-new td{animation:rowIn .28s ease;}
   .lines-scroll thead th{position:sticky;top:58px;background:var(--paper-2);z-index:2;}
@@ -544,7 +547,7 @@
   html.embedded .sheet-fill{display:none;}
   html.embedded .b-lines{flex:0 0 auto;}
   html.embedded .b-lines .listing-foot{margin-top:0;}
-  html.embedded .lines-scroll{min-height:0;}
+  html.embedded .lines-scroll{min-height:0;max-height:320px;}
   /* totals stay tidy in the narrower window */
   html.embedded .listing-foot{gap:10px 16px;}
   html.embedded .ot-cell{padding:2px 12px;}

@@ -18,7 +18,7 @@ export function openWindow(url, { width = 1240, onClose = null } = {}) {
   ov.id = 'yrt-win-ov';
   ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(8,10,14,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity .18s;';
   const fr = document.createElement('iframe');
-  fr.src = url + (url.includes('?') ? '&' : '?') + 'embed=1';
+  fr.src = url + (url.includes('?') ? '&' : '?') + 'embed=1&_=' + Date.now();  // _=… defeats stale iframe cache after a deploy
   fr.style.cssText = 'width:min(' + width + 'px,96vw);height:min(420px,92vh);border:1px solid #423a63;border-radius:16px;background:#141221;box-shadow:0 32px 80px -24px rgba(0,0,0,.9);transition:height .18s ease,width .18s ease;';
   ov.appendChild(fr);
   document.body.appendChild(ov);
