@@ -50,3 +50,21 @@ body{background:radial-gradient(120% 70% at 50% -12%,#1c1433 0%,#0d0b14 56%) no-
 
 /* report bars */
 .bar-fill{background:linear-gradient(90deg,#5b21b6,#8b5cf6);}
+
+/* ── drawers (New Client / Edit Client) ── */
+.drawer{background:var(--bg-2);border-left:1px solid var(--line-2);box-shadow:-24px 0 60px -30px rgba(0,0,0,.8);}
+.drawer-head{background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border-bottom:1px solid var(--line-2);}
+.drawer-head h3{letter-spacing:.03em;text-transform:uppercase;font-size:13px;}
+.drawer input:focus,.drawer select:focus,.drawer textarea:focus,.drawer .in:focus{border-color:var(--brass-2)!important;outline:none;box-shadow:0 0 0 3px rgba(109,40,217,.18);}
+.drawer label{color:var(--text-3);}
+.drawer-foot{background:var(--bg-3);border-top:1px solid var(--line-2);}
+
+/* ── client profile page polish ── */
+.hero{background:linear-gradient(135deg,rgba(109,40,217,.16),transparent 55%),var(--bg-2)!important;border:1px solid var(--line-2)!important;}
+.hero-badge{box-shadow:0 10px 24px -10px rgba(109,40,217,.55);}
+.stats .stat{transition:.14s;}
+.stats .stat:hover{border-color:var(--brass-2);}
+.stats .stat .v{font-family:'Archivo',sans-serif;}
+.contact{transition:.13s;border-radius:10px;}
+.contact:hover{background:var(--bg-3);}
+.info-row .l{color:var(--text-3);}

@@ -134,7 +134,7 @@
 
 <div class="save-bar">
   <span class="msg" id="msg">No changes</span>
-  <button class="btn" onclick="location.href='index.html'">Cancel</button>
+  <button class="btn" id="btn-cancel-po">Cancel</button>
   <button class="btn-brass btn" id="btn-save">Save PO</button>
 </div>
 
@@ -402,6 +402,8 @@ async function savePDF(){
 //  in-app Back navigation with a styled confirm instead.)
 const _backLink=document.getElementById('back-link');
 if(_backLink) _backLink.addEventListener('click',e=>{ e.preventDefault(); leavePO(); });
+const _cancelPO=document.getElementById('btn-cancel-po');
+if(_cancelPO) _cancelPO.addEventListener('click',e=>{ e.preventDefault(); leavePO(); });
 load();
 // live sync: refresh this PO if it changes elsewhere, unless mid-edit
 subscribeFulfillment(async()=>{ if(!DIRTY) await load(); });
