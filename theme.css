@@ -42,8 +42,8 @@ body{background:radial-gradient(120% 70% at 50% -12%,#1e1830 0%,#0f1115 56%) no-
 /* identity chips */
 .avatar,.hero-badge{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;}
 
-/* selected segments, tabs, tracker chip */
-.rt.on,.htab.on,.tab.active{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-color:#7c3aed;}
+/* selected segments, tabs, tracker chip, list filter chips */
+.rt.on,.htab.on,.tab.active,.chip.active,.seg-toggle .t.active{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-color:#7c3aed;}
 .htab.on .tn{background:rgba(255,255,255,.22);color:#fff;}
 .pip.on{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;}
 .pip.on::before{border-color:#fff;background:#fff;}
