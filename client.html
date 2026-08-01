@@ -45,8 +45,9 @@
   .stat .v small{font-size:12px;color:var(--text-2);}
   .stat .s{font-size:10.5px;color:var(--text-3);margin-top:0;}
   /* layout — static page, only the tab body scrolls */
-  .cols{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:stretch;flex:1;min-height:0;}
-  @media(max-width:980px){.cols{grid-template-columns:1fr;}.stats{grid-template-columns:repeat(2,1fr);}}
+  .acct-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;padding:10px 18px;}
+  @media(max-width:760px){.acct-grid{grid-template-columns:1fr;}}
+  @media(max-width:980px){.stats{grid-template-columns:repeat(2,1fr);}}
   .card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;min-height:0;}
   .card-h{padding:12px 18px;border-bottom:2px solid var(--line-2);display:flex;align-items:center;gap:10px;flex-shrink:0;}
   .card-h h3{font-family:var(--fd);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#aab2c4;}
@@ -178,6 +179,7 @@ const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;r
 const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Prince Edward Island','Quebec','Saskatchewan'];
 const ST_LABEL={send_art:'Send Art',approval_due:'Approval',approved:'Approved',in_process:'Process',invoice:'Invoice',no_data:'—'};
 const CID=new URLSearchParams(location.search).get('id');
+let ACCT={};
 let CLIENT=null,CONTACTS=[],ORDERS=[],INVOICES=[],EDIT_CONTACTS=[];
 let SECTORS=[],SECMAP={},SEC_OK=false;
 const monthsAhead=m=>{const cur=new Date().getMonth()+1;return ((m-cur)+12)%12;};
@@ -248,36 +250,21 @@ function render(){
       <div class="stat"><div class="l">Contacts</div><div class="v">${CONTACTS.length}</div><div class="s">people</div></div>
     </div>
 
-    <div class="cols">
-      <div class="card panel-main">
-        <div class="card-h">
-          <div class="htabs" id="htabs" style="margin-left:0;">
-            <button class="htab on" data-tab="contacts">Contacts <span class="tn">${CONTACTS.length}</span></button>
-            <button class="htab" data-tab="inquiry">Inquiries <span class="tn">${INQ.length}</span></button>
-            <button class="htab" data-tab="quote">Quotations <span class="tn">${QUOTE.length}</span></button>
-            <button class="htab" data-tab="order">Sales Orders <span class="tn">${SALES.length}</span></button>
-            <button class="htab" data-tab="invoice">Invoices <span class="tn">${INVOICES.length}</span></button>
-            <button class="htab" data-tab="notes">Notes</button>
-          </div>
-        </div>
-        <div id="htab-body" class="tab-body"></div>
-      </div>
-
-      <div class="card panel-main">
-        <div class="card-h"><h3>Account</h3></div>
-        <div class="tab-body" style="padding:6px 18px;">
-          <div class="info-row"><span class="l">Client Since</span><span class="v mono">${fmtD(firstDate)}</span></div>
-          <div class="info-row"><span class="l">Last Transaction</span><span class="v mono">${fmtD(lastDate)}</span></div>
-          <div class="info-row"><span class="l">Payment Terms</span><span class="v">${CLIENT.terms_days?CLIENT.terms_days+' days':'Prepaid'}</span></div>
-          <div class="info-row"><span class="l">Shipment</span><span class="v">${{pickup:'Pick-up',courier:'Courier',deliver:'Deliver'}[CLIENT.shipment_mode]||'—'}</span></div>
-          <div class="info-row"><span class="l">Contact Cycle</span><span class="v">${CLIENT.contact_cycle_months?CLIENT.contact_cycle_months+' months':'—'}</span></div>
-          <div class="info-row"><span class="l">Referred By</span><span class="v">${esc(CLIENT.referred_by||'—')}</span></div>
-          <div class="info-row"><span class="l">Sector</span><span class="v">${SEC_OK&&SECMAP[CLIENT.sector_id]?esc(SECMAP[CLIENT.sector_id].name):'—'}</span></div>
-          <div class="info-row"><span class="l">Busy Season</span><span class="v">${SEC_OK&&SECMAP[CLIENT.sector_id]?seasonLabel(SECMAP[CLIENT.sector_id]):'—'}</span></div>
-          <div class="info-row"><span class="l">Rating</span><span class="v">${stars(CLIENT.rating)}</span></div>
+    <div class="card panel-main">
+      <div class="card-h">
+        <div class="htabs" id="htabs" style="margin-left:0;">
+          <button class="htab on" data-tab="contacts">Contacts <span class="tn">${CONTACTS.length}</span></button>
+          <button class="htab" data-tab="inquiry">Inquiries <span class="tn">${INQ.length}</span></button>
+          <button class="htab" data-tab="quote">Quotations <span class="tn">${QUOTE.length}</span></button>
+          <button class="htab" data-tab="order">Sales Orders <span class="tn">${SALES.length}</span></button>
+          <button class="htab" data-tab="invoice">Invoices <span class="tn">${INVOICES.length}</span></button>
+          <button class="htab" data-tab="notes">Notes</button>
+          <button class="htab" data-tab="account">Account</button>
         </div>
       </div>
+      <div id="htab-body" class="tab-body"></div>
     </div>`;
+  ACCT={firstDate,lastDate};
 
   // detail tabs — default to Contacts
   HTAB='contacts';
@@ -308,6 +295,24 @@ function renderHistoryTab(){
     const gen=CLIENT.notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">General Notes</div><div class="notes">${esc(CLIENT.notes)}</div></div>`:'';
     const intl=CLIENT.internal_notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">Internal Notes</div><div class="notes internal">${esc(CLIENT.internal_notes)}</div></div>`:'';
     body.innerHTML=(gen||intl)?(gen+intl):'<div class="state">No notes for this client. Click “Edit Client” to add notes.</div>';
+  }
+  else if(HTAB==='account'){
+    const row=(l,v)=>`<div class="info-row"><span class="l">${l}</span><span class="v">${v}</span></div>`;
+    body.innerHTML=`<div class="acct-grid">
+      <div>
+        ${row('Client Since',fmtD(ACCT.firstDate))}
+        ${row('Last Transaction',fmtD(ACCT.lastDate))}
+        ${row('Payment Terms',CLIENT.terms_days?CLIENT.terms_days+' days':'Prepaid')}
+        ${row('Shipment',{pickup:'Pick-up',courier:'Courier',deliver:'Deliver'}[CLIENT.shipment_mode]||'—')}
+        ${row('Rating',stars(CLIENT.rating))}
+      </div>
+      <div>
+        ${row('Sector',SEC_OK&&SECMAP[CLIENT.sector_id]?esc(SECMAP[CLIENT.sector_id].name):'—')}
+        ${row('Busy Season',SEC_OK&&SECMAP[CLIENT.sector_id]?seasonLabel(SECMAP[CLIENT.sector_id]):'—')}
+        ${row('Contact Cycle',CLIENT.contact_cycle_months?CLIENT.contact_cycle_months+' months':'—')}
+        ${row('Referred By',esc(CLIENT.referred_by||'—'))}
+      </div>
+    </div>`;
   }
   else if(HTAB==='inquiry'){body.innerHTML=orderRows(INQ)||'<div class="state">No inquiries for this client.</div>';}
   else if(HTAB==='quote'){body.innerHTML=orderRows(QUOTE)||'<div class="state">No quotations for this client.</div>';}
