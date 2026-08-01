@@ -950,6 +950,7 @@ function renderDeposits(){
     const amt=parseFloat(document.getElementById('dep-amt').value);
     const method=document.getElementById('dep-method').value||null;
     if(!(amt>0)){await alertModal('Deposit','Enter a deposit amount greater than 0.','warn');return;}
+    if(!method){await alertModal('Deposit','Choose how the deposit was paid before adding it.','warn');return;}
     const {data,error}=await db.from('order_deposits').insert({quote_id:ORDER_ID,dep_date:date,amount:amt,method}).select().single();
     if(error){await alertModal('Could not save deposit',error.message,'danger');return;}
     DEPOSITS.push(data);
