@@ -273,18 +273,18 @@
   /* line 1 = supplier name (centred); line 2 = status + PO action together
      (centred). Two tidy centred lines, never a tall stack. */
   .il-sup .sup-input-wrap{flex:0 1 auto;position:relative;display:inline-block;}
-  .il-sup .cb-sup{width:56px;text-align:center;padding:5px 5px;font-size:12px;}
+  .il-sup .cb-sup{width:48px;text-align:center;padding:5px 4px;font-size:12px;}
   .il-sup .alloc-summary{flex:0 1 auto;display:inline-flex;flex-direction:column;align-items:center;gap:0;}
   .il-sup .sup-meta{display:inline-flex;align-items:center;gap:4px;margin:0;}
   .il-sup .sup-meta .sup-id-tag{display:none;}   /* drop #100 inline — minor, frees the row */
-  .il-sup .fs-pill{font-size:8.5px;padding:2px 6px;}
+  .il-sup .fs-pill{font-size:8px;padding:2px 5px;letter-spacing:0;}
   /* name + status share line 1; the PO action drops to its own line 2 */
   .il-sup .partial-tag,.il-sup .full-tag,.il-sup .instock-tag{flex:0 0 100%;}
-  .il-sup .alloc-btn{flex:0 0 100%;margin:0;padding:3px 10px;font-size:10.5px;justify-content:center;}
+  .il-sup .alloc-btn{flex:0 0 100%;margin:3px 0 0;padding:3px 11px;font-size:10.5px;justify-content:center;}
   .td-del{position:relative;}
   .li-amt{padding-top:7px;}
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:7px 8px;border-radius:6px;font-size:13px;font-family:inherit;color:var(--ink);transition:border-color .12s,background .12s;}
-  .li-desc{resize:none;overflow:hidden;line-height:1.4;min-height:30px;white-space:pre-wrap;word-break:break-word;}
+  .li-desc{resize:none;overflow-y:hidden;line-height:1.4;min-height:30px;max-height:42px;white-space:pre-wrap;word-break:break-word;}
   .cb-cell{position:relative;}
   .cb-menu{display:none;position:fixed;min-width:240px;max-width:420px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:9000;overflow:hidden;max-height:260px;overflow-y:auto;}
   .cb-menu.open{display:block;}
@@ -1348,15 +1348,15 @@ function renderLines(){
     const discOpts=[0,5,7.5,10,12.5,15,20,25,50,75,100];
     const waived=((parseFloat(ln.amount)||0)*((parseFloat(ln.discount_pct)||0)/100));
     tr.innerHTML=`
-      <td class="cb-cell il-cat" style="width:11%;"><span class="cl">Category</span><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
-      <td class="cb-cell il-style" style="width:11%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
-      <td class="cb-cell il-desc" style="width:14.5%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search or type…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
+      <td class="cb-cell il-cat" style="width:10.5%;"><span class="cl">Category</span><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
+      <td class="cb-cell il-style" style="width:10.5%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
+      <td class="cb-cell il-desc" style="width:15.5%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search or type…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
       <td class="cb-cell il-sup sup-col ${fulfillClass(ln)}" style="width:18%;"><span class="cl">Supplier</span>
         <div class="sup-body">
         ${(ln._allocations&&ln._allocations.length)
           ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
           : `<span class="cb-cell sup-input-wrap"><input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div></span>${ln.supplier_id&&ln._supplier_number?`<span class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</span>`:''}`}
-        <button class="alloc-btn" data-alloc="${i}" title="Order this line's quantity to a purchase order">⊞ Order to PO</button>
+        <button class="alloc-btn" data-alloc="${i}" title="Order this line to a purchase order">⊞ Order to PO</button>
         </div>
       </td>
       <td class="qty-cell il-n" style="width:10%;"><span class="cl">Order Qty</span><span class="qtywrap"><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></span></td>
@@ -1562,7 +1562,7 @@ function wireSupplierCombo(inp){
   inp.addEventListener('blur',()=>setTimeout(close,120));
 }
 
-function autoGrow(el){ if(!el)return; el.style.height='auto'; el.style.height=(el.scrollHeight)+'px'; }
+function autoGrow(el){ if(!el)return; el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,42)+'px'; el.style.overflowY=el.scrollHeight>42?'auto':'hidden'; }
 function addLine(){
   LINES.push({category_code:'',category_name:'',style_number:'',description:'',quantity:1,unit:'Pc',unit_price:0,amount:0,discount_pct:0,net_amount:0,line_order:LINES.length+1});
   renderLines();markDirty();
