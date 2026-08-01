@@ -96,11 +96,11 @@
      Right: a 310px status rail — production tracker, order controls,
      deposits, artwork — stacked ruled sections. Both columns stretch
      to the same bottom edge; --gx is the document's shared gutter. */
-  .order-layout{--gx:22px;display:flex;align-items:stretch;gap:16px;margin-bottom:14px;}
+  .order-layout{--gx:22px;display:flex;align-items:center;gap:16px;margin-bottom:14px;}
   .order-layout > .card{margin-bottom:0;}
   .doc{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;}
   .rail{flex:0 0 310px;display:flex;flex-direction:column;background:linear-gradient(180deg,#14171d,#111318);}
-  .rail::after{content:'';flex:1 1 0;}
+  .rail::after{content:none;}
   .band{padding:17px var(--gx) 19px;}
   .band + .band{border-top:1px solid var(--line);}
   .band-flush{padding:0;}
@@ -126,19 +126,23 @@
   /* quality floor */
   .rt:focus-visible,.stog:focus-visible,.btn:focus-visible{outline:2px solid var(--brass-2);outline-offset:1px;}
   @media(prefers-reduced-motion:reduce){.sk-card{animation:none;}}
-  /* stacked mode: rail becomes a 2-column ruled grid below the doc */
+  /* stacked mode (narrow / popup windows): rail is a single full-width
+     column below the doc — no half-empty grid cells */
   @media(max-width:1120px){
     .order-layout{flex-direction:column;}
-    .rail{flex:1 1 auto;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
+    .rail{flex:1 1 auto;display:flex;flex-direction:column;}
     .rail::after{display:none;}
     #extras-card{display:contents;}
-    .rail .rs,.rail > .rs:first-child{border:solid var(--line);border-width:1px 0 0 1px;margin:-1px 0 0 -1px;}
-    /* stacked mode: the tracker spans the full width and runs horizontally
-       (.rail prefix outranks the later base .pipeline column rules) */
-    .rail > .rs:first-child{grid-column:1/-1;}
+    /* the two deposit/artwork sections may sit side by side when there's room */
+    #extras-card{display:flex;gap:0;}
+    #extras-card{display:contents;}
+    /* production tracker runs horizontally when the rail is full width */
     .rail .pipeline{flex-direction:row;flex-wrap:wrap;gap:8px 10px;}
     .rail .pip{min-height:32px;padding:0 30px 0 30px;flex:1 1 auto;justify-content:center;}
     .rail .pip::before{left:10px;}
+    /* form controls in the stacked rail get room to breathe */
+    .rail .rtype,.rail .statetog{width:auto;}
+    .rail .seg-2{max-width:420px;}
   }
   @media(max-width:1040px){.b-lines table{table-layout:auto;min-width:900px;}}
   @media(max-width:980px){.b-fields .client-block{grid-template-columns:1fr 1fr;}.b-fields .client-block .cb-sp2{grid-column:auto;}}
@@ -240,13 +244,34 @@
   .il-n .cl,.il-amtcell .cl{margin:0 0 4px;text-align:center;}
   .il-n .li-input.num{text-align:center;}
   .il-n .qty-cell,.il-amtcell .li-amt{text-align:center;}
-  .qty-cell.il-n{white-space:nowrap;}
-  .qty-cell.il-n .li-input.num{width:40px;display:inline-block;vertical-align:middle;}
-  .qty-cell.il-n .unit-suffix{display:inline-block;vertical-align:middle;width:auto;margin-left:4px;}
+  /* Order Qty reads left: header and value share the same left edge,
+     Pc rides tight to the number */
+  .qty-cell.il-n{text-align:left;}
+  .qty-cell.il-n .cl{text-align:left;margin:0 0 4px 9px;}
+  .qty-cell.il-n .qtywrap{display:inline-flex;align-items:baseline;margin-left:9px;}
+  .qty-cell.il-n .qtywrap .li-input.num{width:34px;text-align:left;padding:6px 2px;}
+  .qty-cell.il-n .qtywrap .unit-suffix{margin-left:3px;width:auto;font-size:9.5px;}
   .il-n .li-disc{text-align:center;}
   .il-amtcell .li-amt{text-align:center;padding-right:0;}
-  /* supplier sits centred in the gap between description and qty */
-  .il-sup{padding-left:14px;}
+  /* inquiries & quotes have no supplier — the row reflows to fill its
+     space cleanly instead of leaving a gap where supplier used to be */
+  .b-lines table.no-sup .il-sup{display:none;}
+  .b-lines table.no-sup .il-cat{width:13% !important;}
+  .b-lines table.no-sup .il-style{width:13% !important;}
+  .b-lines table.no-sup .il-desc{width:27% !important;}
+  .b-lines table.no-sup .qty-cell{width:11% !important;}
+  .b-lines table.no-sup .il-unit{width:11% !important;}
+  .b-lines table.no-sup .disc-cell{width:10% !important;}
+  .b-lines table.no-sup .il-amtcell{width:14% !important;}
+  .b-lines table.no-sup .td-del{width:1% !important;}
+  /* supplier: a centred stack with room either side, never hugging description */
+  .il-sup{text-align:center;padding:9px 18px 11px;}
+  .il-sup .cl{margin:0 0 4px;text-align:center;}
+  .il-sup .cb-sup{text-align:center;}
+  .il-sup .sup-meta{justify-content:center;margin-top:5px;}
+  .il-sup .alloc-summary{align-items:center;}
+  .il-sup .partial-tag,.il-sup .full-tag,.il-sup .instock-tag{text-align:center;}
+  .il-sup .alloc-btn{display:inline-block;margin-top:7px;}
   .td-del{position:relative;}
   .li-amt{padding-top:7px;}
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:7px 8px;border-radius:6px;font-size:13px;font-family:inherit;color:var(--ink);transition:border-color .12s,background .12s;}
@@ -289,6 +314,12 @@
   .ot-cell.grand .ot-lbl{color:#454c5b;}
   .ot-cell.grand .ot-amt{font-family:var(--fd);font-weight:800;font-size:21px;color:#15171c;letter-spacing:-.01em;}
   @media(max-width:640px){.order-totals{flex-wrap:wrap;justify-content:flex-end;gap:6px 0;}.ot-cell{padding:2px 14px;}}
+  /* totals living in the rail (inquiries/quotes): a clean vertical summary */
+  .order-totals.in-rail{flex-direction:column;align-items:stretch;margin:0;width:100%;}
+  .order-totals.in-rail .ot-cell{flex-direction:row;align-items:center;justify-content:space-between;text-align:left;border-left:none;border-bottom:1px solid var(--line);padding:9px 2px;gap:12px;}
+  .order-totals.in-rail .ot-cell .ot-lbl{margin:0;}
+  .order-totals.in-rail .ot-cell.grand{margin:10px 0 0;border-bottom:none;justify-content:space-between;padding:11px 14px;}
+  .order-totals.in-rail .ot-cell.grand .ot-amt{font-size:20px;}
   .cb-cell.in-po .cb-sup{color:var(--danger);font-weight:700;}
   .cb-sup{text-overflow:ellipsis;}
   /* fulfillment colour: the status pill carries the colour; the split summary count tints to match */
@@ -660,6 +691,7 @@
         <div class="seg"><label>Event Date</label><input type="date" class="input" id="i-event"></div>
       </div>
     </div>
+    <div class="rs mgmt-only" id="quote-sum" style="display:none;"><div class="seg"><label>Quote Summary</label><div id="quote-sum-slot"></div></div></div>
     <div id="extras-card" class="mgmt-only" style="display:none;">
       <div class="rs" id="deposit-seg" style="display:none;">
         <div class="seg">
@@ -944,7 +976,7 @@ function applyRecordType(){
   const T={inquiry:'Inquiry',quote:'Quotation',order:'Sales Order'};
   document.querySelector('.topbar .title').childNodes[0].nodeValue=(T[ORDER.record_type]||'Record')+' ';
   // stage pipeline only relevant for sales orders
-  if(EMBED) embedPost({yrt:'width', w: ORDER.record_type==='order' ? 1360 : 880});
+  if(EMBED) embedPost({yrt:'width', w: 1360});
   const stageSeg=document.getElementById('stage-seg');
   if(stageSeg)stageSeg.style.display=ORDER.record_type==='order'?'':'none';
   // Print Quotation: quotations only. A confirmed order converts to an invoice instead.
@@ -963,6 +995,7 @@ function applyRecordType(){
   renderOutcome();
   renderDeposits();
   renderArt();
+  relocateTotals();
   // Supplier column (PO linking) only on Sales Orders
   applySupplierColVisibility();
 }
@@ -1136,9 +1169,33 @@ function renderOutcome(){
   }
 }
 
+// A quote/inquiry's rail is short, so its totals move there as a
+// "Quote Summary" (the way a sales order's rail carries Deposits) — the
+// SAME totals node, so recalc keeps updating it wherever it lives.
+function relocateTotals(){
+  const totals=document.querySelector('.order-totals');
+  const railSlot=document.getElementById('quote-sum');
+  const railInner=document.getElementById('quote-sum-slot');
+  const foot=document.querySelector('.listing-foot');
+  if(!totals||!railSlot||!railInner||!foot) return;
+  const isOrder=ORDER&&ORDER.record_type==='order';
+  if(isOrder){
+    if(totals.parentElement!==foot) foot.appendChild(totals);
+    totals.classList.remove('in-rail');
+    railSlot.style.display='none';
+  }else{
+    if(totals.parentElement!==railInner) railInner.appendChild(totals);
+    totals.classList.add('in-rail');
+    railSlot.style.display='';
+  }
+}
 function applySupplierColVisibility(){
   const isOrder=ORDER&&ORDER.record_type==='order';
   document.querySelectorAll('.sup-col').forEach(el=>{ el.style.display=isOrder?'':'none'; });
+  // With the supplier column gone (inquiries/quotes) the remaining columns
+  // must reclaim its width, or its slot shows as an empty gap.
+  const tbl=document.querySelector('.b-lines table');
+  if(tbl) tbl.classList.toggle('no-sup', !isOrder);
 }
 
 // One painter for the stage stepper: current stage = solid pill, earlier stages = green done-dots.
@@ -1286,8 +1343,8 @@ function renderLines(){
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn" data-alloc="${i}" title="Order this line's quantity to a purchase order">⊞ Order to PO</button>
       </td>
-      <td class="qty-cell il-n" style="width:10%;"><span class="cl">Order Qty</span><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></td>
-      <td class="money-col il-n" style="width:10%;"><span class="cl">Unit Price</span><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
+      <td class="qty-cell il-n" style="width:10%;"><span class="cl">Order Qty</span><span class="qtywrap"><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></span></td>
+      <td class="money-col il-n il-unit" style="width:10%;"><span class="cl">Unit Price</span><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
       <td class="disc-cell money-col il-n" style="width:9.5%;">
         <span class="cl">Discount</span><select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
         ${parseFloat(ln.discount_pct)===100?`<div class="disc-waived waived-full">Charges Waived</div>`:(waived>0?`<div class="disc-waived">−${money(waived)}</div>`:'')}
