@@ -97,8 +97,8 @@
   <div class="step">
     <div class="lbl"><span class="n">1</span>Master design</div>
     <label class="drop" id="dropzone">
-      <b>Upload the design — PDF or SVG</b>
-      <div class="hint">Best from CorelDRAW: File → Publish to PDF (everything embeds automatically).<br>Text must be real text, not converted to curves.</div>
+      <b>Upload the design — SVG or PDF</b>
+      <div class="hint"><b>Best from CorelDRAW: File → Export → SVG</b> — keeps your exact fonts.<br>Convert the logo to curves first; keep the text as text.<br>PDF also works, but changed text must use a standard font (a PDF limitation).</div>
       <input type="file" id="file" accept=".pdf,application/pdf,.svg,image/svg+xml">
     </label>
     <div class="filerow" id="filerow" hidden>
@@ -338,7 +338,9 @@ $("file").addEventListener("change", async e=>{
       const a = await analyzePDF(bytes);
       M = {kind:"pdf", bytes, ...a};
       $("master").innerHTML=""; $("master").appendChild(a.canvas); $("master").hidden=false;
-      if(a.numPages>1) showWarn("This PDF has "+a.numPages+" pages — the first page is used as the master.");
+      showWarn("PDF master: the changed text must be drawn in a standard font — a PDF only embeds the letters it already uses, so the original font can't write new names. "
+        + "For exact fonts, upload an <b>SVG</b> instead (Corel: convert logo to curves → File → Export → SVG)."
+        + (a.numPages>1 ? "<br>Also: this PDF has "+a.numPages+" pages — the first page is used as the master." : ""));
       $("fontwrap").hidden = false;
     }else{
       const text = await f.text();
