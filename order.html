@@ -239,6 +239,11 @@
   tbody tr:hover td{border-color:var(--line-2);}
   tbody tr:focus-within td{border-color:var(--brass-2);}
   .cl{display:block;font-family:var(--font-body);font-size:9.5px;font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--text-3);margin:0 0 4px 8px;}
+  /* text columns centre their value under the heading */
+  .il-cat,.il-style,.il-desc{text-align:center;}
+  .il-cat .cl,.il-style .cl,.il-desc .cl{margin:0 0 4px;text-align:center;}
+  .il-cat .li-input,.il-style .li-input{text-align:center;}
+  .il-desc .li-desc{text-align:center;}
   /* numeric columns: header + value share one centered column */
   .il-n,.il-amtcell{text-align:center;}
   .il-n .cl,.il-amtcell .cl{margin:0 0 4px;text-align:center;}
@@ -1349,8 +1354,8 @@ function renderLines(){
     const waived=((parseFloat(ln.amount)||0)*((parseFloat(ln.discount_pct)||0)/100));
     tr.innerHTML=`
       <td class="cb-cell il-cat" style="width:10.5%;"><span class="cl">Category</span><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
-      <td class="cb-cell il-style" style="width:10.5%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
-      <td class="cb-cell il-desc" style="width:15.5%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search or type…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
+      <td class="cb-cell il-style" style="width:12.5%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
+      <td class="cb-cell il-desc" style="width:13.5%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search or type…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
       <td class="cb-cell il-sup sup-col ${fulfillClass(ln)}" style="width:18%;"><span class="cl">Supplier</span>
         <div class="sup-body">
         ${(ln._allocations&&ln._allocations.length)
