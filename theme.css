@@ -1,70 +1,82 @@
-/* ── YRT Royal Violet ────────────────────────────────────────────────
+/* ── YRT Black & White ───────────────────────────────────────────────
    One theme file for the whole CRM, linked after each page's inline
-   styles so its rules win by cascade order. Slate base stays; every
-   silver/white accent becomes the violet gradient. Status colours
-   (green / amber / red / blue) keep their meaning, and the engraved
-   silver grand-total plate stays silver on purpose — the one
-   non-purple accent, like a trophy plate against purple velvet. */
+   styles so its rules win by cascade order. Near-black base, crisp
+   white accents, brighter/bolder borders and text so everything stands
+   out. The engraved silver grand-total plate stays silver. */
 
 :root{
-  --bg:#13111d;
-  --bg-2:#1a1728;
-  --bg-3:#232038;
-  --bg-4:#2e2848;
-  --sidebar:#100e18;
-  --line:#352f4e;
-  --line-2:#4a4269;
-  --line-strong:#4a4269;
-  --brass:#9d7bf5;
-  --brass-2:#7c3aed;
-  --brass-bg:rgba(109,40,217,.16);
-  --paper:#0d0b14;
-  --paper-2:#141221;
-  --slate-900:#141221;
-  --slate-700:#1b1830;
+  --bg:#0c0d11;
+  --bg-2:#15171c;
+  --bg-3:#1f232b;
+  --bg-4:#2c313b;
+  --sidebar:#08090c;
+  /* brighter, clearly-visible borders */
+  --line:#3d434f;
+  --line-2:#576070;
+  --line-strong:#576070;
+  /* accents are white now */
+  --brass:#f0f3f8;
+  --brass-2:#ffffff;
+  --brass-bg:rgba(255,255,255,.10);
+  /* brighter text — nothing reads as dimmed */
+  --text:#f7f9fc;
+  --text-2:#d6dbe3;
+  --text-3:#9ea6b2;
+  --paper:#0c0d11;
+  --paper-2:#15171c;
+  --slate-900:#15171c;
+  --slate-700:#1f232b;
+  --muted:#9ea6b2;
+  --muted-2:#9ea6b2;
 }
 
-body{background:radial-gradient(120% 70% at 50% -12%,#241a3d 0%,#13111d 56%) no-repeat fixed #13111d;}
+body{background:radial-gradient(120% 70% at 50% -12%,#191c22 0%,#0c0d11 56%) no-repeat fixed #0c0d11;}
 
 /* sidebar + topbar active state */
-.nav a.active{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;border-color:transparent;}
+.nav a.active{background:linear-gradient(135deg,#ffffff,#d7dce4);color:#15171c;border-color:transparent;font-weight:700;}
 
-/* primary actions — every page's flavour of the light accent button */
+/* primary actions — white */
 .btn-primary,.btn-save,.btn-brass,.btn.brass,.btn-dark,
 .modal-btn-primary,.inact-btn.primary,
 #__sm .b.primary,#pmodal .pb.primary,.am-btn.primary{
-  background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;border-color:#5b21b6;
+  background:linear-gradient(135deg,#ffffff,#d7dce4);color:#15171c;border-color:#d7dce4;font-weight:700;
 }
 .btn-primary:hover,.btn-save:hover,.btn-brass:hover,.btn.brass:hover,.btn-dark:hover{
-  filter:brightness(1.1);background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;
+  filter:brightness(1.05);background:linear-gradient(135deg,#ffffff,#d7dce4);color:#15171c;
 }
 
 /* identity chips */
-.avatar,.hero-badge{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;}
+.avatar,.hero-badge{background:linear-gradient(135deg,#ffffff,#cfd5df);color:#15171c;}
 
 /* selected segments, tabs, tracker chip, list filter chips */
-.rt.on,.htab.on,.tab.active,.chip.active,.seg-toggle .t.active{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;border-color:#5b21b6;}
-.htab.on .tn{background:rgba(255,255,255,.22);color:#fff;}
-.pip.on{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;}
-.pip.on::before{border-color:#fff;background:#fff;}
+.rt.on,.htab.on,.tab.active,.chip.active,.seg-toggle .t.active{background:linear-gradient(135deg,#ffffff,#d7dce4);color:#15171c;border-color:#d7dce4;}
+.htab.on .tn{background:rgba(0,0,0,.20);color:#15171c;}
+.pip.on{background:linear-gradient(135deg,#ffffff,#d7dce4);color:#15171c;}
+.pip.on::before{border-color:#15171c;background:#15171c;}
 
 /* report bars */
-.bar-fill{background:linear-gradient(90deg,#5b21b6,#8b5cf6);}
+.bar-fill{background:linear-gradient(90deg,#7d838f,#f0f3f8);}
+
+/* ── brighter, bolder headers & labels across the CRM ── */
+.card-h h3,.panel-head h2,.panel-head h3,.eyebrow,.topbar .title,.drawer-head h3{color:#ffffff;}
+.card-h h3,.eyebrow{font-weight:800;}
+thead th,.ctable th,.cl,.ot-lbl,.field label,.seg label,.info-row .l{color:var(--text-2);font-weight:700;}
+tbody td,.field .val,.info-row .v{color:var(--text);}
 
 /* ── drawers (New Client / Edit Client) ── */
 .drawer{background:var(--bg-2);border-left:1px solid var(--line-2);box-shadow:-24px 0 60px -30px rgba(0,0,0,.8);}
 .drawer-head{background:linear-gradient(180deg,var(--bg-3),var(--bg-2));border-bottom:1px solid var(--line-2);}
 .drawer-head h3{letter-spacing:.03em;text-transform:uppercase;font-size:13px;}
-.drawer input:focus,.drawer select:focus,.drawer textarea:focus,.drawer .in:focus{border-color:var(--brass-2)!important;outline:none;box-shadow:0 0 0 3px rgba(109,40,217,.18);}
-.drawer label{color:var(--text-3);}
+.drawer input:focus,.drawer select:focus,.drawer textarea:focus,.drawer .in:focus{border-color:#ffffff!important;outline:none;box-shadow:0 0 0 3px rgba(255,255,255,.14);}
+.drawer label{color:var(--text-2);}
 .drawer-foot{background:var(--bg-3);border-top:1px solid var(--line-2);}
 
 /* ── client profile page polish ── */
-.hero{background:linear-gradient(135deg,rgba(109,40,217,.16),transparent 55%),var(--bg-2)!important;border:1px solid var(--line-2)!important;}
-.hero-badge{box-shadow:0 10px 24px -10px rgba(109,40,217,.55);}
+.hero{background:linear-gradient(135deg,rgba(255,255,255,.05),transparent 55%),var(--bg-2)!important;border:1px solid var(--line-2)!important;}
+.hero-badge{box-shadow:0 10px 24px -10px rgba(255,255,255,.25);}
 .stats .stat{transition:.14s;}
-.stats .stat:hover{border-color:var(--brass-2);}
-.stats .stat .v{font-family:'Archivo',sans-serif;}
+.stats .stat:hover{border-color:var(--line-2);}
+.stats .stat .v{font-family:'Archivo',sans-serif;color:#fff;}
 .contact{transition:.13s;border-radius:10px;}
 .contact:hover{background:var(--bg-3);}
-.info-row .l{color:var(--text-3);}
+.info-row .l{color:var(--text-2);}
