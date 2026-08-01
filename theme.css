@@ -7,46 +7,46 @@
    non-purple accent, like a trophy plate against purple velvet. */
 
 :root{
-  --bg:#0f1115;
-  --bg-2:#16151f;
-  --bg-3:#1f1c2b;
-  --bg-4:#2b2739;
-  --sidebar:#0b0a11;
-  --line:#322e45;
-  --line-2:#453f5e;
-  --line-strong:#453f5e;
-  --brass:#a78bfa;
-  --brass-2:#8b5cf6;
-  --brass-bg:rgba(139,92,246,.14);
-  --paper:#0f1115;
-  --paper-2:#16151f;
-  --slate-900:#16151f;
-  --slate-700:#1f1c2b;
+  --bg:#0d0b14;
+  --bg-2:#141221;
+  --bg-3:#1b1830;
+  --bg-4:#262040;
+  --sidebar:#0a0810;
+  --line:#2e2947;
+  --line-2:#423a63;
+  --line-strong:#423a63;
+  --brass:#9d7bf5;
+  --brass-2:#7c3aed;
+  --brass-bg:rgba(109,40,217,.16);
+  --paper:#0d0b14;
+  --paper-2:#141221;
+  --slate-900:#141221;
+  --slate-700:#1b1830;
 }
 
-body{background:radial-gradient(120% 70% at 50% -12%,#1e1830 0%,#0f1115 56%) no-repeat fixed #0f1115;}
+body{background:radial-gradient(120% 70% at 50% -12%,#1c1433 0%,#0d0b14 56%) no-repeat fixed #0d0b14;}
 
 /* sidebar + topbar active state */
-.nav a.active{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-color:transparent;}
+.nav a.active{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;border-color:transparent;}
 
 /* primary actions — every page's flavour of the light accent button */
 .btn-primary,.btn-save,.btn-brass,.btn.brass,.btn-dark,
 .modal-btn-primary,.inact-btn.primary,
 #__sm .b.primary,#pmodal .pb.primary,.am-btn.primary{
-  background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-color:#7c3aed;
+  background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;border-color:#5b21b6;
 }
 .btn-primary:hover,.btn-save:hover,.btn-brass:hover,.btn.brass:hover,.btn-dark:hover{
-  filter:brightness(1.1);background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;
+  filter:brightness(1.1);background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;
 }
 
 /* identity chips */
-.avatar,.hero-badge{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;}
+.avatar,.hero-badge{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;}
 
 /* selected segments, tabs, tracker chip, list filter chips */
-.rt.on,.htab.on,.tab.active,.chip.active,.seg-toggle .t.active{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-color:#7c3aed;}
+.rt.on,.htab.on,.tab.active,.chip.active,.seg-toggle .t.active{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;border-color:#5b21b6;}
 .htab.on .tn{background:rgba(255,255,255,.22);color:#fff;}
-.pip.on{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;}
+.pip.on{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;}
 .pip.on::before{border-color:#fff;background:#fff;}
 
 /* report bars */
-.bar-fill{background:linear-gradient(90deg,#7c3aed,#a78bfa);}
+.bar-fill{background:linear-gradient(90deg,#5b21b6,#8b5cf6);}
