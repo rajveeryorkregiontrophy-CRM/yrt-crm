@@ -1,0 +1,52 @@
+/* ── YRT Royal Violet ────────────────────────────────────────────────
+   One theme file for the whole CRM, linked after each page's inline
+   styles so its rules win by cascade order. Slate base stays; every
+   silver/white accent becomes the violet gradient. Status colours
+   (green / amber / red / blue) keep their meaning, and the engraved
+   silver grand-total plate stays silver on purpose — the one
+   non-purple accent, like a trophy plate against purple velvet. */
+
+:root{
+  --bg:#0f1115;
+  --bg-2:#16151f;
+  --bg-3:#1f1c2b;
+  --bg-4:#2b2739;
+  --sidebar:#0b0a11;
+  --line:#322e45;
+  --line-2:#453f5e;
+  --line-strong:#453f5e;
+  --brass:#a78bfa;
+  --brass-2:#8b5cf6;
+  --brass-bg:rgba(139,92,246,.14);
+  --paper:#0f1115;
+  --paper-2:#16151f;
+  --slate-900:#16151f;
+  --slate-700:#1f1c2b;
+}
+
+body{background:radial-gradient(120% 70% at 50% -12%,#1e1830 0%,#0f1115 56%) no-repeat fixed #0f1115;}
+
+/* sidebar + topbar active state */
+.nav a.active{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-color:transparent;}
+
+/* primary actions — every page's flavour of the light accent button */
+.btn-primary,.btn-save,.btn-brass,.btn.brass,.btn-dark,
+.modal-btn-primary,.inact-btn.primary,
+#__sm .b.primary,#pmodal .pb.primary,.am-btn.primary{
+  background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-color:#7c3aed;
+}
+.btn-primary:hover,.btn-save:hover,.btn-brass:hover,.btn.brass:hover,.btn-dark:hover{
+  filter:brightness(1.1);background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;
+}
+
+/* identity chips */
+.avatar,.hero-badge{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;}
+
+/* selected segments, tabs, tracker chip */
+.rt.on,.htab.on,.tab.active{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border-color:#7c3aed;}
+.htab.on .tn{background:rgba(255,255,255,.22);color:#fff;}
+.pip.on{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;}
+.pip.on::before{border-color:#fff;background:#fff;}
+
+/* report bars */
+.bar-fill{background:linear-gradient(90deg,#7c3aed,#a78bfa);}
