@@ -57,6 +57,11 @@ body{background:radial-gradient(120% 70% at 50% -12%,#191c22 0%,#0c0d11 56%) no-
 /* report bars */
 .bar-fill{background:linear-gradient(90deg,#7d838f,#f0f3f8);}
 
+/* ── slightly thicker lines throughout ── */
+.card,.panel,.hero,.stats,.stat,.drawer,.topbar,#htab-body .contact,.contact{border-width:2px;}
+thead th{border-bottom-width:2px !important;}
+tbody td{border-bottom-width:1.5px !important;}
+
 /* ── brighter, bolder headers & labels across the CRM ── */
 .card-h h3,.panel-head h2,.panel-head h3,.eyebrow,.topbar .title,.drawer-head h3{color:#ffffff;}
 .card-h h3,.eyebrow{font-weight:800;}

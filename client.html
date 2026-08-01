@@ -459,10 +459,12 @@ function drawEditContacts(){
     <div class="contact-card">
       <div class="frow"><div class="field"><label>First</label><input class="in ec" data-i="${i}" data-k="first_name" value="${esc(ct.first_name||'')}"></div>
         <div class="field"><label>Last</label><input class="in ec" data-i="${i}" data-k="last_name" value="${esc(ct.last_name||'')}"></div></div>
-      <div class="frow"><div class="field"><label>Designation</label><input class="in ec" data-i="${i}" data-k="designation" value="${esc(ct.designation||'')}"></div>
-        <div class="field"><label>Telephone</label><input class="in ec" data-i="${i}" data-k="tel1" value="${esc(ct.tel1||'')}"></div></div>
-      <div class="field"><label>Email</label><input class="in ec" data-i="${i}" data-k="email1" value="${esc(ct.email1||'')}"></div>
-      <div class="frow" style="align-items:center;margin-bottom:0;"><label style="margin:0;display:flex;gap:7px;align-items:center;cursor:pointer;color:var(--text-2);text-transform:none;letter-spacing:0;font-size:12.5px;"><input type="radio" name="eprimary" ${ct.is_primary?'checked':''} data-prim="${i}"> Primary</label>
+      <div class="field"><label>Designation</label><input class="in ec" data-i="${i}" data-k="designation" value="${esc(ct.designation||'')}"></div>
+      <div class="frow"><div class="field"><label>Phone · primary</label><input class="in ec" data-i="${i}" data-k="tel1" value="${esc(ct.tel1||'')}" placeholder="905-555-0100"></div>
+        <div class="field"><label>Phone · alternate</label><input class="in ec" data-i="${i}" data-k="tel2" value="${esc(ct.tel2||'')}" placeholder="optional"></div></div>
+      <div class="frow"><div class="field"><label>Email · primary</label><input class="in ec" data-i="${i}" data-k="email1" value="${esc(ct.email1||'')}" placeholder="name@company.com"></div>
+        <div class="field"><label>Email · alternate</label><input class="in ec" data-i="${i}" data-k="email2" value="${esc(ct.email2||'')}" placeholder="optional"></div></div>
+      <div class="frow" style="align-items:center;margin-bottom:0;"><label style="margin:0;display:flex;gap:7px;align-items:center;cursor:pointer;color:var(--text-2);text-transform:none;letter-spacing:0;font-size:12.5px;"><input type="radio" name="eprimary" ${ct.is_primary?'checked':''} data-prim="${i}"> Primary contact</label>
         ${EDIT_CONTACTS.length>1?`<button class="btn btn-del-c" data-del="${i}">Remove</button>`:''}</div>
     </div>`).join('');
   document.querySelectorAll('.ec').forEach(inp=>inp.addEventListener('input',()=>{EDIT_CONTACTS[+inp.dataset.i][inp.dataset.k]=inp.value;}));
@@ -486,7 +488,7 @@ async function save(){
   if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
   await db.from('contacts').delete().eq('client_id',CID);
   const valid=EDIT_CONTACTS.filter(c=>(c.first_name||c.last_name||c.tel1||c.email1));
-  if(valid.length){const rows=valid.map(c=>({client_id:CID,first_name:c.first_name||null,last_name:c.last_name||null,designation:c.designation||null,tel1:c.tel1||null,email1:c.email1||null,is_primary:!!c.is_primary}));
+  if(valid.length){const rows=valid.map(c=>({client_id:CID,first_name:c.first_name||null,last_name:c.last_name||null,designation:c.designation||null,tel1:c.tel1||null,tel2:c.tel2||null,email1:c.email1||null,email2:c.email2||null,is_primary:!!c.is_primary}));
     const {error:e2}=await db.from('contacts').insert(rows);if(e2){msg.textContent='Contacts error: '+e2.message;msg.className='msg err';return;}}
   msg.textContent='Saved ✓';msg.className='msg ok';await load();setTimeout(closeD,500);
 }
