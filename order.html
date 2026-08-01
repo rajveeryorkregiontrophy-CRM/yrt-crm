@@ -234,9 +234,20 @@
   tbody td:last-child{border-right:1px solid var(--line);border-radius:0 11px 11px 0;}
   tbody tr:hover td{border-color:var(--line-2);}
   tbody tr:focus-within td{border-color:var(--brass-2);}
-  .cl{display:block;font-family:var(--font-display);font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin:0 0 3px 8px;}
-  .money-col .cl{margin-left:0;}
-  .td-del{vertical-align:middle;text-align:center;}
+  .cl{display:block;font-family:var(--font-body);font-size:9.5px;font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--text-3);margin:0 0 4px 8px;}
+  /* numeric columns: header + value share one centered column */
+  .il-n,.il-amtcell{text-align:center;}
+  .il-n .cl,.il-amtcell .cl{margin:0 0 4px;text-align:center;}
+  .il-n .li-input.num{text-align:center;}
+  .il-n .qty-cell,.il-amtcell .li-amt{text-align:center;}
+  .qty-cell.il-n{white-space:nowrap;}
+  .qty-cell.il-n .li-input.num{width:40px;display:inline-block;vertical-align:middle;}
+  .qty-cell.il-n .unit-suffix{display:inline-block;vertical-align:middle;width:auto;margin-left:4px;}
+  .il-n .li-disc{text-align:center;}
+  .il-amtcell .li-amt{text-align:center;padding-right:0;}
+  /* supplier sits centred in the gap between description and qty */
+  .il-sup{padding-left:14px;}
+  .td-del{position:relative;}
   .li-amt{padding-top:7px;}
   .li-input{width:100%;border:1px solid transparent;background:transparent;padding:7px 8px;border-radius:6px;font-size:13px;font-family:inherit;color:var(--ink);transition:border-color .12s,background .12s;}
   .li-desc{resize:none;overflow:hidden;line-height:1.4;min-height:30px;white-space:pre-wrap;word-break:break-word;}
@@ -380,7 +391,7 @@
   .li-input.num{text-align:right;font-family:var(--font-mono);}
   .li-input.cat{font-family:var(--font-mono);font-size:12px;color:var(--brass);font-weight:600;}
   .li-amt{text-align:right;font-family:var(--font-mono);font-weight:700;font-size:13px;padding-right:10px;white-space:nowrap;color:#fff;font-variant-numeric:tabular-nums;}
-  .li-del{border:1px solid transparent;background:transparent;color:var(--text-3);cursor:pointer;width:26px;height:26px;border-radius:8px;font-size:13px;line-height:1;display:grid;place-items:center;margin:0 auto;transition:.13s;}
+  .li-del{position:absolute;top:8px;right:10px;border:1px solid transparent;background:transparent;color:var(--text-3);cursor:pointer;width:24px;height:24px;border-radius:7px;font-size:13px;line-height:1;display:grid;place-items:center;transition:.13s;}
   .li-del:hover{background:rgba(255,77,77,.13);border-color:rgba(255,77,77,.35);color:#ff4d4d;}
   .add-line{margin:12px var(--gx) 14px;padding:9px;width:calc(100% - var(--gx)*2);border:1px dashed var(--line-strong);background:transparent;border-radius:var(--radius-sm);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
   .add-line:hover{border-color:var(--brass);color:var(--brass-2);}
@@ -1256,23 +1267,23 @@ function renderLines(){
     const discOpts=[0,5,7.5,10,12.5,15,20,25,50,75,100];
     const waived=((parseFloat(ln.amount)||0)*((parseFloat(ln.discount_pct)||0)/100));
     tr.innerHTML=`
-      <td class="cb-cell" style="width:9.5%;"><span class="cl">Category</span><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Category" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
-      <td class="cb-cell" style="width:8.5%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Style #" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
-      <td class="cb-cell" style="width:19%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search a product, or type freely…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
-      <td class="cb-cell sup-col ${fulfillClass(ln)}" style="width:17.5%;"><span class="cl">Supplier</span>
+      <td class="cb-cell il-cat" style="width:10.5%;"><span class="cl">Category</span><input class="li-input cb-cat" value="${esc(ln.category_name||ln.category_code||'')}" data-i="${i}" data-k="category" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="cat-${i}"></div></td>
+      <td class="cb-cell il-style" style="width:10%;"><span class="cl">Style #</span><input class="li-input cb-style" value="${esc(ln.style_number||'')}" data-i="${i}" data-k="style" placeholder="Type…" autocomplete="off"><div class="cb-menu" data-menu="style-${i}"></div></td>
+      <td class="cb-cell il-desc" style="width:19%;"><span class="cl">Description</span><textarea class="li-input li-desc cb-desc" rows="1" data-i="${i}" data-k="description" placeholder="Search or type…" autocomplete="off">${esc(ln.description||'')}</textarea><div class="cb-menu" data-menu="desc-${i}"></div></td>
+      <td class="cb-cell il-sup sup-col ${fulfillClass(ln)}" style="width:15.5%;"><span class="cl">Supplier</span>
         ${(ln._allocations&&ln._allocations.length)
           ? `<div class="alloc-summary" data-alloc="${i}"><span class="alloc-count">${esc(ln._supplier_name||'Supplier')}</span><span class="alloc-edit">manage orders</span></div>${(()=>{const ordered=ln._allocations.reduce((s,a)=>s+(parseFloat(a.quantity)||0),0);const need=parseFloat(ln.quantity)||0;const bal=need-ordered;return bal>0?`<div class="partial-tag">${ordered} ordered · ${bal} to order</div>`:`<div class="full-tag">${ordered} ordered ✓</div>`;})()}`
           : `<input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div>${ln.supplier_id&&ln._supplier_number?`<div class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</div>`:''}`}
         <button class="alloc-btn" data-alloc="${i}" title="Order this line's quantity to a purchase order">⊞ Order to PO</button>
       </td>
-      <td class="qty-cell" style="width:10%;"><span class="cl">Order Qty</span><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></td>
-      <td class="money-col" style="width:9.5%;"><span class="cl">Unit Price</span><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
-      <td class="disc-cell money-col" style="width:10%;">
+      <td class="qty-cell il-n" style="width:9.5%;"><span class="cl">Order Qty</span><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></td>
+      <td class="money-col il-n" style="width:9.5%;"><span class="cl">Unit Price</span><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
+      <td class="disc-cell money-col il-n" style="width:9%;">
         <span class="cl">Discount</span><select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
         ${parseFloat(ln.discount_pct)===100?`<div class="disc-waived waived-full">Charges Waived</div>`:(waived>0?`<div class="disc-waived">−${money(waived)}</div>`:'')}
       </td>
-      <td class="money-col" style="width:12%;"><span class="cl" style="text-align:right;">Amount</span><div class="li-amt">${money(ln.net_amount)}</div></td>
-      <td class="td-del" style="width:4%;"><button class="li-del" data-del="${i}">×</button></td>`;
+      <td class="money-col il-amtcell" style="width:12.5%;"><span class="cl">Amount</span><div class="li-amt">${money(ln.net_amount)}</div></td>
+      <td class="td-del" style="width:4.5%;"><button class="li-del" data-del="${i}" title="Remove line">×</button></td>`;
     tb.appendChild(tr);
   });
   // plain inputs (description, qty, unit, price)

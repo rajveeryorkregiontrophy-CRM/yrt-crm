@@ -7,14 +7,14 @@
    non-purple accent, like a trophy plate against purple velvet. */
 
 :root{
-  --bg:#0d0b14;
-  --bg-2:#141221;
-  --bg-3:#1b1830;
-  --bg-4:#262040;
-  --sidebar:#0a0810;
-  --line:#2e2947;
-  --line-2:#423a63;
-  --line-strong:#423a63;
+  --bg:#13111d;
+  --bg-2:#1a1728;
+  --bg-3:#232038;
+  --bg-4:#2e2848;
+  --sidebar:#100e18;
+  --line:#352f4e;
+  --line-2:#4a4269;
+  --line-strong:#4a4269;
   --brass:#9d7bf5;
   --brass-2:#7c3aed;
   --brass-bg:rgba(109,40,217,.16);
@@ -24,7 +24,7 @@
   --slate-700:#1b1830;
 }
 
-body{background:radial-gradient(120% 70% at 50% -12%,#1c1433 0%,#0d0b14 56%) no-repeat fixed #0d0b14;}
+body{background:radial-gradient(120% 70% at 50% -12%,#241a3d 0%,#13111d 56%) no-repeat fixed #13111d;}
 
 /* sidebar + topbar active state */
 .nav a.active{background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff;border-color:transparent;}
