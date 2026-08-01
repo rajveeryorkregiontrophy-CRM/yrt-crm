@@ -29,7 +29,9 @@
   .wrap{max-width:1400px;margin:0 auto;padding:18px 24px;height:calc(100vh - 58px);display:flex;flex-direction:column;overflow:hidden;}
   body{overflow:hidden;}
   /* hero */
-  .hero{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 20px;margin-bottom:14px;display:flex;gap:20px;align-items:center;flex-shrink:0;}
+  .hero{background:linear-gradient(120deg,rgba(109,40,217,.22),transparent 45%),var(--bg-2);border:1px solid var(--line-2);border-radius:14px;padding:20px 24px;margin-bottom:14px;display:flex;gap:18px;align-items:center;flex-shrink:0;}
+  .hero-name{font-size:22px!important;}
+  .hero-sub .it{border:1px solid var(--line-2);border-radius:20px;padding:4px 12px;font-size:11.5px;background:var(--bg);}
   .hero-badge{width:64px;height:64px;border-radius:14px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-family:var(--fd);font-weight:900;font-size:24px;flex-shrink:0;}
   .hero-main{flex:1;min-width:0;}
   .hero-name{font-family:var(--fd);font-size:24px;font-weight:800;color:#fff;letter-spacing:-.01em;}
@@ -38,8 +40,10 @@
   .stars{color:var(--star);letter-spacing:1px;}.stars .off{color:var(--line-2);}
   .blk{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:5px;background:rgba(255,77,77,.18);color:var(--danger);font-family:var(--fd);}
   /* stat cards */
-  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px;flex-shrink:0;}
-  .stat{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:9px 14px;display:flex;flex-direction:column;justify-content:center;}
+  .stats{display:flex;background:var(--bg-2);border:1px solid var(--line-2);border-radius:12px;margin-bottom:14px;flex-shrink:0;overflow:hidden;}
+  .stat{flex:1;padding:13px 18px;display:flex;flex-direction:column;justify-content:center;border-left:1px solid var(--line);}
+  .stat:first-child{border-left:none;}
+  .stat .v{font-family:'Archivo',sans-serif;font-weight:800;}
   .stat .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#aab0c0;font-weight:700;}
   .stat .v{font-family:var(--fd);font-size:19px;font-weight:900;color:#fff;margin-top:2px;line-height:1.1;}
   .stat .v small{font-size:12px;color:var(--text-2);}
@@ -60,14 +64,16 @@
   .tab-body::-webkit-scrollbar{width:8px;}.tab-body::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--bg-2);}
   /* detail tabs (Contacts / Inquiries / Sales Orders / Notes) */
   .htabs{display:flex;gap:4px;margin-left:auto;}
-  .htab{font-size:11.5px;padding:6px 12px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:6px;}
+  .htab{font-size:11.5px;padding:9px 4px;margin:0 9px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--text-3);cursor:pointer;font-weight:700;font-family:inherit;display:inline-flex;align-items:center;gap:6px;letter-spacing:.02em;text-transform:uppercase;font-size:10.5px;}
   .htab:hover{border-color:var(--brass);color:var(--text);}
-  .htab.on{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
-  .htab .tn{font-family:var(--fm);font-size:10px;padding:1px 6px;border-radius:10px;background:var(--bg-4);color:var(--text-2);}
-  .htab.on .tn{background:rgba(0,0,0,.18);color:#15171c;}
+  .htab.on{background:transparent!important;color:#fff!important;border:none!important;border-bottom:2px solid var(--brass-2)!important;border-radius:0!important;}
+  .htab .tn{font-size:10px;padding:1px 7px;border-radius:10px;background:var(--bg-4);color:var(--text-2);}
+  .htab.on .tn{background:var(--brass-bg);color:var(--brass);}
   .card-b{padding:6px 0;}
   /* contacts */
-  .contact{display:flex;gap:12px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line);}
+  #htab-body .contact{border:1px solid var(--line);border-radius:11px;padding:13px 15px;display:flex;align-items:center;gap:12px;background:var(--bg);}
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;}
+  @media(max-width:860px){.contact-grid{grid-template-columns:1fr;}}
   .contact:last-child{border-bottom:none;}
   .c-av{width:34px;height:34px;border-radius:8px;background:var(--bg-4);color:var(--brass-2);display:grid;place-items:center;font-weight:800;font-family:var(--fd);font-size:13px;flex-shrink:0;}
   .c-info{flex:1;min-width:0;}
@@ -136,7 +142,7 @@
   .sec-months .field{flex:1;}
   .sec-hint{font-size:11px;color:var(--text-3,#9098a8);margin-top:5px;}
 </style>
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=3">
 </head>
 <body>
 <header class="topbar">
@@ -281,7 +287,7 @@ function renderHistoryTab(){
   const orderRows=list=>list.length?`<table><thead><tr><th>ID</th><th>Subject</th><th>Date</th><th>Stage</th><th class="num">Total</th></tr></thead><tbody>${list.map(o=>`
     <tr data-order="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td>${esc(o.subject||'—')}</td><td>${fmtD(o.quote_date)}</td><td><span class="mini-st ms-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td class="num"><span class="money">${money(o.grand_total)}</span></td></tr>`).join('')}</tbody></table>`:null;
   if(HTAB==='contacts'){
-    body.innerHTML=CONTACTS.length?CONTACTS.map(c=>{
+    body.innerHTML=CONTACTS.length?'<div class="contact-grid">'+CONTACTS.map(c=>{
       const nm=((c.first_name||'')+' '+(c.last_name||'')).trim()||'—';
       const em=c.email1?`<span class="em">${esc(c.email1)}</span>`:'';
       const tel=c.tel1?`<span class="tel">${esc(c.tel1)}</span>`:'';
@@ -289,7 +295,7 @@ function renderHistoryTab(){
         <div class="c-av">${esc(initials(nm))}</div>
         <div class="c-info"><div class="c-name">${esc(nm)} ${c.is_primary?'<span class="c-prim">Primary</span>':''}</div><div class="c-desig">${esc(c.designation||'')}</div></div>
         <div class="c-meta">${em}${tel}</div>
-      </div>`;}).join(''):'<div class="state">No contacts. Click “Edit Client” to add people.</div>';
+      </div>`;}).join('')+'</div>':'<div class="state">No contacts. Click “Edit Client” to add people.</div>';
   }
   else if(HTAB==='notes'){
     const gen=CLIENT.notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">General Notes</div><div class="notes">${esc(CLIENT.notes)}</div></div>`:'';
