@@ -70,25 +70,21 @@
   .htab .tn{font-size:10px;padding:1px 7px;border-radius:10px;background:var(--bg-4);color:var(--text-2);}
   .htab.on .tn{background:var(--brass-bg);color:var(--brass);}
   .card-b{padding:6px 0;}
-  /* contacts */
-  #htab-body .contact{border:1px solid var(--line);border-radius:11px;padding:13px 15px;display:flex;align-items:flex-start;gap:12px;background:var(--bg);}
-  .c-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;}
-  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;}
-  @media(max-width:860px){.contact-grid{grid-template-columns:1fr;}}
-  .contact:last-child{border-bottom:none;}
-  .c-av{width:34px;height:34px;border-radius:8px;background:var(--bg-4);color:var(--brass-2);display:grid;place-items:center;font-weight:800;font-family:var(--fd);font-size:13px;flex-shrink:0;}
-  .c-info{min-width:0;}
-  .c-name{font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;}
+  /* contacts — listing */
+  .ct-wrap{padding:6px 16px 12px;}
+  .ct-tbl{width:100%;border-collapse:collapse;}
+  .ct-tbl thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:#fff;font-weight:800;padding:11px 14px;background:var(--bg-3);border-bottom:2px solid var(--line-2);white-space:nowrap;}
+  .ct-tbl tbody td{padding:12px 14px;border-bottom:1.5px solid var(--line);vertical-align:top;font-size:13px;color:var(--text-2);}
+  .ct-tbl tbody tr:last-child td{border-bottom:none;}
+  .ct-person{font-weight:700;color:#fff;white-space:nowrap;}
+  .ct-desig{color:var(--text-2);}
+  .ct-line{display:flex;align-items:center;gap:8px;padding:2px 0;}
+  .ct-mono{font-family:var(--fm);color:var(--text-2);white-space:nowrap;}
+  .ct-em{color:var(--text-2);text-decoration:none;}
+  .ct-em:hover{text-decoration:underline;}
+  .ct-tag{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;border-radius:4px;border:1px solid var(--line-2);color:var(--text-3);}
   .c-prim{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:4px;background:var(--brass-2);color:#15171c;font-family:var(--fd);}
-  .c-desig{font-size:12px;color:var(--text-3);}
-  .c-meta{font-size:12.5px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;white-space:nowrap;}
-  .cm-line{display:inline-flex;align-items:center;gap:7px;}
-  .cm-ic{font-size:11px;color:var(--text-3);width:13px;text-align:center;}
-  .c-meta .em{color:var(--text-2);text-decoration:none;}
-  .c-meta .em:hover{text-decoration:underline;}
-  .c-meta .tel{font-family:var(--fm);color:var(--text-2);}
-  .cm-p{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;border-radius:4px;border:1px solid var(--line-2);color:var(--text-2);}
-  .cm-none{color:var(--text-3);}
+  .c-dash{color:var(--text-3);}
   /* history tables */
   table{width:100%;border-collapse:collapse;}
   thead th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);font-weight:700;padding:9px 18px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
@@ -302,21 +298,18 @@ function renderHistoryTab(){
   const orderRows=list=>list.length?`<table><thead><tr><th>ID</th><th>Subject</th><th>Date</th><th>Stage</th><th class="num">Total</th></tr></thead><tbody>${list.map(o=>`
     <tr data-order="${o.id}"><td><span class="stage-id">#${o.stage_id}</span></td><td>${esc(o.subject||'—')}</td><td>${fmtD(o.quote_date)}</td><td><span class="mini-st ms-${o.art_status}">${ST_LABEL[o.art_status]||o.art_status}</span></td><td class="num"><span class="money">${money(o.grand_total)}</span></td></tr>`).join('')}</tbody></table>`:null;
   if(HTAB==='contacts'){
-    body.innerHTML=CONTACTS.length?'<div class="contact-grid">'+CONTACTS.map(c=>{
+    // multi-value cell: each phone/email on its own line, tagged primary/alt when 2+
+    const multi=arr=>arr.length?arr.map((h,i)=>`<div class="ct-line">${h}${arr.length>1?`<span class="ct-tag">${i===0?'primary':'alt'}</span>`:''}</div>`).join(''):'<span class="c-dash">—</span>';
+    body.innerHTML=CONTACTS.length?`<div class="ct-wrap"><table class="ct-tbl"><thead><tr><th>Contact Person</th><th>Designation</th><th>Telephone</th><th>Email</th></tr></thead><tbody>`+CONTACTS.map(c=>{
       const nm=((c.first_name||'')+' '+(c.last_name||'')).trim()||'—';
-      const emails=[c.email1,c.email2].filter(Boolean);
-      const phones=[c.tel1,c.tel2].filter(Boolean);
-      const lines=[];
-      emails.forEach((e,i)=>lines.push(`<span class="cm-line"><span class="cm-ic">✉</span><a class="em" href="mailto:${esc(e)}">${esc(e)}</a>${i===0&&emails.length>1?'<span class="cm-p">Primary</span>':''}</span>`));
-      phones.forEach((p,i)=>lines.push(`<span class="cm-line"><span class="cm-ic">☎</span><span class="tel">${esc(p)}</span>${i===0&&phones.length>1?'<span class="cm-p">Primary</span>':''}</span>`));
-      const meta=lines.length?lines.join(''):'<span class="cm-line cm-none">No contact details</span>';
-      return `<div class="contact">
-        <div class="c-av">${esc(initials(nm))}</div>
-        <div class="c-body">
-          <div class="c-info"><div class="c-name">${esc(nm)} ${c.is_primary?'<span class="c-prim">Primary</span>':''}</div><div class="c-desig">${esc(c.designation||'')}</div></div>
-          <div class="c-meta">${meta}</div>
-        </div>
-      </div>`;}).join('')+'</div>':'<div class="state">No contacts. Click “Edit Client” to add people.</div>';
+      const phones=[c.tel1,c.tel2].filter(Boolean).map(t=>`<span class="ct-mono">${esc(t)}</span>`);
+      const emails=[c.email1,c.email2].filter(Boolean).map(e=>`<a class="ct-em" href="mailto:${esc(e)}">${esc(e)}</a>`);
+      return `<tr>
+        <td class="ct-person">${esc(nm)} ${c.is_primary?'<span class="c-prim">Primary</span>':''}</td>
+        <td class="ct-desig">${esc(c.designation||'')||'<span class="c-dash">—</span>'}</td>
+        <td>${multi(phones)}</td>
+        <td>${multi(emails)}</td>
+      </tr>`;}).join('')+`</tbody></table></div>`:'<div class="state">No contacts. Click “Edit Client” to add people.</div>';
   }
   else if(HTAB==='notes'){
     const gen=CLIENT.notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">General Notes</div><div class="notes">${esc(CLIENT.notes)}</div></div>`:'';

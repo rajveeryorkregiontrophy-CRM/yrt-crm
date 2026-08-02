@@ -411,7 +411,9 @@ function render(){
       const ap=document.getElementById('add-pay'); if(ap) ap.onclick=addPayment;
     }
   }
-  document.getElementById('btn-pdf').onclick=printInvoice;
+  // Straight to the browser's native print dialog — pick a printer OR
+  // "Save as PDF" there, no custom menu / file-browser popup.
+  document.getElementById('btn-pdf').onclick=()=>outputInvoice('print');
 }
 
 function recalcTotals(){
