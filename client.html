@@ -201,10 +201,8 @@ const inSeason=(f,t)=>{const cur=new Date().getMonth()+1;return f<=t?(cur>=f&&cu
 const seasonLabel=s=>MON[s.active_from_month-1]+'–'+MON[s.active_to_month-1];
 function secChipFor(sectorId){
   const s=SEC_OK&&SECMAP[sectorId]; if(!s)return '';
-  // lead time before the season = this client's Contact Cycle (default 3 months)
-  const lead=Math.min(12,Math.max(1,(CLIENT&&CLIENT.contact_cycle_months)||3));
   const d=monthsAhead(s.active_from_month);
-  const cls=inSeason(s.active_from_month,s.active_to_month)?'now':(d>=1&&d<=lead?'hot':'');
+  const cls=inSeason(s.active_from_month,s.active_to_month)?'now':(d>=1&&d<=3?'hot':'');
   return `<span class="sec-chip ${cls}" title="Busy season ${seasonLabel(s)}">${esc(s.name)}</span>`;
 }
 let INQ=[],QUOTE=[],SALES=[],HTAB='inquiry';
@@ -329,7 +327,7 @@ function renderHistoryTab(){
       <div>
         ${row('Sector',SEC_OK&&SECMAP[CLIENT.sector_id]?esc(SECMAP[CLIENT.sector_id].name):'—')}
         ${row('Busy Season',SEC_OK&&SECMAP[CLIENT.sector_id]?seasonLabel(SECMAP[CLIENT.sector_id]):'—')}
-        ${row('Contact Cycle',CLIENT.contact_cycle_months?CLIENT.contact_cycle_months+' months':'—')}
+        ${row('Contact Cycle',CLIENT.contact_cycle_months?CLIENT.contact_cycle_months+' days':'—')}
         ${row('Referred By',esc(CLIENT.referred_by||'—'))}
       </div>
     </div>`;
@@ -374,7 +372,7 @@ function editForm(){
         <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
         <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
       <div class="frow"><div class="field"><label>Shipment</label><select class="in" id="shipment_mode"><option value="pickup" ${c.shipment_mode==='pickup'?'selected':''}>Pick-up</option><option value="courier" ${c.shipment_mode==='courier'?'selected':''}>Courier</option><option value="deliver" ${c.shipment_mode==='deliver'?'selected':''}>Deliver</option></select></div>
-        <div class="field"><label>Contact Cycle (months)</label><input class="in" id="contact_cycle_months" type="number" min="1" max="12" step="1" value="${c.contact_cycle_months||''}" oninput="if(this.value>12)this.value=12;if(this.value<0)this.value='';"></div>
+        <div class="field"><label>Contact Cycle (days)</label><input class="in" id="contact_cycle_months" type="number" min="1" max="3650" step="1" value="${c.contact_cycle_months||''}" placeholder="e.g. 30" title="Flag this client as an expired cycle if this many days pass after their last transaction" oninput="if(this.value>3650)this.value=3650;if(this.value<0)this.value='';"></div>
         <div class="field"><label>Referred By</label><input class="in" id="referred_by" value="${esc(c.referred_by||'')}"></div></div>
       <div class="frow"><div class="field"><label>Client Since</label><input class="in" id="client_since" type="date" value="${c.client_since||''}"></div>
         <div class="field"><label>Blacklisted</label><select class="in" id="blacklisted"><option value="false" ${!c.blacklisted?'selected':''}>No</option><option value="true" ${c.blacklisted?'selected':''}>Yes</option></select></div></div>
@@ -472,10 +470,10 @@ async function save(){
   if(!name){msg.textContent='Company name required';msg.className='msg err';return;}
   msg.textContent='Saving…';msg.className='msg';
   let _sector; try{_sector=await resolveSector();}catch(e){msg.textContent=e.message;msg.className='msg err';return;}
-  const _cyc=+document.getElementById('contact_cycle_months').value||0;   // clamp to 1–12 months
+  const _cyc=+document.getElementById('contact_cycle_months').value||0;   // Contact Cycle in DAYS (1–3650)
   const payload={company_name:name,rating:+document.getElementById('rating').value||null,terms_days:+document.getElementById('terms_days').value||0,
     serviced_by:document.getElementById('serviced_by').value||null,shipment_mode:document.getElementById('shipment_mode').value,
-    contact_cycle_months:_cyc?Math.min(12,Math.max(1,_cyc)):null,referred_by:document.getElementById('referred_by').value||null,
+    contact_cycle_months:_cyc?Math.min(3650,Math.max(1,_cyc)):null,referred_by:document.getElementById('referred_by').value||null,
     client_since:document.getElementById('client_since').value||null,blacklisted:document.getElementById('blacklisted').value==='true',
     bill_unit:document.getElementById('bill_unit').value||null,bill_address:document.getElementById('bill_address').value||null,
     bill_city:document.getElementById('bill_city').value||null,bill_postal:document.getElementById('bill_postal').value||null,

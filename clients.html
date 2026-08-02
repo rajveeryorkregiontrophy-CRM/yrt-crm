@@ -268,15 +268,22 @@ const monthsAhead=m=>{const cur=new Date().getMonth()+1;return ((m-cur)+12)%12;}
 const inSeason=(f,t)=>{const cur=new Date().getMonth()+1;return f<=t?(cur>=f&&cur<=t):(cur>=f||cur<=t);};
 const seasonLabel=s=>MONS[s.active_from_month-1]+'–'+MONS[s.active_to_month-1];
 // A client is "upcoming" when their sector's season is running or starts within 3 months.
+// (Interim: still sector-based; being replaced by the per-client busy period once the
+//  busy_from/busy_to columns exist.)
 function secState(c){
   const s=SECMAP[c.sector_id]; if(!s)return null;
   if(inSeason(s.active_from_month,s.active_to_month))return {s,cls:'now',note:'Active now'};
   const d=monthsAhead(s.active_from_month);
-  // lead time = this client's Contact Cycle (months). Flag the season as
-  // upcoming that many months ahead. Unset falls back to 3 months.
-  const lead=Math.min(12,Math.max(1,c.contact_cycle_months||3));
-  if(d>=1&&d<=lead)return {s,cls:'hot',note:'Starts '+MONS[s.active_from_month-1]};
+  if(d>=1&&d<=3)return {s,cls:'hot',note:'Starts '+MONS[s.active_from_month-1]};
   return {s,cls:'',note:''};
+}
+// Contact Cycle (stored in contact_cycle_months, now interpreted as DAYS): a client
+// "expires" when more than that many days have passed since their last transaction.
+function cycleExpired(c){
+  const days=Number(c.contact_cycle_months)||0;
+  if(days<=0||!c._lastDate) return false;
+  const due=new Date(c._lastDate+'T00:00:00'); due.setDate(due.getDate()+days);
+  return new Date()>due;
 }
 
 function stars(n){n=n||0;let s='';for(let i=1;i<=5;i++)s+=`<span class="${i<=n?'':'off'}">★</span>`;return `<span class="stars">${s}</span>`;}
@@ -320,12 +327,14 @@ function render(){
     const hay=[c.company_name,sectorName,c.bill_unit,c.bill_address,c.bill_city,c.bill_province,c.bill_postal,c.serviced_by,contactText,fmtD(c._firstDate),fmtD(c._lastDate)].filter(Boolean).join(' ').toLowerCase();
     return hay.includes(q);
   });
-  // tabs: All | Upcoming Season (sector active now or starting within 3 months)
+  // tabs: All | Upcoming Season | Expired Cycles
   const upcoming=CLIENTS.filter(c=>{const st=secState(c);return st&&(st.cls==='now'||st.cls==='hot');});
+  const expired=CLIENTS.filter(cycleExpired);
   const tabsEl=document.getElementById('cl-tabs');
   if(tabsEl){
-    tabsEl.innerHTML=SEC_OK?`<button class="tab ${VIEW==='all'?'active':''}" data-v="all">All</button>`
-      +`<button class="tab ${VIEW==='upcoming'?'active':''}" data-v="upcoming">Upcoming Season<span class="tn">${upcoming.length}</span></button>`:'';
+    tabsEl.innerHTML=`<button class="tab ${VIEW==='all'?'active':''}" data-v="all">All</button>`
+      +(SEC_OK?`<button class="tab ${VIEW==='upcoming'?'active':''}" data-v="upcoming">Upcoming Season<span class="tn">${upcoming.length}</span></button>`:'')
+      +`<button class="tab ${VIEW==='expired'?'active':''}" data-v="expired">Expired Cycles<span class="tn">${expired.length}</span></button>`;
     tabsEl.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{VIEW=t.dataset.v;render();}));
   }
   if(VIEW==='upcoming'){
@@ -336,8 +345,13 @@ function render(){
       const ka=A.cls==='now'?-1:monthsAhead(A.s.active_from_month);
       const kb=B.cls==='now'?-1:monthsAhead(B.s.active_from_month);
       return ka-kb;});
+  } else if(VIEW==='expired'){
+    const ids=new Set(expired.map(c=>c.id));
+    rows=rows.filter(c=>ids.has(c.id));
+    // most overdue first (oldest last transaction)
+    rows.sort((a,b)=>new Date((a._lastDate||'1900-01-01')+'T00:00:00')-new Date((b._lastDate||'1900-01-01')+'T00:00:00'));
   }
-  const _lt=document.getElementById('list-title');if(_lt)_lt.textContent=VIEW==='upcoming'?'Upcoming Season':'All Clients';
+  const _lt=document.getElementById('list-title');if(_lt)_lt.textContent=VIEW==='upcoming'?'Upcoming Season':(VIEW==='expired'?'Expired Contact Cycles':'All Clients');
   // stats band — the directory's dashboard
   const owing=CLIENTS.reduce((t,c)=>t+(c._balance||0),0);
   const owingCount=CLIENTS.filter(c=>(c._balance||0)>0.005).length;
