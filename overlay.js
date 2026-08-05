@@ -35,12 +35,12 @@ export function openWindow(url, { width = 1240, onClose = null } = {}) {
   _pushed = true;
 
   // If the frame ever navigates somewhere that isn't a record page
-  // (order / po), break out: close the window and go there for real.
+  // (order / po / client), break out: close the window and go there for real.
   fr.addEventListener('load', () => {
     try {
       const loc = fr.contentWindow.location;
       if (!loc || loc.href === 'about:blank') return;
-      if (!/\/(order|po)(\.html)?$/.test(loc.pathname)) {
+      if (!/\/(order|po|client)(\.html)?$/.test(loc.pathname)) {
         const href = loc.href;
         closeWindow(false);
         window.location.href = href;

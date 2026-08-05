@@ -153,7 +153,22 @@
   .sec-months{display:none;gap:10px;margin-top:9px;}
   .sec-months.open{display:flex;}
   .sec-months .field{flex:1;}
-  .sec-hint{font-size:11px;color:var(--text-3,#9098a8);margin-top:5px;}
+  .sec-hint{font-size:11px;color:var(--text-3,#9098a8);margin:5px 0 0;}
+  .busy-hint{margin:6px 0 16px;}
+  /* fixed column plan so the listing reads deliberately at any width */
+  .ct-tbl th:nth-child(1){width:27%;}
+  .ct-tbl th:nth-child(2){width:22%;}
+  .ct-tbl th:nth-child(3){width:23%;}
+  .ct-tbl th:nth-child(4){width:28%;}
+
+  /* ── embedded (opened as an overlay window from the dashboard) ──
+     The window hugs the content: no forced full-viewport fill. */
+  html.embedded body{overflow:visible;background:var(--bg-2);}
+  html.embedded .topbar{position:static;background:var(--bg-2);}
+  html.embedded .back{display:none;}
+  html.embedded .wrap{height:auto;overflow:visible;max-width:none;padding:16px 20px 20px;}
+  html.embedded .panel-main{flex:none;}
+  html.embedded .tab-body{flex:none;max-height:400px;}
 </style>
 <link rel="stylesheet" href="theme.css?v=5">
 </head>
@@ -176,6 +191,26 @@
 import { supabase as db, requireAuth, signOut, currentUser, todayLocal } from './auth.js';
 import { openWindow } from './overlay.js';
 await requireAuth();
+
+// ── Overlay-window mode (opened from the clients dashboard) ──
+// Detection is by framing, like order.html: the window hugs the content.
+const EMBED = window.self !== window.top;
+function embedPost(m){ try{ parent.postMessage(m,'*'); }catch(e){} }
+if (EMBED) {
+  document.documentElement.classList.add('embedded');
+  const report = () => { try{ parent.postMessage({yrt:'height', h: document.body.scrollHeight + 2}, '*'); }catch(e){} };
+  new ResizeObserver(report).observe(document.body);
+  window.addEventListener('load', report);
+  window.addEventListener('message', e => {
+    const d = e.data || {};
+    if (d.yrt === 'requestClose') {
+      // Esc / backdrop: close the edit drawer first if it's open, then the window.
+      const dr = document.getElementById('drawer');
+      if (dr && dr.classList.contains('open')) closeD();
+      else embedPost({yrt:'close', refresh:true});
+    }
+  });
+}
 
 // ---- shared styled modal (replaces native alert/confirm) ----
 function __ensureModal(){
@@ -350,8 +385,16 @@ function renderHistoryTab(){
     body.innerHTML=INVOICES.length?`<table><thead><tr><th>Invoice</th><th>Date</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>${INVOICES.map(i=>`
       <tr data-inv="${i.id}"><td><span class="stage-id">#${i.invoice_number||'—'}</span></td><td>${fmtD(i.invoice_date)}</td><td class="num"><span class="money">${money(i.grand_total)}</span></td><td class="num" style="color:${i.balance_due>0?'var(--art)':'var(--approved)'};font-family:var(--fm);font-weight:700;">${money(i.balance_due)}</td><td><span class="mini-st pay-${i.paid_status}">${i.paid_status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="state">No invoices for this client.</div>';
   }
-  body.querySelectorAll('tr[data-order]').forEach(tr=>tr.addEventListener('click',()=>openWindow('order.html?id='+encodeURIComponent(tr.dataset.order),{onClose:load})));
-  body.querySelectorAll('tr[data-inv]').forEach(tr=>tr.addEventListener('click',()=>location.href='invoice.html?id='+encodeURIComponent(tr.dataset.inv)));
+  // Embedded: the record swaps into this same window (order.html is an allowed
+  // frame page); invoices are full pages, so hand navigation to the top window.
+  body.querySelectorAll('tr[data-order]').forEach(tr=>tr.addEventListener('click',()=>{
+    const href='order.html?id='+encodeURIComponent(tr.dataset.order);
+    if(EMBED) location.href=href; else openWindow(href,{onClose:load});
+  }));
+  body.querySelectorAll('tr[data-inv]').forEach(tr=>tr.addEventListener('click',()=>{
+    const href='invoice.html?id='+encodeURIComponent(tr.dataset.inv);
+    if(EMBED) embedPost({yrt:'navigate',href}); else location.href=href;
+  }));
 }
 
 // ---- Edit drawer ----
@@ -377,7 +420,7 @@ function editForm(){
       </div>`:''}
       ${BUSY_OK?`<div class="frow"><div class="field"><label>Busy Period From</label><input class="in" id="busy_from" type="date" value="${c.busy_from||''}"></div>
         <div class="field"><label>Busy Period To</label><input class="in" id="busy_to" type="date" value="${c.busy_to||''}"></div></div>
-      <div class="sec-hint">Repeats every year. This client appears under Upcoming Season 3 months before the from-date and leaves after the to-date.</div>`:''}
+      <div class="sec-hint busy-hint">Repeats every year. This client appears under Upcoming Season 3 months before the from-date and leaves after the to-date.</div>`:''}
       <div class="frow"><div class="field"><label>Rating</label><select class="in" id="rating">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${(c.rating||0)===n?'selected':''}>${n===0?'Unrated':n+' ★'}</option>`).join('')}</select></div>
         <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
         <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
@@ -502,7 +545,8 @@ document.getElementById('d-save').addEventListener('click',save);
 document.getElementById('btn-new-order').addEventListener('click',async()=>{
   const {data,error}=await db.from('quotes').insert({record_type:'order',art_status:'send_art',sent_status:'not_sent',active_status:'active',quote_date:todayLocal(),subject:'New order',client_id:CID}).select().single();
   if(error){await smAlert('Could not create order: '+error.message,'Error','danger');return;}
-  openWindow('order.html?id='+encodeURIComponent(data.id),{onClose:load});
+  const href='order.html?id='+encodeURIComponent(data.id);
+  if(EMBED) location.href=href; else openWindow(href,{onClose:load});
 });
 load();
 </script>

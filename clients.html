@@ -256,6 +256,7 @@
 
 <script type="module">
 import { supabase as db, requireAuth, signOut, currentUser } from './auth.js';
+import { openWindow } from './overlay.js';
 await requireAuth();
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Prince Edward Island','Quebec','Saskatchewan'];
@@ -389,7 +390,8 @@ function render(){
       <td>${fmtD(c._lastDate)}</td>
     </tr>`;}).join('');
   document.getElementById('wrap').innerHTML=`<div class="ctable-wrap"><table class="ctable"><thead><tr><th>Client</th><th>Sector</th><th>Primary Contact</th><th>Telephone</th><th>Email</th><th>Client Since</th><th>Last Transaction</th></tr></thead><tbody>${body}</tbody></table></div>`;
-  document.querySelectorAll('.ctable tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>location.href='client.html?id='+encodeURIComponent(tr.dataset.id)));
+  // Clients open as a content-hugging overlay window (same approach as order.html)
+  document.querySelectorAll('.ctable tbody tr[data-id]').forEach(tr=>tr.addEventListener('click',()=>openWindow('client.html?id='+encodeURIComponent(tr.dataset.id),{width:1120,onClose:load})));
 }
 function openDrawer(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
 function closeDrawer(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.getElementById('d-msg').textContent='';}
@@ -410,7 +412,7 @@ function drawForm(c){
       </div>`:''}
       ${BUSY_OK?`<div class="frow"><div class="field"><label>Busy Period From</label><input class="in" id="busy_from" type="date" value="${c.busy_from||''}"></div>
         <div class="field"><label>Busy Period To</label><input class="in" id="busy_to" type="date" value="${c.busy_to||''}"></div></div>
-      <div class="sec-hint" style="margin-bottom:12px;">Repeats every year. The client shows under Upcoming Season 3 months before the from-date and leaves after the to-date.</div>`:''}
+      <div class="sec-hint" style="margin:6px 0 16px;">Repeats every year. The client shows under Upcoming Season 3 months before the from-date and leaves after the to-date.</div>`:''}
       <div class="frow"><div class="field"><label>Rating</label><select class="in" id="rating">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${(c.rating||0)===n?'selected':''}>${n===0?'Unrated':n+' ★'}</option>`).join('')}</select></div>
         <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
         <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
