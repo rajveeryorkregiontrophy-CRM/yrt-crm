@@ -73,10 +73,25 @@
   .htab .tn{font-size:10px;padding:1px 7px;border-radius:10px;background:var(--bg-4);color:var(--text-2);}
   .htab.on .tn{background:var(--brass-bg);color:var(--brass);}
   .card-b{padding:6px 0;}
-  /* contacts — listing (rows open the client editor) */
+  /* contacts — listing (a row opens that contact's popup) */
   .ct-wrap{padding:10px 20px 18px;}
+  .ct-scroll{max-height:264px;overflow-y:auto;border:1.5px solid var(--line);border-radius:10px;}
+  .ct-scroll::-webkit-scrollbar{width:9px;}
+  .ct-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--bg-2);}
+  .ct-add{display:block;width:100%;margin-top:10px;padding:12px;border:1.5px dashed var(--line-2);border-radius:10px;background:transparent;color:var(--text-2);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;transition:.13s;}
+  .ct-add:hover{border-color:#fff;color:#fff;}
   .ct-tbl{width:100%;border-collapse:collapse;}
-  .ct-tbl thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:#fff;font-weight:800;padding:13px 18px;background:var(--bg-3);border-bottom:2px solid var(--line-2);white-space:nowrap;}
+  .ct-tbl thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:#fff;font-weight:800;padding:13px 18px;background:var(--bg-3);border-bottom:2px solid var(--line-2);white-space:nowrap;position:sticky;top:0;z-index:2;}
+  /* contact popup */
+  #cm-ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:8500;padding:20px;}
+  #cm-ov.open{display:flex;}
+  #cm{background:var(--bg-2);border:2px solid var(--line-2);border-radius:14px;width:100%;max-width:520px;padding:22px 24px;max-height:92vh;overflow-y:auto;}
+  #cm h3{font-family:var(--fd);font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#fff;margin-bottom:16px;}
+  .cm-check{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--text-2);margin-top:4px;cursor:pointer;}
+  .cm-check input{width:15px;height:15px;accent-color:#f4f6fb;}
+  #cm .foot{display:flex;gap:9px;margin-top:18px;align-items:center;justify-content:flex-end;}
+  #cm .cm-del{margin-right:auto;border-color:rgba(255,77,77,.5);color:var(--danger);}
+  #cm .cm-del:hover{background:var(--danger);color:#fff;border-color:var(--danger);}
   .ct-tbl tbody td{padding:18px;border-bottom:1.5px solid var(--line);vertical-align:top;font-size:13.5px;color:var(--text-2);}
   .ct-tbl tbody tr{cursor:pointer;transition:background .12s;}
   .ct-tbl tbody tr:hover{background:var(--bg-3);}
@@ -176,13 +191,13 @@
 <header class="topbar">
   <a class="back" href="clients.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Clients</a>
   <div class="title" id="t-title">Client</div>
-  <div class="actions"><button class="btn" id="btn-new-order">+ New Order</button></div>
+  <div class="actions"><button class="btn" id="btn-new-order">+ New Order</button><button class="btn-brass btn" id="btn-edit-co">Edit Company</button></div>
 </header>
 <div class="wrap" id="wrap"><div class="state">Loading client…</div></div>
 
 <div class="overlay" id="overlay"></div>
 <aside class="drawer" id="drawer">
-  <div class="drawer-head"><h3>Edit Client</h3><button class="x" id="d-close">×</button></div>
+  <div class="drawer-head"><h3>Edit Company</h3><button class="x" id="d-close">×</button></div>
   <div class="drawer-body" id="d-body"></div>
   <div class="drawer-foot"><span class="msg" id="d-msg"></span><button class="btn" id="d-cancel">Cancel</button><button class="btn-brass btn" id="d-save">Save</button></div>
 </aside>
@@ -204,9 +219,12 @@ if (EMBED) {
   window.addEventListener('message', e => {
     const d = e.data || {};
     if (d.yrt === 'requestClose') {
-      // Esc / backdrop: close the edit drawer first if it's open, then the window.
+      // Esc / backdrop: innermost layer first — contact popup, then the
+      // company drawer, then the window itself.
+      const cm = document.getElementById('cm-ov');
       const dr = document.getElementById('drawer');
-      if (dr && dr.classList.contains('open')) closeD();
+      if (cm && cm.classList.contains('open')) closeCM();
+      else if (dr && dr.classList.contains('open')) closeD();
       else embedPost({yrt:'close', refresh:true});
     }
   });
@@ -234,7 +252,7 @@ const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','N
 const ST_LABEL={send_art:'Send Art',approval_due:'Approval',approved:'Approved',in_process:'Process',invoice:'Invoice',no_data:'—'};
 const CID=new URLSearchParams(location.search).get('id');
 let ACCT={};
-let CLIENT=null,CONTACTS=[],ORDERS=[],INVOICES=[],EDIT_CONTACTS=[];
+let CLIENT=null,CONTACTS=[],ORDERS=[],INVOICES=[];
 let SECTORS=[],SECMAP={},SEC_OK=false;
 // BUSY_OK: the clients table has the per-client busy-period columns (busy_from/busy_to)
 let BUSY_OK=false;
@@ -341,24 +359,30 @@ function renderHistoryTab(){
   if(HTAB==='contacts'){
     // multi-value cell: each phone/email on its own line, tagged primary/alt when 2+
     const multi=arr=>arr.length?arr.map((h,i)=>`<div class="ct-line">${h}${arr.length>1?`<span class="ct-tag">${i===0?'primary':'alt'}</span>`:''}</div>`).join(''):'<span class="c-dash">—</span>';
-    body.innerHTML=CONTACTS.length?`<div class="ct-wrap"><table class="ct-tbl"><thead><tr><th>Contact Person</th><th>Designation</th><th>Telephone</th><th>Email</th></tr></thead><tbody>`+CONTACTS.map(c=>{
+    const rowsHtml=CONTACTS.map((c,i)=>{
       const nm=((c.first_name||'')+' '+(c.last_name||'')).trim()||'—';
       const phones=[c.tel1,c.tel2].filter(Boolean).map(t=>`<span class="ct-mono">${esc(t)}</span>`);
       const emails=[c.email1,c.email2].filter(Boolean).map(e=>`<a class="ct-em" href="mailto:${esc(e)}">${esc(e)}</a>`);
-      return `<tr class="ct-row">
+      return `<tr class="ct-row" data-ci="${i}">
         <td class="ct-person">${esc(nm)} ${c.is_primary?'<span class="c-prim">Primary</span>':''}</td>
         <td class="ct-desig">${esc(c.designation||'')||'<span class="c-dash">—</span>'}</td>
         <td>${multi(phones)}</td>
         <td>${multi(emails)}</td>
-      </tr>`;}).join('')+`</tbody></table></div>`:'<div class="state">No contacts yet. <button class="btn" id="ct-add" style="margin-left:10px;">Add contacts</button></div>';
-    // clicking a contact opens the client editor (which holds the contact forms)
-    body.querySelectorAll('.ct-row').forEach(tr=>tr.addEventListener('click',e=>{if(e.target.closest('a'))return;editForm();openD();}));
-    const addBtn=document.getElementById('ct-add');if(addBtn)addBtn.addEventListener('click',()=>{editForm();openD();});
+      </tr>`;}).join('');
+    // the box shows at most ~3 contacts; beyond that it gets its own scrollbar
+    body.innerHTML=`<div class="ct-wrap">
+      ${CONTACTS.length?`<div class="ct-scroll"><table class="ct-tbl"><thead><tr><th>Contact Person</th><th>Designation</th><th>Telephone</th><th>Email</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`
+        :`<div class="state" style="padding:24px;">No contacts yet — add the first one below.</div>`}
+      <button class="ct-add" id="ct-add-btn">+ Add contact</button>
+    </div>`;
+    // a row opens ONLY that person's info in the contact popup
+    body.querySelectorAll('.ct-row').forEach(tr=>tr.addEventListener('click',e=>{if(e.target.closest('a'))return;openContactModal(CONTACTS[+tr.dataset.ci]);}));
+    document.getElementById('ct-add-btn').addEventListener('click',()=>openContactModal(null));
   }
   else if(HTAB==='notes'){
     const gen=CLIENT.notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">General Notes</div><div class="notes">${esc(CLIENT.notes)}</div></div>`:'';
     const intl=CLIENT.internal_notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">Internal Notes</div><div class="notes internal">${esc(CLIENT.internal_notes)}</div></div>`:'';
-    body.innerHTML=(gen||intl)?(gen+intl):'<div class="state">No notes for this client. Click “Edit Client” to add notes.</div>';
+    body.innerHTML=(gen||intl)?(gen+intl):'<div class="state">No notes for this client. Click “Edit Company” to add notes.</div>';
   }
   else if(HTAB==='account'){
     const row=(l,v)=>`<div class="info-row"><span class="l">${l}</span><span class="v">${v}</span></div>`;
@@ -401,13 +425,12 @@ function renderHistoryTab(){
 function openD(){document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');}
 function closeD(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.getElementById('d-msg').textContent='';}
 function editForm(){
-  const c=CLIENT;EDIT_CONTACTS=CONTACTS.map(x=>({...x}));if(!EDIT_CONTACTS.length)EDIT_CONTACTS=[{first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:true}];
+  const c=CLIENT;
   const provOpts=PROV.map(p=>`<option ${c.bill_province===p?'selected':''}>${p}</option>`).join('');
   document.getElementById('d-body').innerHTML=`
     <div class="ew-tabs" id="ew-tabs" style="margin:-22px -22px 18px;">
       <button type="button" class="ewt on" data-s="details">Details</button>
       <button type="button" class="ewt" data-s="billing">Billing</button>
-      <button type="button" class="ewt" data-s="contacts">Contacts</button>
       <button type="button" class="ewt" data-s="notes">Notes</button>
     </div>
     <div class="esec on" data-esec="details">
@@ -440,9 +463,6 @@ function editForm(){
       <div class="field"><label>Province</label><select class="in" id="bill_province">${provOpts}</select></div>
     </div>
     </div>
-    <div class="esec" data-esec="contacts">
-    <div class="fgroup"><div class="fgroup-t">Contacts</div><div id="ec-list"></div><button class="add-contact" id="ec-add">+ Add contact</button></div>
-    </div>
     <div class="esec" data-esec="notes">
     <div class="fgroup"><div class="fgroup-t">Notes</div>
       <div class="field"><label>General Notes</label><textarea class="in" id="notes">${esc(c.notes||'')}</textarea></div>
@@ -453,9 +473,7 @@ function editForm(){
     document.querySelectorAll('#ew-tabs .ewt').forEach(x=>x.classList.toggle('on',x===t));
     document.querySelectorAll('.esec').forEach(sec=>sec.classList.toggle('on',sec.dataset.esec===t.dataset.s));
   }));
-  drawEditContacts();
   if(SEC_OK)wireSector(c.sector_id);
-  document.getElementById('ec-add').addEventListener('click',()=>{EDIT_CONTACTS.push({first_name:'',last_name:'',designation:'',tel1:'',email1:'',is_primary:EDIT_CONTACTS.length===0});drawEditContacts();});
 }
 
 // ── Sector type-ahead (same rules as the client list: match existing, or create with a busy season)
@@ -498,22 +516,85 @@ async function resolveSector(){
   SECTORS.push(data);SECMAP[data.id]=data;
   return data.id;
 }
-function drawEditContacts(){
-  document.getElementById('ec-list').innerHTML=EDIT_CONTACTS.map((ct,i)=>`
-    <div class="contact-card">
-      <div class="frow"><div class="field"><label>First</label><input class="in ec" data-i="${i}" data-k="first_name" value="${esc(ct.first_name||'')}"></div>
-        <div class="field"><label>Last</label><input class="in ec" data-i="${i}" data-k="last_name" value="${esc(ct.last_name||'')}"></div></div>
-      <div class="field"><label>Designation</label><input class="in ec" data-i="${i}" data-k="designation" value="${esc(ct.designation||'')}"></div>
-      <div class="frow"><div class="field"><label>Phone · primary</label><input class="in ec" data-i="${i}" data-k="tel1" value="${esc(ct.tel1||'')}" placeholder="905-555-0100"></div>
-        <div class="field"><label>Phone · alternate</label><input class="in ec" data-i="${i}" data-k="tel2" value="${esc(ct.tel2||'')}" placeholder="optional"></div></div>
-      <div class="frow"><div class="field"><label>Email · primary</label><input class="in ec" data-i="${i}" data-k="email1" value="${esc(ct.email1||'')}" placeholder="name@company.com"></div>
-        <div class="field"><label>Email · alternate</label><input class="in ec" data-i="${i}" data-k="email2" value="${esc(ct.email2||'')}" placeholder="optional"></div></div>
-      <div class="frow" style="align-items:center;margin-bottom:0;"><label style="margin:0;display:flex;gap:7px;align-items:center;cursor:pointer;color:var(--text-2);text-transform:none;letter-spacing:0;font-size:12.5px;"><input type="radio" name="eprimary" ${ct.is_primary?'checked':''} data-prim="${i}"> Primary contact</label>
-        ${EDIT_CONTACTS.length>1?`<button class="btn btn-del-c" data-del="${i}">Remove</button>`:''}</div>
-    </div>`).join('');
-  document.querySelectorAll('.ec').forEach(inp=>inp.addEventListener('input',()=>{EDIT_CONTACTS[+inp.dataset.i][inp.dataset.k]=inp.value;}));
-  document.querySelectorAll('[data-prim]').forEach(r=>r.addEventListener('change',()=>{EDIT_CONTACTS.forEach((c,i)=>c.is_primary=(i===+r.dataset.prim));}));
-  document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{EDIT_CONTACTS.splice(+b.dataset.del,1);if(!EDIT_CONTACTS.some(c=>c.is_primary)&&EDIT_CONTACTS.length)EDIT_CONTACTS[0].is_primary=true;drawEditContacts();}));
+// ── Contact popup ───────────────────────────────────────────────────
+// Contacts are managed one at a time through this popup (like adding a
+// line item on an order): "+ Add contact" opens it blank, clicking a
+// listing row opens it with that person loaded. Writes go straight to
+// the contacts table; the company drawer never touches contacts.
+let CM_EDIT=null;   // the contact being edited, or null for a new one
+function ensureContactModal(){
+  if(document.getElementById('cm-ov'))return;
+  const ov=document.createElement('div');ov.id='cm-ov';
+  ov.innerHTML=`<div id="cm">
+    <h3 id="cm-title">Add Contact</h3>
+    <div class="frow"><div class="field"><label>First Name</label><input class="in" id="cm-first"></div>
+      <div class="field"><label>Last Name</label><input class="in" id="cm-last"></div></div>
+    <div class="field"><label>Designation</label><input class="in" id="cm-desig" placeholder="e.g. Procurement Lead"></div>
+    <div class="frow"><div class="field"><label>Phone · primary</label><input class="in" id="cm-tel1" placeholder="905-555-0100"></div>
+      <div class="field"><label>Phone · alternate</label><input class="in" id="cm-tel2" placeholder="optional"></div></div>
+    <div class="frow"><div class="field"><label>Email · primary</label><input class="in" id="cm-email1" placeholder="name@company.com"></div>
+      <div class="field"><label>Email · alternate</label><input class="in" id="cm-email2" placeholder="optional"></div></div>
+    <label class="cm-check"><input type="checkbox" id="cm-primary"> Primary contact for this client</label>
+    <div class="msg" id="cm-msg"></div>
+    <div class="foot">
+      <button class="btn cm-del" id="cm-del">Remove</button>
+      <button class="btn" id="cm-cancel">Cancel</button>
+      <button class="btn btn-brass" id="cm-save">Save Contact</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)closeCM();});
+  document.getElementById('cm-cancel').addEventListener('click',closeCM);
+  document.getElementById('cm-save').addEventListener('click',saveContact);
+  document.getElementById('cm-del').addEventListener('click',deleteContact);
+}
+function openContactModal(ct){
+  ensureContactModal();
+  CM_EDIT=ct||null;
+  document.getElementById('cm-title').textContent=ct?'Edit Contact':'Add Contact';
+  const set=(id,v)=>{document.getElementById(id).value=v||'';};
+  set('cm-first',ct?.first_name);set('cm-last',ct?.last_name);set('cm-desig',ct?.designation);
+  set('cm-tel1',ct?.tel1);set('cm-tel2',ct?.tel2);set('cm-email1',ct?.email1);set('cm-email2',ct?.email2);
+  document.getElementById('cm-primary').checked=ct?!!ct.is_primary:CONTACTS.length===0;
+  document.getElementById('cm-primary').disabled=!ct&&CONTACTS.length===0;   // first contact is always primary
+  document.getElementById('cm-del').style.display=ct?'':'none';
+  document.getElementById('cm-msg').textContent='';document.getElementById('cm-msg').className='msg';
+  document.getElementById('cm-ov').classList.add('open');
+  document.getElementById('cm-first').focus();
+}
+function closeCM(){const ov=document.getElementById('cm-ov');if(ov)ov.classList.remove('open');CM_EDIT=null;}
+async function saveContact(){
+  const msg=document.getElementById('cm-msg');
+  const v=id=>document.getElementById(id).value.trim();
+  const rec={first_name:v('cm-first')||null,last_name:v('cm-last')||null,designation:v('cm-desig')||null,
+    tel1:v('cm-tel1')||null,tel2:v('cm-tel2')||null,email1:v('cm-email1')||null,email2:v('cm-email2')||null};
+  if(!(rec.first_name||rec.last_name||rec.tel1||rec.email1)){msg.textContent='Give the contact at least a name, phone, or email.';msg.className='msg err';return;}
+  const prim=document.getElementById('cm-primary').checked||CONTACTS.length===0;
+  rec.is_primary=prim;
+  msg.textContent='Saving…';msg.className='msg';
+  let savedId=CM_EDIT?.id||null, err=null;
+  if(CM_EDIT){ ({error:err}=await db.from('contacts').update(rec).eq('id',CM_EDIT.id)); }
+  else { const {data,error}=await db.from('contacts').insert({...rec,client_id:CID}).select().single(); err=error; savedId=data?.id; }
+  if(err){msg.textContent='Error: '+err.message;msg.className='msg err';return;}
+  if(prim&&savedId) await db.from('contacts').update({is_primary:false}).eq('client_id',CID).neq('id',savedId);
+  await ensureOnePrimary();
+  closeCM();await load();
+}
+async function deleteContact(){
+  if(!CM_EDIT)return;
+  const nm=((CM_EDIT.first_name||'')+' '+(CM_EDIT.last_name||'')).trim()||'this contact';
+  const ok=await smConfirm('Remove '+nm+' from this client? This cannot be undone.','Remove contact',{danger:true,confirmText:'Remove'});
+  if(!ok)return;
+  const {error}=await db.from('contacts').delete().eq('id',CM_EDIT.id);
+  if(error){const msg=document.getElementById('cm-msg');msg.textContent='Error: '+error.message;msg.className='msg err';return;}
+  await ensureOnePrimary();
+  closeCM();await load();
+}
+// Belt and braces: a client with contacts always has exactly one primary.
+async function ensureOnePrimary(){
+  const {data}=await db.from('contacts').select('id,is_primary').eq('client_id',CID);
+  const list=data||[];
+  if(list.length&&!list.some(c=>c.is_primary)) await db.from('contacts').update({is_primary:true}).eq('id',list[0].id);
 }
 async function save(){
   const msg=document.getElementById('d-msg');const name=document.getElementById('company_name').value.trim();
@@ -532,12 +613,9 @@ async function save(){
   if(BUSY_OK){payload.busy_from=document.getElementById('busy_from').value||null;payload.busy_to=document.getElementById('busy_to').value||null;}
   const {error}=await db.from('clients').update(payload).eq('id',CID);
   if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
-  await db.from('contacts').delete().eq('client_id',CID);
-  const valid=EDIT_CONTACTS.filter(c=>(c.first_name||c.last_name||c.tel1||c.email1));
-  if(valid.length){const rows=valid.map(c=>({client_id:CID,first_name:c.first_name||null,last_name:c.last_name||null,designation:c.designation||null,tel1:c.tel1||null,tel2:c.tel2||null,email1:c.email1||null,email2:c.email2||null,is_primary:!!c.is_primary}));
-    const {error:e2}=await db.from('contacts').insert(rows);if(e2){msg.textContent='Contacts error: '+e2.message;msg.className='msg err';return;}}
   msg.textContent='Saved ✓';msg.className='msg ok';await load();setTimeout(closeD,500);
 }
+document.getElementById('btn-edit-co').addEventListener('click',()=>{editForm();openD();});
 document.getElementById('d-close').addEventListener('click',closeD);
 document.getElementById('d-cancel').addEventListener('click',closeD);
 document.getElementById('overlay').addEventListener('click',closeD);
