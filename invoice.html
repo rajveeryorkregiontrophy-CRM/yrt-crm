@@ -364,7 +364,7 @@ function render(){
   const details=[];
   if(INV.subject)details.push('Subject: '+esc(INV.subject));
   if(INV.serviced_by)details.push('Serviced by '+esc(INV.serviced_by));
-  if(INV.quotes?.stage_id)details.push('From order #'+INV.quotes.stage_id);
+  if(INV.quotes?.stage_id)details.push('Sales Order #'+INV.quotes.stage_id);
   const cpo=INV.po_number||INV.quotes?.po_number;if(cpo)details.push('Client P.O. '+esc(cpo));
   document.getElementById('s-details').innerHTML=details.length?details.join('<br>'):'—';
 

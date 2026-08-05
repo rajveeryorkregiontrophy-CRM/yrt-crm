@@ -517,6 +517,10 @@
   .rt.on{background:#f4f6fb;color:#15171c;}
   .meta-foot{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted-2);padding:12px 18px;border-top:1px solid var(--line);background:var(--paper);}
   .meta-foot b{color:var(--muted);font-weight:600;}
+  /* cross-reference chip on a converted order — clicks through to the invoice */
+  .inv-xref{border:1px solid var(--line-2);border-radius:6px;padding:3px 10px;cursor:pointer;color:var(--text,#eef0f4);transition:.13s;}
+  .inv-xref:hover{border-color:#fff;}
+  .inv-xref b{color:inherit;}
   .save-bar{position:sticky;bottom:0;background:var(--paper-2);border-top:1px solid var(--line-2);padding:12px 28px;display:flex;align-items:center;gap:12px;justify-content:flex-end;z-index:40;box-shadow:0 -8px 24px -12px rgba(0,0,0,.6);}
   .save-bar .status-msg{margin-right:auto;font-size:13px;color:var(--muted);}
   .save-bar .status-msg.saved{color:var(--st-approved);}
@@ -825,7 +829,7 @@ if (EMBED) {
 }
 function embedPost(m) { try { parent.postMessage(m, '*'); } catch (e) {} }
 
-let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[], SUPPLIERS=[], DEPOSITS=[], ART=[], ART_OK=false;
+let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[], SUPPLIERS=[], DEPOSITS=[], ART=[], ART_OK=false, INV_REF=null;
 
 function markDirty(){DIRTY=true;const m=document.getElementById('save-msg');m.textContent='Unsaved changes';m.className='status-msg';}
 
@@ -945,6 +949,12 @@ async function load(){
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load this order.<br>${error?.message||''}</div>`;return;}
   ORDER=data;
   LOADED_AT = data.modified_at || null;   // optimistic lock: the version we loaded
+  // Cross-reference: a converted order shows the invoice it became.
+  INV_REF=null;
+  if(ORDER.record_type==='invoice'){
+    const {data:iv}=await db.from('invoices').select('id,invoice_number').eq('quote_id',ORDER_ID).order('invoice_number',{ascending:false}).limit(1);
+    INV_REF=(iv&&iv[0])||null;
+  }
   // load catalogues first (needed to resolve line-item displays)
   // Supabase caps a select at 1000 rows — page through so the whole catalogue is searchable.
   let _allProds=[],_pFrom=0;const _PPAGE=1000;
@@ -1326,7 +1336,13 @@ function render(){
   document.getElementById('meta').innerHTML=
     `<span><b>Created</b> ${fmtD(tsDateLocal(ORDER.created_at))} ${ORDER.created_by?'· '+esc(ORDER.created_by):''}</span>
      <span><b>Modified</b> ${fmtD(tsDateLocal(ORDER.modified_at))}</span>
-     <span><b>Record</b> ${esc(ORDER.record_type)}</span>`;
+     <span><b>Record</b> ${esc(ORDER.record_type)}</span>`
+    +(INV_REF?` <span class="inv-xref" id="inv-xref" title="Open invoice"><b>Converted to Invoice</b> #${esc(String(INV_REF.invoice_number))}</span>`:'');
+  const _xr=document.getElementById('inv-xref');
+  if(_xr)_xr.addEventListener('click',()=>{
+    const href='invoices.html?open='+encodeURIComponent(INV_REF.id);
+    if(EMBED) embedPost({yrt:'navigate',href}); else location.href=href;
+  });
 
   renderLines();
 }
