@@ -317,7 +317,12 @@ async function load(){
     }
   });
   (qs||[]).forEach(q=>{ mark(q.client_id,q.quote_date); });
-  CLIENTS.forEach(c=>{ c._balance=balByClient[c.id]||0; c._spend=spendByClient[c.id]||0; c._lastDate=lastByClient[c.id]||null; c._firstDate=firstByClient[c.id]||(c.created_at?String(c.created_at).slice(0,10):null); });
+  CLIENTS.forEach(c=>{ c._balance=balByClient[c.id]||0; c._spend=spendByClient[c.id]||0;
+    // clients.last_transaction is the curated cycle anchor (set via the popup on
+    // invoice conversion). When present it wins over the computed latest date, so
+    // the Last Transaction column and the Expired Cycles tab always agree.
+    c._lastDate=c.last_transaction||lastByClient[c.id]||null;
+    c._firstDate=firstByClient[c.id]||(c.created_at?String(c.created_at).slice(0,10):null); });
   // Sectors are optional plumbing: if the table doesn't exist yet, everything
   // sector-related simply stays hidden and the page works as before.
   const {data:secs,error:secErr}=await db.from('sectors').select('*').order('name');
