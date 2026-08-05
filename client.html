@@ -211,6 +211,16 @@ await requireAuth();
 // Detection is by framing, like order.html: the window hugs the content.
 const EMBED = window.self !== window.top;
 function embedPost(m){ try{ parent.postMessage(m,'*'); }catch(e){} }
+// Esc works no matter where focus is (typing in a field inside this page):
+// peel the innermost layer — contact popup, company drawer, then the window.
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  const cm=document.getElementById('cm-ov');
+  const dr=document.getElementById('drawer');
+  if(cm&&cm.classList.contains('open'))closeCM();
+  else if(dr&&dr.classList.contains('open'))closeD();
+  else if(EMBED)embedPost({yrt:'close',refresh:true});
+});
 if (EMBED) {
   document.documentElement.classList.add('embedded');
   const report = () => { try{ parent.postMessage({yrt:'height', h: document.body.scrollHeight + 2}, '*'); }catch(e){} };
