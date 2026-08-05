@@ -28,15 +28,18 @@
   .btn-brass:hover{filter:brightness(1.08);}
   .wrap{max-width:1400px;margin:0 auto;padding:18px 24px;height:calc(100vh - 58px);display:flex;flex-direction:column;overflow:hidden;}
   body{overflow:hidden;}
-  /* hero */
-  .hero{background:linear-gradient(120deg,rgba(255,255,255,.06),transparent 45%),var(--bg-2);border:1px solid var(--line-2);border-radius:14px;padding:20px 24px;margin-bottom:14px;display:flex;gap:18px;align-items:flex-start;text-align:left;flex-shrink:0;}
-  .hero-name{font-size:22px!important;}
-  .hero-sub .it{border:1px solid var(--line-2);border-radius:20px;padding:4px 12px;font-size:11.5px;background:var(--bg);}
+  /* hero — identity band: name + labelled ledger meta, same vocabulary as the stat strip */
+  .hero{background:linear-gradient(120deg,rgba(255,255,255,.05),transparent 45%),var(--bg-2);border:1px solid var(--line-2);border-radius:14px;padding:22px 26px;margin-bottom:14px;display:flex;gap:20px;align-items:center;text-align:left;flex-shrink:0;}
   .hero-badge{width:64px;height:64px;border-radius:14px;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;display:grid;place-items:center;font-family:var(--fd);font-weight:900;font-size:24px;flex-shrink:0;}
   .hero-main{flex:1;min-width:0;}
-  .hero-name{font-family:var(--fd);font-size:24px;font-weight:800;color:#fff;letter-spacing:-.01em;}
-  .hero-sub{display:flex;gap:16px;flex-wrap:wrap;margin-top:7px;color:var(--text-2);font-size:13px;}
-  .hero-sub .it{display:inline-flex;align-items:center;gap:6px;}
+  .hero-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .hero-name{font-family:var(--fd);font-size:25px;font-weight:800;color:#fff;letter-spacing:-.01em;line-height:1.1;}
+  .sec-tag{font-family:var(--fd);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:4px 10px;border:1px solid var(--line-2);border-radius:5px;color:var(--text-2);}
+  .hero-meta{display:flex;flex-wrap:wrap;margin-top:14px;}
+  .hm{padding:0 28px;border-left:1px solid var(--line);min-width:0;}
+  .hm:first-child{padding-left:0;border-left:none;}
+  .hm-l{font-family:var(--fd);font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);}
+  .hm-v{font-size:13.5px;color:var(--text);font-weight:600;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .stars{color:var(--star);letter-spacing:1px;}.stars .off{color:var(--line-2);}
   .blk{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:5px;background:rgba(255,77,77,.18);color:var(--danger);font-family:var(--fd);}
   /* stat cards */
@@ -70,15 +73,17 @@
   .htab .tn{font-size:10px;padding:1px 7px;border-radius:10px;background:var(--bg-4);color:var(--text-2);}
   .htab.on .tn{background:var(--brass-bg);color:var(--brass);}
   .card-b{padding:6px 0;}
-  /* contacts — listing */
-  .ct-wrap{padding:6px 16px 12px;}
+  /* contacts — listing (rows open the client editor) */
+  .ct-wrap{padding:10px 20px 18px;}
   .ct-tbl{width:100%;border-collapse:collapse;}
-  .ct-tbl thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:#fff;font-weight:800;padding:11px 14px;background:var(--bg-3);border-bottom:2px solid var(--line-2);white-space:nowrap;}
-  .ct-tbl tbody td{padding:12px 14px;border-bottom:1.5px solid var(--line);vertical-align:top;font-size:13px;color:var(--text-2);}
+  .ct-tbl thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:#fff;font-weight:800;padding:13px 18px;background:var(--bg-3);border-bottom:2px solid var(--line-2);white-space:nowrap;}
+  .ct-tbl tbody td{padding:18px;border-bottom:1.5px solid var(--line);vertical-align:top;font-size:13.5px;color:var(--text-2);}
+  .ct-tbl tbody tr{cursor:pointer;transition:background .12s;}
+  .ct-tbl tbody tr:hover{background:var(--bg-3);}
   .ct-tbl tbody tr:last-child td{border-bottom:none;}
   .ct-person{font-weight:700;color:#fff;white-space:nowrap;}
   .ct-desig{color:var(--text-2);}
-  .ct-line{display:flex;align-items:center;gap:8px;padding:2px 0;}
+  .ct-line{display:flex;align-items:center;gap:9px;padding:3px 0;}
   .ct-mono{font-family:var(--fm);color:var(--text-2);white-space:nowrap;}
   .ct-em{color:var(--text-2);text-decoration:none;}
   .ct-em:hover{text-decoration:underline;}
@@ -156,7 +161,7 @@
 <header class="topbar">
   <a class="back" href="clients.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Clients</a>
   <div class="title" id="t-title">Client</div>
-  <div class="actions"><button class="btn" id="btn-new-order">+ New Order</button><button class="btn-brass btn" id="btn-edit">Edit Client</button></div>
+  <div class="actions"><button class="btn" id="btn-new-order">+ New Order</button></div>
 </header>
 <div class="wrap" id="wrap"><div class="state">Loading client…</div></div>
 
@@ -196,14 +201,12 @@ const CID=new URLSearchParams(location.search).get('id');
 let ACCT={};
 let CLIENT=null,CONTACTS=[],ORDERS=[],INVOICES=[],EDIT_CONTACTS=[];
 let SECTORS=[],SECMAP={},SEC_OK=false;
-const monthsAhead=m=>{const cur=new Date().getMonth()+1;return ((m-cur)+12)%12;};
-const inSeason=(f,t)=>{const cur=new Date().getMonth()+1;return f<=t?(cur>=f&&cur<=t):(cur>=f||cur<=t);};
-const seasonLabel=s=>MON[s.active_from_month-1]+'–'+MON[s.active_to_month-1];
+// BUSY_OK: the clients table has the per-client busy-period columns (busy_from/busy_to)
+let BUSY_OK=false;
+// Sector is a plain industry label now — no season colour states.
 function secChipFor(sectorId){
   const s=SEC_OK&&SECMAP[sectorId]; if(!s)return '';
-  const d=monthsAhead(s.active_from_month);
-  const cls=inSeason(s.active_from_month,s.active_to_month)?'now':(d>=1&&d<=3?'hot':'');
-  return `<span class="sec-chip ${cls}" title="Busy season ${seasonLabel(s)}">${esc(s.name)}</span>`;
+  return `<span class="sec-tag">${esc(s.name)}</span>`;
 }
 let INQ=[],QUOTE=[],SALES=[],HTAB='inquiry';
 
@@ -215,6 +218,7 @@ async function load(){
   const {data,error}=await db.from('clients').select('*, contacts(*)').eq('id',CID).single();
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load client. ${error?.message||''}</div>`;return;}
   CLIENT=data;CONTACTS=(data.contacts||[]).sort((a,b)=>(b.is_primary?1:0)-(a.is_primary?1:0));
+  BUSY_OK=('busy_from' in data);   // lights up once the busy-period migration has run
   // orders + quotes for this client
   const {data:ord}=await db.from('quotes').select('*').eq('client_id',CID).order('quote_date',{ascending:false});
   ORDERS=ord||[];
@@ -247,12 +251,16 @@ function render(){
     <div class="hero">
       <div class="hero-badge">${esc(initials(CLIENT.company_name))}</div>
       <div class="hero-main">
-        <div class="hero-name">${esc(CLIENT.company_name)} ${CLIENT.blacklisted?'<span class="blk">Blacklisted</span>':''} ${secChipFor(CLIENT.sector_id)}</div>
-        <div class="hero-sub">
-          <span class="it">${stars(CLIENT.rating)}</span>
-          ${loc?`<span class="it">📍 ${esc(loc)}</span>`:''}
-          ${CLIENT.serviced_by?`<span class="it">Serviced by ${esc(CLIENT.serviced_by)}</span>`:''}
-          <span class="it">${CLIENT.terms_days?CLIENT.terms_days+' day terms':'Prepaid'}</span>
+        <div class="hero-top">
+          <span class="hero-name">${esc(CLIENT.company_name)}</span>
+          ${secChipFor(CLIENT.sector_id)}
+          ${CLIENT.blacklisted?'<span class="blk">Blacklisted</span>':''}
+        </div>
+        <div class="hero-meta">
+          ${loc?`<div class="hm"><div class="hm-l">Address</div><div class="hm-v">${esc(loc)}</div></div>`:''}
+          ${CLIENT.serviced_by?`<div class="hm"><div class="hm-l">Serviced by</div><div class="hm-v">${esc(CLIENT.serviced_by)}</div></div>`:''}
+          <div class="hm"><div class="hm-l">Terms</div><div class="hm-v">${CLIENT.terms_days?CLIENT.terms_days+' day terms':'Prepaid'}</div></div>
+          <div class="hm"><div class="hm-l">Rating</div><div class="hm-v">${stars(CLIENT.rating)}</div></div>
         </div>
       </div>
     </div>
@@ -302,12 +310,15 @@ function renderHistoryTab(){
       const nm=((c.first_name||'')+' '+(c.last_name||'')).trim()||'—';
       const phones=[c.tel1,c.tel2].filter(Boolean).map(t=>`<span class="ct-mono">${esc(t)}</span>`);
       const emails=[c.email1,c.email2].filter(Boolean).map(e=>`<a class="ct-em" href="mailto:${esc(e)}">${esc(e)}</a>`);
-      return `<tr>
+      return `<tr class="ct-row">
         <td class="ct-person">${esc(nm)} ${c.is_primary?'<span class="c-prim">Primary</span>':''}</td>
         <td class="ct-desig">${esc(c.designation||'')||'<span class="c-dash">—</span>'}</td>
         <td>${multi(phones)}</td>
         <td>${multi(emails)}</td>
-      </tr>`;}).join('')+`</tbody></table></div>`:'<div class="state">No contacts. Click “Edit Client” to add people.</div>';
+      </tr>`;}).join('')+`</tbody></table></div>`:'<div class="state">No contacts yet. <button class="btn" id="ct-add" style="margin-left:10px;">Add contacts</button></div>';
+    // clicking a contact opens the client editor (which holds the contact forms)
+    body.querySelectorAll('.ct-row').forEach(tr=>tr.addEventListener('click',e=>{if(e.target.closest('a'))return;editForm();openD();}));
+    const addBtn=document.getElementById('ct-add');if(addBtn)addBtn.addEventListener('click',()=>{editForm();openD();});
   }
   else if(HTAB==='notes'){
     const gen=CLIENT.notes?`<div class="card-b" style="padding:16px 18px;"><div class="notes-h">General Notes</div><div class="notes">${esc(CLIENT.notes)}</div></div>`:'';
@@ -326,7 +337,7 @@ function renderHistoryTab(){
       </div>
       <div>
         ${row('Sector',SEC_OK&&SECMAP[CLIENT.sector_id]?esc(SECMAP[CLIENT.sector_id].name):'—')}
-        ${row('Busy Season',SEC_OK&&SECMAP[CLIENT.sector_id]?seasonLabel(SECMAP[CLIENT.sector_id]):'—')}
+        ${row('Busy Period',(BUSY_OK&&CLIENT.busy_from&&CLIENT.busy_to)?(fmtD(CLIENT.busy_from)+' – '+fmtD(CLIENT.busy_to)+' · repeats yearly'):'—')}
         ${row('Contact Cycle',CLIENT.contact_cycle_months?CLIENT.contact_cycle_months+' days':'—')}
         ${row('Referred By',esc(CLIENT.referred_by||'—'))}
       </div>
@@ -362,12 +373,11 @@ function editForm(){
       ${SEC_OK?`<div class="field sec-box"><label>Sector</label>
         <input class="in" id="sector-input" placeholder="Start typing — e.g. Schools" autocomplete="off" value="${esc((SECMAP[c.sector_id]||{}).name||'')}">
         <div class="sec-menu" id="sec-menu"></div>
-        <div class="sec-months" id="sec-months">
-          <div class="field"><label>Busy From</label><select class="in" id="sec-from">${MON.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select></div>
-          <div class="field"><label>Busy To</label><select class="in" id="sec-to">${MON.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select></div>
-        </div>
         <div class="sec-hint" id="sec-hint"></div>
       </div>`:''}
+      ${BUSY_OK?`<div class="frow"><div class="field"><label>Busy Period From</label><input class="in" id="busy_from" type="date" value="${c.busy_from||''}"></div>
+        <div class="field"><label>Busy Period To</label><input class="in" id="busy_to" type="date" value="${c.busy_to||''}"></div></div>
+      <div class="sec-hint">Repeats every year. This client appears under Upcoming Season 3 months before the from-date and leaves after the to-date.</div>`:''}
       <div class="frow"><div class="field"><label>Rating</label><select class="in" id="rating">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${(c.rating||0)===n?'selected':''}>${n===0?'Unrated':n+' ★'}</option>`).join('')}</select></div>
         <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
         <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
@@ -409,24 +419,21 @@ function editForm(){
 let SEC_SEL=null;
 function wireSector(currentId){
   const inp=document.getElementById('sector-input'),menu=document.getElementById('sec-menu');
-  const months=document.getElementById('sec-months'),hint=document.getElementById('sec-hint');
+  const hint=document.getElementById('sec-hint');
   SEC_SEL=currentId||null;
   const sync=()=>{
     const q=inp.value.trim().toLowerCase();
     const exact=SECTORS.find(s=>s.name.toLowerCase()===q);
     SEC_SEL=exact?exact.id:null;
-    const isNew=q&&!exact;
-    months.classList.toggle('open',isNew);
-    hint.textContent=exact?('Busy season '+seasonLabel(exact)):(isNew?'New sector — set its busy season below.':'');
+    hint.textContent=(q&&!exact)?'New sector — it will be created when you save.':'';
     if(!q){menu.classList.remove('open');return;}
     const hits=SECTORS.filter(s=>s.name.toLowerCase().includes(q)).slice(0,8);
-    menu.innerHTML=hits.map(s=>`<div class="sec-opt" data-id="${s.id}"><span>${esc(s.name)}</span><span class="mo">${seasonLabel(s)}</span></div>`).join('')
-      +(exact?'':`<div class="sec-opt new" data-new="1">＋ Create “${esc(inp.value.trim())}”</div>`);
+    menu.innerHTML=hits.map(s=>`<div class="sec-opt" data-id="${s.id}"><span>${esc(s.name)}</span></div>`).join('')
+      +(exact?'':`<div class="sec-opt new" data-new="1">Create “${esc(inp.value.trim())}”</div>`);
     menu.classList.add('open');
     menu.querySelectorAll('.sec-opt').forEach(o=>o.addEventListener('mousedown',e=>{
       e.preventDefault();
-      if(o.dataset.id){const s=SECMAP[o.dataset.id];inp.value=s.name;SEC_SEL=s.id;months.classList.remove('open');hint.textContent='Busy season '+seasonLabel(s);}
-      else{months.classList.add('open');hint.textContent='New sector — set its busy season below.';}
+      if(o.dataset.id){const s=SECMAP[o.dataset.id];inp.value=s.name;SEC_SEL=s.id;hint.textContent='';}
       menu.classList.remove('open');
     }));
   };
@@ -442,7 +449,7 @@ async function resolveSector(){
   if(!name)return null;
   const exact=SECTORS.find(s=>s.name.toLowerCase()===name.toLowerCase());
   if(exact)return exact.id;
-  const payload={name,active_from_month:+document.getElementById('sec-from').value||1,active_to_month:+document.getElementById('sec-to').value||12};
+  const payload={name,active_from_month:1,active_to_month:12};   // sector is a plain label; months are legacy columns
   const {data,error}=await db.from('sectors').insert(payload).select().single();
   if(error)throw new Error('Sector: '+error.message);
   SECTORS.push(data);SECMAP[data.id]=data;
@@ -479,6 +486,7 @@ async function save(){
     bill_city:document.getElementById('bill_city').value||null,bill_postal:document.getElementById('bill_postal').value||null,
     bill_province:document.getElementById('bill_province').value||null,notes:document.getElementById('notes').value||null,internal_notes:document.getElementById('internal_notes').value||null};
   if(_sector!==undefined)payload.sector_id=_sector;
+  if(BUSY_OK){payload.busy_from=document.getElementById('busy_from').value||null;payload.busy_to=document.getElementById('busy_to').value||null;}
   const {error}=await db.from('clients').update(payload).eq('id',CID);
   if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
   await db.from('contacts').delete().eq('client_id',CID);
@@ -487,7 +495,6 @@ async function save(){
     const {error:e2}=await db.from('contacts').insert(rows);if(e2){msg.textContent='Contacts error: '+e2.message;msg.className='msg err';return;}}
   msg.textContent='Saved ✓';msg.className='msg ok';await load();setTimeout(closeD,500);
 }
-document.getElementById('btn-edit').addEventListener('click',()=>{editForm();openD();});
 document.getElementById('d-close').addEventListener('click',closeD);
 document.getElementById('d-cancel').addEventListener('click',closeD);
 document.getElementById('overlay').addEventListener('click',closeD);

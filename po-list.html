@@ -86,8 +86,8 @@
   .rc-qty:focus{outline:none;border-color:var(--brass-2);}
   .rc-of{font-size:11.5px;color:var(--text-3);font-weight:600;margin-left:4px;}
   .rc-recdone{font-family:var(--fm);font-size:12.5px;color:#3ddc84;font-weight:700;}
-  .rc-exp{background:var(--bg);border:1px solid var(--line-2);color:var(--text-2);border-radius:6px;padding:5px 7px;font-size:11.5px;font-family:inherit;color-scheme:dark;width:132px;}
-  .rc-exp:focus{outline:none;border-color:var(--brass-2);}
+  .rc-late{display:inline-block;font-family:var(--fd);font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:5px;background:rgba(255,77,77,.16);color:#ff4d4d;vertical-align:2px;margin-left:8px;}
+  .rc-late-d{color:#ff4d4d;font-weight:700;}
   .rc-owed{font-size:11px;font-weight:600;color:#c9a4f0;margin-top:4px;white-space:nowrap;}
   .rc-owed b{color:#b06bff;}
   .rc-owed.overdue{color:#ff8f88;} .rc-owed.overdue b{color:#ff6b6b;}
@@ -308,14 +308,17 @@ function renderReceiving(completed){
     const backordered=items.filter(i=>(i.status||'issued')==='backordered').length;
     const pct=ordUnits?Math.round((recUnits/ordUnits)*100):0;
     const allDone=total>0&&items.every(i=>(i.status||'issued')==='received');
+    // The In-Hand Date set before sending IS the receiving deadline: a PO that
+    // isn't fully received by then is flagged overdue.
+    const late=!allDone&&p.in_hand_date&&new Date(p.in_hand_date+'T23:59:59')<new Date();
     return `<div class="rc-card">
       <div class="rc-head">
         <div class="rc-head-l">
-          <div class="rc-po">PO #${esc(String(p.po_number))}</div>
+          <div class="rc-po">PO #${esc(String(p.po_number))}${late?' <span class="rc-late">Overdue</span>':''}</div>
           <div class="rc-sup">${esc(sup.company_name||sup.short_name||'—')}${sup.supplier_number?` · #${sup.supplier_number}`:''}</div>
         </div>
         <div class="rc-head-r">
-          <div class="rc-dates"><span class="rc-dlabel">Ordered</span> ${fmtD(p.order_date)}${p.in_hand_date?` &nbsp;·&nbsp; <span class="rc-dlabel">In&#8209;hand</span> ${fmtD(p.in_hand_date)}`:''}</div>
+          <div class="rc-dates"><span class="rc-dlabel">Ordered</span> ${fmtD(p.order_date)}${p.in_hand_date?` &nbsp;·&nbsp; <span class="rc-dlabel">In&#8209;hand by</span> <span class="${late?'rc-late-d':''}">${fmtD(p.in_hand_date)}</span>`:''}</div>
           <div class="rc-progress-wrap"><div class="rc-progress"><div class="rc-progress-bar ${allDone?'done':''}" style="width:${pct}%"></div></div><span class="rc-progress-txt ${allDone?'done':''}">${recUnits}/${ordUnits} units received${backordered?` · ${backordered} line${backordered===1?'':'s'} back ordered`:''}</span></div>
         </div>
       </div>
@@ -325,8 +328,7 @@ function renderReceiving(completed){
         const ordered=Number(it.quantity)||0;
         const recv=Math.min(Number(it.qty_received)||0,ordered);
         const owed=Math.max(0,ordered-recv);
-        const exp=it.backorder_expected;
-        const overdue=st==='backordered'&&exp&&new Date(exp+'T23:59:59')<new Date();
+        const overdue=st==='backordered'&&late;
         const done=st==='received';
         return `<tr class="rc-row rc-row-${st}${overdue?' rc-row-overdue':''}">
           <td><span class="ro mono">${esc(it.part_no||it.style_number||'')}</span></td>
@@ -336,11 +338,10 @@ function renderReceiving(completed){
           <td class="rc-recvcell">${completed||done
             ? `<span class="rc-recdone">${recv} of ${ordered}</span>`
             : `<input type="number" class="rc-qty" data-item="${it.id}" data-ordered="${ordered}" value="${recv||''}" placeholder="0" min="0" max="${ordered}"> <span class="rc-of">/ ${ordered}</span>`}</td>
-          <td class="rc-statuscell">${rcBadge(st)}${st==='backordered'?`<div class="rc-owed ${overdue?'overdue':''}"><b>${owed}</b> owed${exp?` · ${overdue?'was due':'due'} ${fmtD(exp)}`:''}</div>`:''}</td>
+          <td class="rc-statuscell">${rcBadge(st)}${st==='backordered'?`<div class="rc-owed ${overdue?'overdue':''}"><b>${owed}</b> owed by supplier</div>`:''}</td>
           <td class="rc-actcell">${completed
             ? `<span class="rc-lock">Received in full</span>`
             : `<div class="rc-actions">
-              ${!done?`<input type="date" class="rc-exp" data-item="${it.id}" value="${exp||''}" title="Only used if fewer units arrive than ordered">`:''}
               ${!done?`<button class="rc-act ok" data-item="${it.id}" data-po="${p.id}" data-act="confirm">Confirm</button>`:''}
               ${st==='backordered'?`<button class="rc-act rest" data-item="${it.id}" data-po="${p.id}" data-ordered="${ordered}" data-act="rest">Receive rest</button>`:''}
               ${st!=='issued'?`<button class="rc-act reset" data-item="${it.id}" data-po="${p.id}" data-act="reset">Reset</button>`:''}
@@ -353,13 +354,12 @@ function renderReceiving(completed){
     const item=b.dataset.item, po=b.dataset.po, act=b.dataset.act;
     if(act==='reset'){ receiveItem(item,po,0,null); return; }
     if(act==='rest'){ receiveItem(item,po,Number(b.dataset.ordered)||0,null); return; }
-    // confirm: read the quantity that arrived + an expected date for any shortfall
+    // confirm: read the quantity that arrived; a shortfall becomes a back order
+    // judged against the PO's In-Hand Date (no separate expected date).
     const qEl=document.querySelector('.rc-qty[data-item="'+item+'"]');
-    const eEl=document.querySelector('.rc-exp[data-item="'+item+'"]');
     const ordered=Number(qEl&&qEl.dataset.ordered)||0;
     let qty=parseInt(qEl&&qEl.value,10); if(isNaN(qty)||qty<0)qty=0; if(qty>ordered)qty=ordered;
-    const exp=(qty>0&&qty<ordered)?((eEl&&eEl.value)||null):null;
-    receiveItem(item,po,qty,exp);
+    receiveItem(item,po,qty,null);
   }));
 }
 

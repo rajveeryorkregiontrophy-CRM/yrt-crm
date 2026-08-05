@@ -260,22 +260,29 @@ await requireAuth();
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const PROV=['Ontario','Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Nova Scotia','Prince Edward Island','Quebec','Saskatchewan'];
 
-let CLIENTS=[],EDITING=null,CONTACTS=[],SECTORS=[],SECMAP={},SEC_OK=false,VIEW='all';
+let CLIENTS=[],EDITING=null,CONTACTS=[],SECTORS=[],SECMAP={},SEC_OK=false,BUSY_OK=false,VIEW='all';
 const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-// months until a sector's busy season starts (0 = starts this month)
-const monthsAhead=m=>{const cur=new Date().getMonth()+1;return ((m-cur)+12)%12;};
-// is the current month inside the from..to range (inclusive, wraps year-end)?
-const inSeason=(f,t)=>{const cur=new Date().getMonth()+1;return f<=t?(cur>=f&&cur<=t):(cur>=f||cur<=t);};
-const seasonLabel=s=>MONS[s.active_from_month-1]+'–'+MONS[s.active_to_month-1];
-// A client is "upcoming" when their sector's season is running or starts within 3 months.
-// (Interim: still sector-based; being replaced by the per-client busy period once the
-//  busy_from/busy_to columns exist.)
-function secState(c){
-  const s=SECMAP[c.sector_id]; if(!s)return null;
-  if(inSeason(s.active_from_month,s.active_to_month))return {s,cls:'now',note:'Active now'};
-  const d=monthsAhead(s.active_from_month);
-  if(d>=1&&d<=3)return {s,cls:'hot',note:'Starts '+MONS[s.active_from_month-1]};
-  return {s,cls:'',note:''};
+// Busy period lives on the CLIENT (busy_from → busy_to, repeats every year by
+// month/day). A client sits in Upcoming Season from 3 months before the from-date
+// and leaves once the to-date has passed. Returns null when not in/near season.
+//   {order:-1}      → busy right now (sorts first)
+//   {order:ms}      → season starts within 3 months (sorted soonest-first)
+function busyState(c){
+  if(!c.busy_from||!c.busy_to) return null;
+  const t=new Date(); t.setHours(0,0,0,0);
+  const f=new Date(c.busy_from+'T00:00:00'), b=new Date(c.busy_to+'T00:00:00');
+  const y=t.getFullYear();
+  let F=new Date(y,f.getMonth(),f.getDate());
+  let T=new Date(y,b.getMonth(),b.getDate());
+  if(T<F){ // period wraps the year end (e.g. Nov → Feb)
+    if(t<=T) F=new Date(y-1,f.getMonth(),f.getDate());
+    else T=new Date(y+1,b.getMonth(),b.getDate());
+  }
+  if(t>=F&&t<=T) return {order:-1,starts:F};
+  const nextF=F>t?F:new Date(F.getFullYear()+1,F.getMonth(),F.getDate());
+  const lead=new Date(t); lead.setMonth(lead.getMonth()+3);
+  if(nextF<=lead) return {order:nextF-t,starts:nextF};
+  return null;
 }
 // Contact Cycle (stored in contact_cycle_months, now interpreted as DAYS): a client
 // "expires" when more than that many days have passed since their last transaction.
@@ -294,6 +301,7 @@ async function load(){
   const {data,error}=await db.from('clients').select('*, contacts(*)').order('company_name');
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   CLIENTS=data||[];
+  BUSY_OK=CLIENTS.length>0&&('busy_from' in CLIENTS[0]);   // lights up once the busy-period migration has run
   // outstanding balance per client (from unpaid/partial invoices) + last invoice date
   const {data:invs}=await db.from('invoices').select('client_id,balance_due,invoice_date,grand_total');
   // last activity per client (most recent quote/order/invoice date on the quotes table)
@@ -328,23 +336,20 @@ function render(){
     return hay.includes(q);
   });
   // tabs: All | Upcoming Season | Expired Cycles
-  const upcoming=CLIENTS.filter(c=>{const st=secState(c);return st&&(st.cls==='now'||st.cls==='hot');});
+  const upcoming=CLIENTS.filter(c=>busyState(c));
   const expired=CLIENTS.filter(cycleExpired);
   const tabsEl=document.getElementById('cl-tabs');
   if(tabsEl){
     tabsEl.innerHTML=`<button class="tab ${VIEW==='all'?'active':''}" data-v="all">All</button>`
-      +(SEC_OK?`<button class="tab ${VIEW==='upcoming'?'active':''}" data-v="upcoming">Upcoming Season<span class="tn">${upcoming.length}</span></button>`:'')
+      +`<button class="tab ${VIEW==='upcoming'?'active':''}" data-v="upcoming">Upcoming Season<span class="tn">${upcoming.length}</span></button>`
       +`<button class="tab ${VIEW==='expired'?'active':''}" data-v="expired">Expired Cycles<span class="tn">${expired.length}</span></button>`;
     tabsEl.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{VIEW=t.dataset.v;render();}));
   }
   if(VIEW==='upcoming'){
     const ids=new Set(upcoming.map(c=>c.id));
     rows=rows.filter(c=>ids.has(c.id));
-    // soonest season first: active-now, then by months until start
-    rows.sort((a,b)=>{const A=secState(a),B=secState(b);
-      const ka=A.cls==='now'?-1:monthsAhead(A.s.active_from_month);
-      const kb=B.cls==='now'?-1:monthsAhead(B.s.active_from_month);
-      return ka-kb;});
+    // busy-now first, then whoever's season starts soonest
+    rows.sort((a,b)=>(busyState(a)||{order:1e15}).order-(busyState(b)||{order:1e15}).order);
   } else if(VIEW==='expired'){
     const ids=new Set(expired.map(c=>c.id));
     rows=rows.filter(c=>ids.has(c.id));
@@ -361,7 +366,7 @@ function render(){
   const money0=n=>'$'+Math.round(Number(n)||0).toLocaleString('en-CA');
   const stEl=document.getElementById('cl-stats');
   if(stEl)stEl.innerHTML=`
-    <div class="cstat"><div class="l">In / Near Season</div><div class="v">${upcoming.length}</div><div class="s">clients to call first</div></div>
+    <div class="cstat"><div class="l">Upcoming Season</div><div class="v">${upcoming.length}</div><div class="s">clients to call first</div></div>
     <div class="cstat"><div class="l">Balance Owing</div><div class="v${owing>0?' warn':''}">${money0(owing)}</div><div class="s">${owingCount} client${owingCount===1?'':'s'} owe you</div></div>
     <div class="cstat"><div class="l">Lifetime Billed</div><div class="v">${money0(lifetime)}</div><div class="s">total from the whole book</div></div>
     <div class="cstat"><div class="l">Top Client</div><div class="v" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(topName)}</div><div class="s">${top&&top._spend>0?money0(top._spend)+' billed':'no invoices yet'}</div></div>`;
@@ -373,8 +378,7 @@ function render(){
     const telN=[prim.tel1,prim.tel2].filter(Boolean).length;
     const emN=[prim.email1,prim.email2].filter(Boolean).length;
     const more=n=>n>1?`<span class="c-more">+${n-1}</span>`:'';
-    const st=secState(c);
-    const secCell=st?`<span class="sec-chip ${st.cls}" title="Busy season ${seasonLabel(st.s)}">${esc(st.s.name)}</span>`:(SEC_OK&&SECMAP[c.sector_id]?esc(SECMAP[c.sector_id].name):'<span class="c-dash">—</span>');
+    const secCell=(SEC_OK&&SECMAP[c.sector_id])?esc(SECMAP[c.sector_id].name):'<span class="c-dash">—</span>';
     return `<tr data-id="${c.id}">
       <td class="c-name-cell">${esc(c.company_name)}</td>
       <td>${secCell}</td>
@@ -402,12 +406,11 @@ function drawForm(c){
       ${SEC_OK?`<div class="field sec-box" style="margin-bottom:12px;"><label>Sector</label>
         <input class="in" id="sector-input" placeholder="Start typing — e.g. Schools" autocomplete="off" value="${esc((SECMAP[c.sector_id]||{}).name||'')}">
         <div class="sec-menu" id="sec-menu"></div>
-        <div class="sec-months" id="sec-months">
-          <div class="field"><label>Busy From</label><select class="in" id="sec-from">${MONS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select></div>
-          <div class="field"><label>Busy To</label><select class="in" id="sec-to">${MONS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select></div>
-        </div>
         <div class="sec-hint" id="sec-hint"></div>
       </div>`:''}
+      ${BUSY_OK?`<div class="frow"><div class="field"><label>Busy Period From</label><input class="in" id="busy_from" type="date" value="${c.busy_from||''}"></div>
+        <div class="field"><label>Busy Period To</label><input class="in" id="busy_to" type="date" value="${c.busy_to||''}"></div></div>
+      <div class="sec-hint" style="margin-bottom:12px;">Repeats every year. The client shows under Upcoming Season 3 months before the from-date and leaves after the to-date.</div>`:''}
       <div class="frow"><div class="field"><label>Rating</label><select class="in" id="rating">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${(c.rating||0)===n?'selected':''}>${n===0?'Unrated':n+' ★'}</option>`).join('')}</select></div>
         <div class="field"><label>Terms (days)</label><input class="in" id="terms_days" type="number" value="${c.terms_days||0}"></div>
         <div class="field"><label>Serviced By</label><input class="in" id="serviced_by" value="${esc(c.serviced_by||'')}"></div></div>
@@ -440,24 +443,21 @@ function drawForm(c){
 let SEC_SEL=null;   // the chosen existing sector id, when the input matches one
 function wireSector(currentId){
   const inp=document.getElementById('sector-input'),menu=document.getElementById('sec-menu');
-  const months=document.getElementById('sec-months'),hint=document.getElementById('sec-hint');
+  const hint=document.getElementById('sec-hint');
   SEC_SEL=currentId||null;
   const sync=()=>{
     const q=inp.value.trim().toLowerCase();
     const exact=SECTORS.find(s=>s.name.toLowerCase()===q);
     SEC_SEL=exact?exact.id:null;
-    const isNew=q&&!exact;
-    months.classList.toggle('open',isNew);
-    hint.textContent=exact?('Busy season '+seasonLabel(exact)):(isNew?'New sector — set its busy season below.':'');
+    hint.textContent=(q&&!exact)?'New sector — it will be created when you save.':'';
     if(!q){menu.classList.remove('open');return;}
     const hits=SECTORS.filter(s=>s.name.toLowerCase().includes(q)).slice(0,8);
-    menu.innerHTML=hits.map(s=>`<div class="sec-opt" data-id="${s.id}"><span>${esc(s.name)}</span><span class="mo">${seasonLabel(s)}</span></div>`).join('')
-      +(exact?'':`<div class="sec-opt new" data-new="1">＋ Create “${esc(inp.value.trim())}”</div>`);
+    menu.innerHTML=hits.map(s=>`<div class="sec-opt" data-id="${s.id}"><span>${esc(s.name)}</span></div>`).join('')
+      +(exact?'':`<div class="sec-opt new" data-new="1">Create “${esc(inp.value.trim())}”</div>`);
     menu.classList.add('open');
     menu.querySelectorAll('.sec-opt').forEach(o=>o.addEventListener('mousedown',e=>{
       e.preventDefault();
-      if(o.dataset.id){const s=SECMAP[o.dataset.id];inp.value=s.name;SEC_SEL=s.id;months.classList.remove('open');hint.textContent='Busy season '+seasonLabel(s);}
-      else{months.classList.add('open');hint.textContent='New sector — set its busy season below.';}
+      if(o.dataset.id){const s=SECMAP[o.dataset.id];inp.value=s.name;SEC_SEL=s.id;hint.textContent='';}
       menu.classList.remove('open');
     }));
   };
@@ -474,7 +474,7 @@ async function resolveSector(){
   if(!name)return null;                              // cleared -> no sector
   const exact=SECTORS.find(s=>s.name.toLowerCase()===name.toLowerCase());
   if(exact)return exact.id;
-  const payload={name,active_from_month:+document.getElementById('sec-from').value||1,active_to_month:+document.getElementById('sec-to').value||12};
+  const payload={name,active_from_month:1,active_to_month:12};   // sector is a plain label; months are legacy columns
   const {data,error}=await db.from('sectors').insert(payload).select().single();
   if(error)throw new Error('Sector: '+error.message);
   SECTORS.push(data);SECMAP[data.id]=data;
@@ -485,9 +485,11 @@ function drawContacts(){
     <div class="contact-card">
       <div class="frow"><div class="field"><label>First Name</label><input class="in ct" data-i="${i}" data-k="first_name" value="${esc(ct.first_name||'')}"></div>
         <div class="field"><label>Last Name</label><input class="in ct" data-i="${i}" data-k="last_name" value="${esc(ct.last_name||'')}"></div></div>
-      <div class="frow"><div class="field"><label>Designation</label><input class="in ct" data-i="${i}" data-k="designation" value="${esc(ct.designation||'')}"></div>
-        <div class="field"><label>Telephone</label><input class="in ct" data-i="${i}" data-k="tel1" value="${esc(ct.tel1||'')}"></div></div>
-      <div class="frow"><div class="field"><label>Email</label><input class="in ct" data-i="${i}" data-k="email1" value="${esc(ct.email1||'')}"></div></div>
+      <div class="field"><label>Designation</label><input class="in ct" data-i="${i}" data-k="designation" value="${esc(ct.designation||'')}"></div>
+      <div class="frow"><div class="field"><label>Phone · primary</label><input class="in ct" data-i="${i}" data-k="tel1" value="${esc(ct.tel1||'')}"></div>
+        <div class="field"><label>Phone · alternate</label><input class="in ct" data-i="${i}" data-k="tel2" value="${esc(ct.tel2||'')}" placeholder="optional"></div></div>
+      <div class="frow"><div class="field"><label>Email · primary</label><input class="in ct" data-i="${i}" data-k="email1" value="${esc(ct.email1||'')}"></div>
+        <div class="field"><label>Email · alternate</label><input class="in ct" data-i="${i}" data-k="email2" value="${esc(ct.email2||'')}" placeholder="optional"></div></div>
       <div class="frow" style="align-items:center;"><label style="margin:0;display:flex;gap:7px;align-items:center;cursor:pointer;color:var(--text-2);text-transform:none;letter-spacing:0;font-size:12.5px;"><input type="radio" name="primary" ${ct.is_primary?'checked':''} data-prim="${i}"> Primary contact</label>
         ${CONTACTS.length>1?`<button class="btn" data-del="${i}" style="margin-left:auto;padding:5px 11px;">Remove</button>`:''}</div>
     </div>`).join('');
@@ -509,13 +511,14 @@ async function save(){
     bill_province:document.getElementById('bill_province').value||null,notes:document.getElementById('notes').value||null,
     internal_notes:document.getElementById('internal_notes').value||null};
   if(_sector!==undefined)payload.sector_id=_sector;
+  if(BUSY_OK){payload.busy_from=document.getElementById('busy_from').value||null;payload.busy_to=document.getElementById('busy_to').value||null;}
   let clientId;
   if(EDITING){const {error}=await db.from('clients').update(payload).eq('id',EDITING.id);if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}clientId=EDITING.id;
     await db.from('contacts').delete().eq('client_id',clientId);
   }else{const {data,error}=await db.from('clients').insert(payload).select().single();if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}clientId=data.id;}
   const validContacts=CONTACTS.filter(c=>(c.first_name||c.last_name||c.tel1||c.email1));
   if(validContacts.length){
-    const rows=validContacts.map(c=>({client_id:clientId,first_name:c.first_name||null,last_name:c.last_name||null,designation:c.designation||null,tel1:c.tel1||null,email1:c.email1||null,is_primary:!!c.is_primary}));
+    const rows=validContacts.map(c=>({client_id:clientId,first_name:c.first_name||null,last_name:c.last_name||null,designation:c.designation||null,tel1:c.tel1||null,tel2:c.tel2||null,email1:c.email1||null,email2:c.email2||null,is_primary:!!c.is_primary}));
     const {error}=await db.from('contacts').insert(rows);if(error){msg.textContent='Contacts error: '+error.message;msg.className='msg err';return;}
   }
   msg.textContent='Saved ✓';msg.className='msg ok';
