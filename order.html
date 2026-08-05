@@ -2302,12 +2302,11 @@ async function cycleCheckpoint(inv, invDate, amount){
   if(useThis){
     await db.from('clients').update({last_transaction:invDate}).eq('id',ORDER.client_id);
   }else if(!cl.last_transaction){
-    // "No" with no stored anchor yet: freeze the clock at the latest
-    // transaction BEFORE this invoice, so the new one doesn't restart it
-    // through the computed fallback.
-    const {data:pq}=await db.from('quotes').select('quote_date').eq('client_id',ORDER.client_id).order('quote_date',{ascending:false}).limit(1);
+    // "No" with no stored pointer yet: freeze it at the latest invoice
+    // BEFORE this one (the cycle is invoice-based), so the new invoice
+    // doesn't move the pointer through the computed fallback.
     const {data:pi}=await db.from('invoices').select('invoice_date').eq('client_id',ORDER.client_id).neq('id',inv.id).order('invoice_date',{ascending:false}).limit(1);
-    const prev=[pq&&pq[0]&&pq[0].quote_date, pi&&pi[0]&&pi[0].invoice_date].filter(Boolean).sort().pop()||null;
+    const prev=(pi&&pi[0]&&pi[0].invoice_date)||null;
     if(prev) await db.from('clients').update({last_transaction:prev}).eq('id',ORDER.client_id);
   }
 }

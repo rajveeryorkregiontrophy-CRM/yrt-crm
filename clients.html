@@ -285,12 +285,14 @@ function busyState(c){
   if(nextF<=lead) return {order:nextF-t,starts:nextF};
   return null;
 }
-// Contact Cycle (stored in contact_cycle_months, now interpreted as DAYS): a client
-// "expires" when more than that many days have passed since their last transaction.
+// Contact Cycle Duration (contact_cycle_months, in DAYS, 1–365): a client is
+// captured under Expired Contact Cycles when more than that many days have
+// passed since the invoice the pointer sits on (c._cycleAnchor). e.g. pointer
+// on an invoice dated 15 Feb 2026 with a 60-day cycle → captured from 16 Apr.
 function cycleExpired(c){
   const days=Number(c.contact_cycle_months)||0;
-  if(days<=0||!c._lastDate) return false;
-  const due=new Date(c._lastDate+'T00:00:00'); due.setDate(due.getDate()+days);
+  if(days<=0||!c._cycleAnchor) return false;
+  const due=new Date(c._cycleAnchor+'T00:00:00'); due.setDate(due.getDate()+days);
   return new Date()>due;
 }
 
@@ -307,20 +309,22 @@ async function load(){
   const {data:invs}=await db.from('invoices').select('client_id,balance_due,invoice_date,grand_total');
   // last activity per client (most recent quote/order/invoice date on the quotes table)
   const {data:qs}=await db.from('quotes').select('client_id,quote_date');
-  const balByClient={}, lastByClient={}, firstByClient={}, spendByClient={};
+  const balByClient={}, lastByClient={}, lastInvByClient={}, firstByClient={}, spendByClient={};
   const mark=(id,d)=>{ if(!id||!d)return; if(!lastByClient[id]||d>lastByClient[id])lastByClient[id]=d; if(!firstByClient[id]||d<firstByClient[id])firstByClient[id]=d; };
   (invs||[]).forEach(iv=>{
     if(iv.client_id){
       balByClient[iv.client_id]=(balByClient[iv.client_id]||0)+Number(iv.balance_due||0);
       spendByClient[iv.client_id]=(spendByClient[iv.client_id]||0)+Number(iv.grand_total||0);
       mark(iv.client_id,iv.invoice_date);
+      if(iv.invoice_date&&(!lastInvByClient[iv.client_id]||iv.invoice_date>lastInvByClient[iv.client_id]))lastInvByClient[iv.client_id]=iv.invoice_date;
     }
   });
   (qs||[]).forEach(q=>{ mark(q.client_id,q.quote_date); });
   CLIENTS.forEach(c=>{ c._balance=balByClient[c.id]||0; c._spend=spendByClient[c.id]||0;
-    // clients.last_transaction is the curated cycle anchor (set via the popup on
-    // invoice conversion). When present it wins over the computed latest date, so
-    // the Last Transaction column and the Expired Cycles tab always agree.
+    // The cycle POINTER is invoice-based: clients.last_transaction (curated via the
+    // popup on invoice conversion) wins; otherwise the latest invoice date. Clients
+    // with no invoices have no pointer and are never captured.
+    c._cycleAnchor=c.last_transaction||lastInvByClient[c.id]||null;
     c._lastDate=c.last_transaction||lastByClient[c.id]||null;
     c._firstDate=firstByClient[c.id]||(c.created_at?String(c.created_at).slice(0,10):null); });
   // Sectors are optional plumbing: if the table doesn't exist yet, everything
@@ -348,7 +352,7 @@ function render(){
   if(tabsEl){
     tabsEl.innerHTML=`<button class="tab ${VIEW==='all'?'active':''}" data-v="all">All</button>`
       +`<button class="tab ${VIEW==='upcoming'?'active':''}" data-v="upcoming">Upcoming Season<span class="tn">${upcoming.length}</span></button>`
-      +`<button class="tab ${VIEW==='expired'?'active':''}" data-v="expired">Expired Cycles<span class="tn">${expired.length}</span></button>`;
+      +`<button class="tab ${VIEW==='expired'?'active':''}" data-v="expired">Expired Contact Cycles<span class="tn">${expired.length}</span></button>`;
     tabsEl.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{VIEW=t.dataset.v;render();}));
   }
   if(VIEW==='upcoming'){
@@ -359,8 +363,8 @@ function render(){
   } else if(VIEW==='expired'){
     const ids=new Set(expired.map(c=>c.id));
     rows=rows.filter(c=>ids.has(c.id));
-    // most overdue first (oldest last transaction)
-    rows.sort((a,b)=>new Date((a._lastDate||'1900-01-01')+'T00:00:00')-new Date((b._lastDate||'1900-01-01')+'T00:00:00'));
+    // most overdue first (oldest pointer)
+    rows.sort((a,b)=>new Date((a._cycleAnchor||'1900-01-01')+'T00:00:00')-new Date((b._cycleAnchor||'1900-01-01')+'T00:00:00'));
   }
   const _lt=document.getElementById('list-title');if(_lt)_lt.textContent=VIEW==='upcoming'?'Upcoming Season':(VIEW==='expired'?'Expired Contact Cycles':'All Clients');
   // stats band — the directory's dashboard
