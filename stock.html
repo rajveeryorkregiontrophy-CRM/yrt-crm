@@ -198,6 +198,7 @@
     <div class="content">
       <div class="tabs" id="tabs">
         <button class="tab active" data-f="onhand">Stock on Hand <span class="n" id="n-onhand">0</span></button>
+        <button class="tab" data-f="short">Shortages <span class="n" id="n-short">0</span></button>
         <button class="tab" data-f="moves">Movements <span class="n" id="n-moves">0</span></button>
       </div>
       <section class="panel">
@@ -241,9 +242,9 @@ await requireAuth();
 const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmtTs=ts=>{if(!ts)return '—';const x=new Date(ts);return x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
-const REASON={po_receipt:'PO received',receipt_correction:'Receipt correction',production_release:'Released to production',opening_balance:'Opening balance',adjust_in:'Adjustment in',adjust_out:'Adjustment out'};
+const REASON={po_receipt:'PO received',receipt_correction:'Receipt correction',production_release:'Released to production',production_return:'Returned from production',opening_balance:'Opening balance',adjust_in:'Adjustment in',adjust_out:'Adjustment out'};
 
-let MOVES=[],FILTER='onhand',STOCK_OK=true,PICKED=null;
+let MOVES=[],DEMAND=[],FILTER='onhand',STOCK_OK=true,PICKED=null,CONFIRM_DUP=false;
 
 async function load(){
   const {data,error}=await db.from('stock_movements').select('*').order('created_at',{ascending:false});
@@ -254,6 +255,14 @@ async function load(){
     return;
   }
   MOVES=data||[];
+  // what active sales orders still need released (for the Shortages view)
+  DEMAND=[];
+  const {data:ords}=await db.from('quotes').select('id,stage_id').eq('record_type','order').eq('active_status','active');
+  const ids=(ords||[]).map(o=>o.id);
+  if(ids.length){
+    const {data:items}=await db.from('quote_items').select('quote_id,style_number,description,quantity,stock_released').in('quote_id',ids);
+    DEMAND=(items||[]).filter(i=>i.style_number&&(Number(i.quantity)||0)>(Number(i.stock_released)||0));
+  }
   render();
 }
 
@@ -271,9 +280,35 @@ function summary(){
 function render(){
   const q=(document.getElementById('stk-search').value||'').toLowerCase();
   const rows=summary();
+  // shortages: what active orders still need, versus what's on hand
+  const needBy={};
+  DEMAND.forEach(i=>{
+    const k=String(i.style_number).trim();
+    if(!needBy[k])needBy[k]={style:k,name:i.description||'',needed:0};
+    needBy[k].needed+=Math.max(0,(Number(i.quantity)||0)-(Number(i.stock_released)||0));
+  });
+  const onhandBy={};rows.forEach(r=>{onhandBy[r.style]=r.onhand;});
+  const shorts=Object.values(needBy).map(n=>({...n,onhand:onhandBy[n.style]||0,short:Math.max(0,n.needed-(onhandBy[n.style]||0))}))
+    .sort((a,b)=>b.short-a.short);
   document.getElementById('n-onhand').textContent=rows.length;
+  document.getElementById('n-short').textContent=shorts.filter(s=>s.short>0).length;
   document.getElementById('n-moves').textContent=MOVES.length;
-  document.getElementById('list-title').textContent=FILTER==='onhand'?'Stock on Hand':'Stock Movements';
+  document.getElementById('list-title').textContent=FILTER==='onhand'?'Stock on Hand':(FILTER==='short'?'Shortages — needed by active orders':'Stock Movements');
+  if(FILTER==='short'){
+    const vis=shorts.filter(r=>!q||(r.style+' '+r.name).toLowerCase().includes(q));
+    document.getElementById('count').textContent=vis.length+' products';
+    document.getElementById('wrap').innerHTML=vis.length?`<table><thead><tr>
+        <th>Product</th><th>Style #</th><th class="num">Needed by Orders</th><th class="num">On Hand</th><th class="num">Short</th>
+      </tr></thead><tbody>${vis.map(r=>`<tr>
+        <td style="font-weight:700;color:#fff;">${esc(r.name||'—')}</td>
+        <td style="font-family:var(--fm),monospace;">${esc(r.style)}</td>
+        <td class="num">${r.needed}</td>
+        <td class="num">${r.onhand}</td>
+        <td class="num" style="font-weight:800;color:${r.short>0?'#ff4d4d':'#3ddc84'};">${r.short>0?r.short:'—'}</td>
+      </tr>`).join('')}</tbody></table>`
+      :'<div class="state">Nothing outstanding. Every active order is covered by released or available stock.</div>';
+    return;
+  }
   if(FILTER==='onhand'){
     const vis=rows.filter(r=>!q||(r.style+' '+r.name).toLowerCase().includes(q));
     document.getElementById('count').textContent=vis.length+' products';
@@ -313,7 +348,7 @@ document.getElementById('stk-search').addEventListener('input',render);
 
 // ── Manual entry ────────────────────────────────────────────────────
 const ovEl=document.getElementById('ov');
-function openEntry(){PICKED=null;['me-prod','me-qty','me-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('me-picked').textContent='';document.getElementById('me-msg').textContent='';document.getElementById('me-type').value='opening_balance';ovEl.classList.add('open');document.getElementById('me-prod').focus();}
+function openEntry(){PICKED=null;CONFIRM_DUP=false;document.getElementById('me-save').textContent='Save Entry';['me-prod','me-qty','me-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('me-picked').textContent='';document.getElementById('me-msg').textContent='';document.getElementById('me-type').value='opening_balance';ovEl.classList.add('open');document.getElementById('me-prod').focus();}
 function closeEntry(){ovEl.classList.remove('open');document.getElementById('me-menu').style.display='none';}
 document.getElementById('new-entry').addEventListener('click',openEntry);
 document.getElementById('me-cancel').addEventListener('click',closeEntry);
@@ -354,9 +389,18 @@ document.getElementById('me-save').addEventListener('click',async()=>{
   const qty=Math.floor(+document.getElementById('me-qty').value||0);
   if(qty<=0){msg.textContent='Quantity must be at least 1.';msg.className='msg err';return;}
   const type=document.getElementById('me-type').value;
+  const styleKey=String(PICKED.style).trim();
+  // guard against entering an opening balance twice for the same product
+  if(type==='opening_balance'&&!CONFIRM_DUP&&MOVES.some(m=>String(m.style_number||'').trim()===styleKey&&m.reason==='opening_balance')){
+    msg.textContent='This product already has an opening balance. Save again only if you really mean a second one — an Adjustment is usually the right choice.';
+    msg.className='msg err';
+    document.getElementById('me-save').textContent='Save anyway';
+    CONFIRM_DUP=true;
+    return;
+  }
   msg.textContent='Saving…';msg.className='msg';
   const {error}=await db.from('stock_movements').insert({
-    style_number:PICKED.style,
+    style_number:styleKey,
     product_name:PICKED.name||null,
     direction:type==='adjust_out'?'out':'in',
     quantity:qty,

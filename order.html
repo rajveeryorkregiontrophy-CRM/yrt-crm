@@ -755,6 +755,7 @@ await requireAuth();
 const PROFILE = await getProfile();
 const MGMT = isManagement();
 let LOADED_AT = null;   // quotes.modified_at as it was when this page loaded
+let LOADED_ACTIVE = 'active';   // active_status as loaded — detects the flip to inactive
 
 const HST_RATE = 0.13;
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -961,6 +962,7 @@ async function load(){
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load this order.<br>${error?.message||''}</div>`;return;}
   ORDER=data;
   LOADED_AT = data.modified_at || null;   // optimistic lock: the version we loaded
+  LOADED_ACTIVE = data.active_status || 'active';
   await detectStock();
   // Cross-reference: a converted order shows the invoice it became.
   INV_REF=null;
@@ -1416,8 +1418,8 @@ function renderLines(){
         </div>
       </td>
       <td class="qty-cell il-n" style="width:10%;"><span class="cl">Order Qty</span><span class="qtywrap"><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></span>${(()=>{
-        // stock-release state: released so far vs line quantity
-        if(!STOCK_OK||ORDER.record_type!=='order')return '';
+        // stock-release state: released so far vs line quantity (stocked lines only)
+        if(!STOCK_OK||ORDER.record_type!=='order'||!ln.style_number)return '';
         const rel=parseFloat(ln.stock_released)||0, need=parseFloat(ln.quantity)||0;
         if(rel<=0&&ORDER.art_status!=='in_process')return '';
         return rel>=need&&need>0?`<div class="il-status full-tag" style="margin-top:4px;display:inline-block;">${rel} released ✓</div>`
@@ -1927,6 +1929,8 @@ function updateSummary(){
 
 async function save(silent){
   if(!MGMT) return;   // process users are read-only; RLS blocks the write server-side too.
+  // Going inactive returns every released unit to stock (handled per line below).
+  const goingInactive=STOCK_OK&&ORDER.active_status==='inactive'&&LOADED_ACTIVE!=='inactive';
 
   // ── Optimistic lock ───────────────────────────────────────────────
   // Atomically stamp the record, but ONLY if nobody has saved it since we
@@ -1965,11 +1969,21 @@ async function save(silent){
 
   // 2. UPDATE-IN-PLACE line items — never destroy fulfillment fields (in_po, po_id, fulfillment_status)
   //    a) figure out which existing rows were removed in the UI, and delete only those
-  const {data:existing}=await db.from('quote_items').select('id').eq('quote_id',ORDER_ID);
+  const {data:existing}=await db.from('quote_items').select('id,style_number,description,stock_released').eq('quote_id',ORDER_ID);
   const existingIds=new Set((existing||[]).map(r=>r.id));
   const keptIds=new Set(LINES.filter(l=>l.id).map(l=>l.id));
   const toDelete=[...existingIds].filter(id=>!keptIds.has(id));
   if(toDelete.length){
+    // Deleting a line that had stock released returns that stock to the
+    // shelf — the goods never left, only the paperwork did.
+    if(STOCK_OK){
+      for(const row of (existing||[]).filter(r=>toDelete.includes(r.id))){
+        const rel=parseFloat(row.stock_released)||0;
+        if(rel>0&&row.style_number){
+          await db.from('stock_movements').insert({style_number:String(row.style_number).trim(),product_name:row.description||null,direction:'in',quantity:rel,reason:'production_return',source_quote_item_id:row.id,ref:'Order #'+(ORDER.stage_id||'')+' line removed'});
+        }
+      }
+    }
     // also remove any PO items sourced from these deleted lines (from OPEN POs only —
     // sent POs are locked records). Their allocations go too.
     const {data:delAllocs}=await db.from('quote_item_allocations').select('id').in('quote_item_id',toDelete);
@@ -2004,6 +2018,17 @@ async function save(silent){
       amount:parseFloat(l.amount)||0,discount_pct:parseFloat(l.discount_pct)||0,net_amount:parseFloat(l.net_amount)||0,
       supplier_id:l.supplier_id||null,
       supplier_quantity:parseFloat(l.quantity)||0};   // basis is order qty now; mirror it
+    // Stock returns: a released line that shrinks gives the difference back,
+    // and an order going inactive gives back everything it had released.
+    if(STOCK_OK&&l.style_number){
+      const rel=parseFloat(l.stock_released)||0;
+      const targetRel=goingInactive?0:Math.min(rel,base.quantity);
+      if(targetRel<rel){
+        await db.from('stock_movements').insert({style_number:String(l.style_number).trim(),product_name:l.description||null,direction:'in',quantity:rel-targetRel,reason:'production_return',source_quote_item_id:l.id||null,ref:'Order #'+(ORDER.stage_id||'')+(goingInactive?' inactive':' quantity reduced')});
+        base.stock_released=targetRel;
+        l.stock_released=targetRel;
+      }
+    }
     if(l.id && existingIds.has(l.id)){
       // existing row -> UPDATE (do NOT touch in_po, po_id, fulfillment_status)
       await db.from('quote_items').update(base).eq('id',l.id);
@@ -2055,6 +2080,7 @@ async function save(silent){
   if(ORDER_ID){
     const {data:_fresh}=await db.from('quotes').select('modified_at').eq('id',ORDER_ID).single();
     if(_fresh && _fresh.modified_at) LOADED_AT=_fresh.modified_at;
+    LOADED_ACTIVE=ORDER.active_status||'active';   // the flip (if any) is saved now
   }
   DIRTY=false;
   if(msg){msg.textContent='Saved ✓';msg.className='status-msg saved';}
@@ -2304,8 +2330,15 @@ async function deleteOrder(){
 // releases more as stock arrives. Outward movements are written to
 // stock_movements and the running total kept on quote_items.stock_released.
 async function openReleasePopup(){
-  const lines=LINES.filter(l=>(parseFloat(l.quantity)||0)>0&&(l.style_number||l.description));
-  if(!lines.length){ await alertModal('Nothing to release','Add product lines before moving this order into Process.','info'); return; }
+  // Only stocked products (lines with a style number) go through stock.
+  // Custom lines — engraving, fees, one-offs — skip the release step.
+  const lines=LINES.filter(l=>(parseFloat(l.quantity)||0)>0&&l.style_number);
+  if(!lines.length){
+    ORDER.art_status='in_process';paintPipeline();
+    document.getElementById('t-badge').innerHTML=`<span class="badge-st st-in_process">${label('in_process')}</span>`;
+    markDirty();
+    return;
+  }
   // current stock per product, in one query
   const styles=[...new Set(lines.map(l=>l.style_number).filter(Boolean))];
   const bal={};
@@ -2357,7 +2390,7 @@ async function openReleasePopup(){
       const qty=inp?Math.max(0,Math.min(+inp.value||0,Math.min(rows[i].remaining,rows[i].stock))):0;
       if(qty<=0)continue;
       const l=rows[i].l;
-      const {error:me}=await db.from('stock_movements').insert({style_number:l.style_number||null,product_name:l.description||null,direction:'out',quantity:qty,reason:'production_release',source_quote_item_id:l.id||null,ref:'Order #'+(ORDER.stage_id||'')});
+      const {error:me}=await db.from('stock_movements').insert({style_number:String(l.style_number||'').trim()||null,product_name:l.description||null,direction:'out',quantity:qty,reason:'production_release',source_quote_item_id:l.id||null,ref:'Order #'+(ORDER.stage_id||'')});
       if(me){await alertModal('Could not release stock',me.message,'danger');return;}
       const newRel=(parseFloat(l.stock_released)||0)+qty;
       await db.from('quote_items').update({stock_released:newRel}).eq('id',l.id);
@@ -2421,7 +2454,7 @@ async function convertToInvoice(){
   // Stock gate: an order cannot become an invoice until every line's full
   // quantity has been released from Stock Control.
   if(STOCK_OK){
-    const short=LINES.filter(l=>(parseFloat(l.quantity)||0)>(parseFloat(l.stock_released)||0));
+    const short=LINES.filter(l=>l.style_number&&(parseFloat(l.quantity)||0)>(parseFloat(l.stock_released)||0));
     if(short.length){
       await alertModal('Stock not fully released',
         'This order can’t be converted to an invoice yet. These lines are still owed stock:<br><br>'

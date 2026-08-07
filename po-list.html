@@ -376,19 +376,26 @@ async function receiveItem(itemId,poId,qty,expected){
   const poPre=POS.find(p=>p.id===poId);
   const itPre=poPre&&(poPre.po_items||[]).find(x=>x.id===itemId);
   const prevRecv=itPre?Math.min(Number(itPre.qty_received)||0,Number(itPre.quantity)||0):0;
-  const {data,error}=await db.rpc('receive_po_item',{p_item:itemId,p_qty:qty,p_expected:expected||null});
+  // Prefer v2, which records the receipt AND its stock inward in one
+  // database transaction. Fall back to the original function (plus a
+  // client-side stock write) until the v2 migration has been run.
+  let usedV2=true;
+  let {data,error}=await db.rpc('receive_po_item_v2',{p_item:itemId,p_qty:qty,p_expected:expected||null});
+  if(error&&/function|schema cache|not exist|not found/i.test(error.message||'')){
+    usedV2=false;
+    ({data,error}=await db.rpc('receive_po_item',{p_item:itemId,p_qty:qty,p_expected:expected||null}));
+  }
   if(error){await smAlert('Could not update: '+error.message,'Error','danger');return;}
   const row=Array.isArray(data)?data[0]:data;
   const po=POS.find(p=>p.id===poId);
   const it=po&&(po.po_items||[]).find(x=>x.id===itemId);
-  // Stock Control: every received unit becomes a stock inward, by the
-  // quantity that actually arrived. Lowering a received count (Reset or a
-  // correction) writes the difference back out so stock stays true.
-  if(STOCK_OK&&it&&row){
+  // Fallback path only: write the stock inward from the browser, by the
+  // quantity that actually arrived (a lowered count writes the difference out).
+  if(!usedV2&&STOCK_OK&&it&&row){
     const delta=(Number(row.out_qty_received)||0)-prevRecv;
     if(delta!==0){
       await db.from('stock_movements').insert({
-        style_number:it.style_number||it.part_no||null,
+        style_number:String(it.style_number||it.part_no||'').trim()||null,
         product_name:it.product_name||it.description||null,
         direction:delta>0?'in':'out',
         quantity:Math.abs(delta),
