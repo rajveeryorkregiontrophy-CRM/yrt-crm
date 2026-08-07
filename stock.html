@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Control — YRT CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115;--bg-2:#16181d;--bg-3:#1f2229;--bg-4:#2a2e37;--sidebar:#0a0c0f;
+    --line:#323a48;--line-2:#414a5c;--text:#eef0f4;--text-2:#c4cad6;--text-3:#9098a8;
+    --brass:#e7ebf3;--brass-2:#f4f6fb;--danger:#ff4d4d;--approved:#3ddc84;--process:#3da5ff;--due:#ffb627;
+    --radius:11px;--radius-sm:8px;
+    --fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--fm:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}html,body{height:100%;}
+  body{font-family:var(--fb);background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:2px solid var(--bg);}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line);}
+  .brand .mark{font-family:var(--fd);font-weight:900;font-size:17px;color:#fff;line-height:1.12;text-transform:uppercase;}
+  .brand .mark .amp{color:var(--brass-2);}
+  .nav{padding:14px 12px;flex:1;overflow-y:auto;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:var(--radius-sm);color:var(--text-2);text-decoration:none;font-weight:500;font-size:13.5px;margin-bottom:2px;transition:.13s;}
+  .nav-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#aab0c0;padding:20px 10px 8px;font-weight:700;}
+  .nav-sep{height:1px;background:var(--line);margin:14px 14px;opacity:.7;}
+  .nav-label:first-child{padding-top:8px;}
+  .nav a:hover{background:var(--bg-3);color:#fff;}
+  .nav a.active{background:linear-gradient(90deg,#f4f6fb,#cfd6e3);color:#15171c;font-weight:700;}
+  .nav a .ico{width:17px;height:17px;flex-shrink:0;}
+  .nav a .badge{margin-left:auto;background:transparent;color:var(--text-3);font-size:11px;font-weight:800;padding:0;font-family:var(--fd);}
+  .sidebar-foot{padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .logout-btn{margin-left:auto;background:var(--bg-3);border:1px solid var(--line-2);color:var(--text-3);width:32px;height:32px;border-radius:8px;cursor:pointer;display:grid;place-items:center;transition:.13s;}
+  .logout-btn:hover{border-color:var(--danger);color:var(--danger);}.logout-btn svg{width:16px;height:16px;}
+  .avatar{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#f4f6fb,#cfd6e3);color:#15171c;display:grid;place-items:center;font-weight:900;font-size:10px;}
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{height:62px;background:var(--bg-2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 26px;position:sticky;top:0;z-index:20;}
+  .topbar h1{font-family:var(--fd);font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}
+  .btn-primary{margin-left:auto;background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;padding:10px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .content{padding:24px 26px 70px;max-width:1560px;width:100%;}
+  .tabs{display:flex;gap:6px;margin-bottom:18px;}
+  .tab{font-size:12.5px;padding:8px 15px;border-radius:7px;border:1px solid var(--line-2);background:var(--bg-2);color:var(--text-2);cursor:pointer;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
+  .tab:hover{border-color:var(--text-3);color:var(--text);}
+  .tab.active{background:#f4f6fb;color:#15171c;border-color:#f4f6fb;font-weight:700;}
+  .tab .n{font-family:var(--fm);font-size:10.5px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.07);}
+  .tab.active .n{background:rgba(0,0,0,.15);}
+  .rc-intro{font-size:13px;color:var(--text-2);margin-bottom:18px;padding:12px 16px;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;}
+  .rc-card{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden;}
+  .rc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:16px 20px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent);}
+  .rc-head-l{display:flex;flex-direction:column;gap:3px;}
+  .rc-po{font-family:var(--fm);font-weight:800;font-size:15px;color:var(--brass-2);}
+  .rc-sup{font-size:13.5px;font-weight:600;color:var(--text);}
+  .rc-head-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:240px;}
+  .rc-dates{font-size:11.5px;color:var(--text-3);}
+  .rc-dlabel{text-transform:uppercase;letter-spacing:.04em;font-weight:700;color:var(--text-3);font-size:10px;}
+  .rc-progress-wrap{display:flex;align-items:center;gap:10px;width:100%;justify-content:flex-end;}
+  .rc-progress{width:120px;height:6px;border-radius:4px;background:var(--bg-4);overflow:hidden;}
+  .rc-progress-bar{height:100%;background:#8a92a2;transition:width .3s;}
+  .rc-progress-bar.done{background:#3ddc84;}
+  .rc-progress-txt{font-size:11px;color:var(--text-3);white-space:nowrap;}
+  .rc-progress-txt.done{color:#3ddc84;font-weight:700;}
+  .rc-table{width:100%;border-collapse:collapse;}
+  .rc-table th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);text-align:left;padding:11px 20px;border-bottom:1px solid var(--line);font-weight:700;}
+  .rc-table td{padding:13px 20px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .rc-table tr:last-child td{border-bottom:none;}
+  .rc-table .num{text-align:right;}
+  .rc-row-received{background:rgba(61,220,132,.04);}
+  .rc-row-backordered{background:rgba(176,107,255,.04);}
+  .ro{font-size:13px;color:var(--text-2);}
+  .ro.mono{font-family:var(--fm);font-size:12.5px;}
+  .rc-badge{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
+  .rc-actcell{text-align:right;}
+  .rc-actions{display:inline-flex;gap:7px;justify-content:flex-end;}
+  .rc-act{font-size:11px;font-weight:700;padding:6px 12px;border-radius:6px;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text-2);cursor:pointer;font-family:inherit;transition:all .14s;}
+  .rc-act:hover{border-color:var(--text-3);color:var(--text);}
+  .rc-act.ok{border-color:rgba(61,220,132,.4);color:#3ddc84;}
+  .rc-act.ok:hover{background:#3ddc84;color:#0f1115;border-color:#3ddc84;}
+  .rc-act.bad{border-color:rgba(176,107,255,.4);color:#b06bff;}
+  .rc-act.bad:hover{background:#b06bff;color:#fff;border-color:#b06bff;}
+  .rc-act.reset{color:var(--text-3);}
+  .rc-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;}
+  .rc-receive-all{font-size:12px;font-weight:700;padding:8px 16px;border-radius:7px;border:1px solid rgba(61,220,132,.4);background:rgba(61,220,132,.08);color:#3ddc84;cursor:pointer;font-family:inherit;}
+  .rc-receive-all:hover{background:#3ddc84;color:#0f1115;}
+  /* quantity-aware receiving controls */
+  .rc-qty{width:56px;background:var(--bg);border:1px solid var(--line-2);color:var(--text);border-radius:6px;padding:6px 8px;font-size:13px;font-family:var(--fm);text-align:right;}
+  .rc-qty:focus{outline:none;border-color:var(--brass-2);}
+  .rc-of{font-size:11.5px;color:var(--text-3);font-weight:600;margin-left:4px;}
+  .rc-recdone{font-family:var(--fm);font-size:12.5px;color:#3ddc84;font-weight:700;}
+  .rc-late{display:inline-block;font-family:var(--fd);font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:5px;background:rgba(255,77,77,.16);color:#ff4d4d;vertical-align:2px;margin-left:8px;}
+  .rc-late-d{color:#ff4d4d;font-weight:700;}
+  .rc-owed{font-size:11px;font-weight:600;color:#c9a4f0;margin-top:4px;white-space:nowrap;}
+  .rc-owed b{color:#b06bff;}
+  .rc-owed.overdue{color:#ff8f88;} .rc-owed.overdue b{color:#ff6b6b;}
+  .rc-row-overdue{background:rgba(239,106,99,.05);}
+  .rc-act.rest{border-color:rgba(61,220,132,.4);color:#3ddc84;}
+  .rc-act.rest:hover{background:#3ddc84;color:#0f1115;border-color:#3ddc84;}
+  .rc-lock{font-size:11px;color:var(--text-3);font-weight:600;font-style:italic;}
+  .rc-actions{display:inline-flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
+  .panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;}
+  .panel-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:2px solid var(--line-2);}
+  .panel-head h2{font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
+  .panel-head .count{font-family:var(--fd);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);background:transparent;border:none;border-left:2px solid var(--line-2);padding:2px 0 2px 10px;border-radius:0;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#aab0c0;font-weight:700;padding:11px 16px;border-bottom:2px solid var(--line-2);background:var(--bg-3);}
+  thead th.num{text-align:right;}
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr{cursor:pointer;transition:background .1s;}tbody tr:hover{background:var(--bg-3);}
+  tbody tr:last-child td{border-bottom:none;}
+  .po-num{font-family:var(--fm);font-size:13px;font-weight:700;color:#b9c1d2;}
+  .po-supplier{font-weight:700;color:#fff;}
+  .po-sub{font-size:12px;color:#8a92a2;margin-top:1px;}
+  .badge-st{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.02em;padding:5px 11px;border-radius:7px;white-space:nowrap;text-transform:uppercase;font-family:var(--fd);}
+  .badge-st::before{content:'';width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.4);}
+  .st-open{background:var(--due);color:#231803;}.st-sent{background:var(--process);color:#03101f;}
+  .st-received{background:var(--approved);color:#04130a;}.st-verified{background:#4ddbd0;color:#06201d;}.st-cancelled{background:#5a6273;color:#fff;}
+  .po-items-count{font-family:var(--fm);font-size:12px;color:var(--text-2);}
+  .po-total{font-family:var(--fm);font-weight:700;color:#fff;font-size:13.5px;}
+  .state{padding:44px;text-align:center;color:var(--text-3);}
+  /* modal for new PO */
+  .ov{position:fixed;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+  .ov.open{display:flex;}
+  .mod{background:var(--bg-2);border:1px solid var(--line-2);border-radius:14px;width:100%;max-width:420px;overflow:hidden;}
+  .mod-h{padding:18px 22px;border-bottom:1px solid var(--line);font-family:var(--fd);font-weight:800;text-transform:uppercase;letter-spacing:.03em;font-size:15px;}
+  .mod-b{padding:22px;}
+  .field{margin-bottom:14px;}label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;margin-bottom:6px;}
+  .in{width:100%;border:1px solid var(--line-2);background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:var(--text);}
+  .in:focus{outline:none;border-color:var(--brass);}
+  .mod-f{padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;}
+  .btn{padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--line-2);background:var(--bg-3);color:var(--text);}
+  .btn:hover{border-color:var(--brass);}
+  .btn-save{background:linear-gradient(135deg,#f4f6fb,#d4dae6);color:#15171c;border:none;}
+  .msg{font-size:12.5px;color:var(--danger);margin-top:8px;min-height:16px;}
+  @media(max-width:880px){.app{grid-template-columns:1fr;}.sidebar{display:none;}}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;transition:grid-template-columns .32s cubic-bezier(.4,0,.2,1);}
+  .app.collapsed{grid-template-columns:68px 1fr;}
+  .sidebar{background:var(--sidebar);color:var(--text-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line);width:240px;transition:width .32s cubic-bezier(.4,0,.2,1);z-index:50;overflow:hidden;}
+  .app.collapsed .sidebar{width:68px;}
+  .app.collapsed .sidebar:hover{width:240px;box-shadow:10px 0 36px -8px rgba(0,0,0,.65);}
+  /* keep inner blocks at full width so text never squishes — the sidebar clips it */
+  .sidebar .brand,.sidebar .nav,.sidebar .sidebar-foot{width:240px;flex-shrink:0;}
+  /* labels/sub-text fade out only; layout width is fixed so nothing mushes */
+  .nav a span.lbl,.nav a .badge,.brand .sub,.brand .mark,.sidebar-foot .foot-text,.nav-label{transition:opacity .32s cubic-bezier(.4,0,.2,1);}
+  .app.collapsed .sidebar .brand .sub,
+  .app.collapsed .sidebar .brand .mark,
+  .app.collapsed .sidebar .nav-label,
+  .app.collapsed .sidebar .nav a span.lbl,
+  .app.collapsed .sidebar .nav a .badge,
+  .app.collapsed .sidebar .sidebar-foot .foot-text{opacity:0;pointer-events:none;}
+  .app.collapsed .sidebar:hover .brand .sub,
+  .app.collapsed .sidebar:hover .brand .mark,
+  .app.collapsed .sidebar:hover .nav-label,
+  .app.collapsed .sidebar:hover .nav a span.lbl,
+  .app.collapsed .sidebar:hover .nav a .badge,
+  .app.collapsed .sidebar:hover .sidebar-foot .foot-text{opacity:1;pointer-events:auto;}
+  /* compact "YRT" marks shown only while collapsed (and not hovered) */
+  .brand-mini{display:none;position:absolute;top:20px;left:0;width:68px;text-align:center;font-family:var(--fd);font-weight:900;font-size:15px;color:#fff;letter-spacing:.04em;}
+  .app.collapsed .sidebar .brand-mini{display:block;}
+  .app.collapsed .sidebar:hover .brand-mini{display:none;}
+  .app.collapsed .sidebar:not(:hover) .nav a span.lbl,
+  .app.collapsed .sidebar:not(:hover) .brand .mark,
+  .app.collapsed .sidebar:not(:hover) .sidebar-foot .foot-text{visibility:hidden;}
+  .brand{position:relative;}
+  .nav a{overflow:hidden;}
+  .app.collapsed .sidebar:not(:hover) .nav a{padding-left:14px;padding-right:14px;}
+  .app.collapsed .sidebar:not(:hover) .nav a.active{background:transparent;}
+  .app.collapsed .sidebar:not(:hover) .nav a.active .ico{color:#fff;}
+  .app.collapsed .sidebar:not(:hover) .brand{padding-left:0;padding-right:0;}
+</style>
+<link rel="stylesheet" href="theme.css?v=5">
+</head>
+<body>
+<div class="app collapsed">
+  <aside class="sidebar">
+
+    <div class="brand"><div class="brand-mini">YRT</div><div class="mark">York Region<br>Trophy <span class="amp">&amp;</span> Promotion</div></div>
+    <nav class="nav">
+      <a href="clients.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Client Manager</span></a>
+      <a href="index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span class="lbl">Sales Timeline</span></a>
+      <a href="invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Sales Invoices</span></a>
+      <a href="production.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="lbl">Production Lineup</span></a>
+      <a href="reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><span class="lbl">Sales Reports</span></a>
+      <div class="nav-sep"></div>
+      <a href="suppliers.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9M3 5h18v16H3z"/></svg><span class="lbl">Suppliers</span></a>
+      <a href="po-list.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Purchase Timeline</span></a>
+      <a href="stock.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg><span class="lbl">Stock Control</span></a>
+      <a href="purchase-invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h20v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M2 7l3-4h14l3 4"/><path d="M9 13h6"/></svg><span class="lbl">Purchase Invoices</span></a>
+      <a href="purchase-reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg><span class="lbl">Purchase Reports</span></a>
+      <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="lbl">Products</span></a>
+      <div class="nav-sep"></div>
+      <a href="database-map.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg><span class="lbl">Database Map</span></a>
+    </nav>
+    <div class="sidebar-foot"><div class="avatar">YRT</div><div class="foot-text"><div style="color:var(--text);font-weight:700;">YRT CRM</div><div style="font-size:11px;color:var(--text-3);">Operations Suite</div></div><button class="logout-btn" id="logout-btn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+  </aside>
+  <div class="main">
+    <header class="topbar"><h1>Stock Control</h1>
+      <button class="btn-primary" id="new-entry"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>Manual Entry</button>
+    </header>
+    <div class="content">
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-f="onhand">Stock on Hand <span class="n" id="n-onhand">0</span></button>
+        <button class="tab" data-f="moves">Movements <span class="n" id="n-moves">0</span></button>
+      </div>
+      <section class="panel">
+        <div class="panel-head"><h2 id="list-title">Stock on Hand</h2><span class="count" id="count">—</span>
+          <input class="in" id="stk-search" placeholder="Search product or style…" style="margin-left:auto;max-width:260px;padding:8px 12px;font-size:13px;">
+        </div>
+        <div id="wrap"><div class="state">Loading…</div></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov">
+  <div class="mod">
+    <div class="mod-h" id="me-title">Manual Stock Entry</div>
+    <div class="mod-b">
+      <div class="field" style="position:relative;"><label>Product</label>
+        <input class="in" id="me-prod" placeholder="Type a style number or product name…" autocomplete="off">
+        <div id="me-menu" style="position:absolute;top:100%;left:0;right:0;background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.5);z-index:60;max-height:220px;overflow-y:auto;display:none;"></div>
+        <div id="me-picked" style="font-size:11.5px;color:var(--text-3);margin-top:5px;"></div>
+      </div>
+      <div class="field"><label>Entry Type</label>
+        <select class="in" id="me-type">
+          <option value="opening_balance">Opening balance — stock in</option>
+          <option value="adjust_in">Adjustment — add stock</option>
+          <option value="adjust_out">Adjustment — remove stock</option>
+        </select>
+      </div>
+      <div class="field"><label>Quantity</label><input class="in" id="me-qty" type="number" min="1" step="1" placeholder="0"></div>
+      <div class="field"><label>Note (optional)</label><input class="in" id="me-note" placeholder="e.g. count from the storage room"></div>
+      <div class="msg" id="me-msg"></div>
+    </div>
+    <div class="mod-f"><button class="btn" id="me-cancel">Cancel</button><button class="btn btn-save" id="me-save">Save Entry</button></div>
+  </div>
+</div>
+
+<script type="module">
+import { supabase as db, requireAuth, signOut } from './auth.js';
+await requireAuth();
+
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtTs=ts=>{if(!ts)return '—';const x=new Date(ts);return x.getDate()+' '+MON[x.getMonth()]+' '+x.getFullYear();};
+const REASON={po_receipt:'PO received',receipt_correction:'Receipt correction',production_release:'Released to production',opening_balance:'Opening balance',adjust_in:'Adjustment in',adjust_out:'Adjustment out'};
+
+let MOVES=[],FILTER='onhand',STOCK_OK=true,PICKED=null;
+
+async function load(){
+  const {data,error}=await db.from('stock_movements').select('*').order('created_at',{ascending:false});
+  if(error){
+    STOCK_OK=false;
+    document.getElementById('wrap').innerHTML='<div class="state">Stock Control isn’t set up in the database yet. Run the stock migration, then reload this page.</div>';
+    document.getElementById('count').textContent='—';
+    return;
+  }
+  MOVES=data||[];
+  render();
+}
+
+function summary(){
+  const by={};
+  MOVES.forEach(m=>{
+    const k=m.style_number||'—';
+    if(!by[k])by[k]={style:k,name:m.product_name||'',ins:0,outs:0};
+    if(m.product_name&&!by[k].name)by[k].name=m.product_name;
+    if(m.direction==='in')by[k].ins+=Number(m.quantity)||0; else by[k].outs+=Number(m.quantity)||0;
+  });
+  return Object.values(by).map(r=>({...r,onhand:r.ins-r.outs})).sort((a,b)=>(a.name||a.style).localeCompare(b.name||b.style));
+}
+
+function render(){
+  const q=(document.getElementById('stk-search').value||'').toLowerCase();
+  const rows=summary();
+  document.getElementById('n-onhand').textContent=rows.length;
+  document.getElementById('n-moves').textContent=MOVES.length;
+  document.getElementById('list-title').textContent=FILTER==='onhand'?'Stock on Hand':'Stock Movements';
+  if(FILTER==='onhand'){
+    const vis=rows.filter(r=>!q||(r.style+' '+r.name).toLowerCase().includes(q));
+    document.getElementById('count').textContent=vis.length+' products';
+    document.getElementById('wrap').innerHTML=vis.length?`<table><thead><tr>
+        <th>Product</th><th>Style #</th><th class="num">Stock In</th><th class="num">Stock Out</th><th class="num">On Hand</th>
+      </tr></thead><tbody>${vis.map(r=>`<tr>
+        <td style="font-weight:700;color:#fff;">${esc(r.name||'—')}</td>
+        <td style="font-family:var(--fm),monospace;">${esc(r.style)}</td>
+        <td class="num">${r.ins}</td>
+        <td class="num">${r.outs}</td>
+        <td class="num" style="font-weight:800;color:${r.onhand>0?'#3ddc84':(r.onhand<0?'#ff4d4d':'inherit')};">${r.onhand}</td>
+      </tr>`).join('')}</tbody></table>`
+      :'<div class="state">No stock yet. Receive a purchase order, or add an opening balance with Manual Entry.</div>';
+  }else{
+    const vis=MOVES.filter(m=>!q||((m.style_number||'')+' '+(m.product_name||'')+' '+(m.ref||'')).toLowerCase().includes(q));
+    document.getElementById('count').textContent=vis.length+' entries';
+    document.getElementById('wrap').innerHTML=vis.length?`<table><thead><tr>
+        <th>Date</th><th>Product</th><th>Style #</th><th>Type</th><th class="num">Qty</th><th>Reason</th><th>Reference</th><th>Note</th>
+      </tr></thead><tbody>${vis.map(m=>`<tr>
+        <td style="white-space:nowrap;">${fmtTs(m.created_at)}</td>
+        <td style="font-weight:700;color:#fff;">${esc(m.product_name||'—')}</td>
+        <td style="font-family:var(--fm),monospace;">${esc(m.style_number||'—')}</td>
+        <td><span style="display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:5px;${m.direction==='in'?'background:rgba(61,220,132,.14);color:#3ddc84;':'background:rgba(176,107,255,.16);color:#b06bff;'}">${m.direction==='in'?'Stock In':'Stock Out'}</span></td>
+        <td class="num" style="font-weight:700;">${Number(m.quantity)||0}</td>
+        <td>${esc(REASON[m.reason]||m.reason||'—')}</td>
+        <td>${esc(m.ref||'—')}</td>
+        <td style="color:var(--text-3);">${esc(m.note||'')}</td>
+      </tr>`).join('')}</tbody></table>`
+      :'<div class="state">No movements recorded yet.</div>';
+  }
+}
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  FILTER=t.dataset.f;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.f===FILTER));render();
+}));
+document.getElementById('stk-search').addEventListener('input',render);
+
+// ── Manual entry ────────────────────────────────────────────────────
+const ovEl=document.getElementById('ov');
+function openEntry(){PICKED=null;['me-prod','me-qty','me-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('me-picked').textContent='';document.getElementById('me-msg').textContent='';document.getElementById('me-type').value='opening_balance';ovEl.classList.add('open');document.getElementById('me-prod').focus();}
+function closeEntry(){ovEl.classList.remove('open');document.getElementById('me-menu').style.display='none';}
+document.getElementById('new-entry').addEventListener('click',openEntry);
+document.getElementById('me-cancel').addEventListener('click',closeEntry);
+ovEl.addEventListener('click',e=>{if(e.target===ovEl)closeEntry();});
+
+// product type-ahead against the catalogue
+const prodInp=document.getElementById('me-prod'),menu=document.getElementById('me-menu');
+let _t=null;
+prodInp.addEventListener('input',()=>{
+  PICKED=null;document.getElementById('me-picked').textContent='';
+  clearTimeout(_t);_t=setTimeout(async()=>{
+    const q=prodInp.value.trim();
+    if(!q){menu.style.display='none';return;}
+    const {data}=await db.from('products').select('style_number,name').or(`style_number.ilike.%${q}%,name.ilike.%${q}%`).limit(12);
+    const hits=data||[];
+    menu.innerHTML=hits.map(p=>`<div class="sopt" data-s="${esc(p.style_number)}" data-n="${esc(p.name)}" style="padding:9px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;"><span>${esc(p.name)}</span><span style="color:var(--text-3);font-family:var(--fm),monospace;">${esc(p.style_number)}</span></div>`).join('')
+      +`<div class="sopt" data-s="${esc(q)}" data-n="" style="padding:9px 12px;font-size:13px;cursor:pointer;color:var(--brass-2);">Use “${esc(q)}” as the style number</div>`;
+    menu.style.display='block';
+    menu.querySelectorAll('.sopt').forEach(o=>{
+      o.addEventListener('mouseenter',()=>o.style.background='var(--bg-3)');
+      o.addEventListener('mouseleave',()=>o.style.background='');
+      o.addEventListener('mousedown',e=>{
+        e.preventDefault();
+        PICKED={style:o.dataset.s,name:o.dataset.n||''};
+        prodInp.value=o.dataset.n?o.dataset.n+' · '+o.dataset.s:o.dataset.s;
+        document.getElementById('me-picked').textContent='Style '+o.dataset.s;
+        menu.style.display='none';
+      });
+    });
+  },200);
+});
+prodInp.addEventListener('blur',()=>setTimeout(()=>{menu.style.display='none';},150));
+
+document.getElementById('me-save').addEventListener('click',async()=>{
+  const msg=document.getElementById('me-msg');
+  if(!STOCK_OK){msg.textContent='Run the stock migration first.';msg.className='msg err';return;}
+  if(!PICKED||!PICKED.style){msg.textContent='Pick a product from the list, or use your typed style number.';msg.className='msg err';return;}
+  const qty=Math.floor(+document.getElementById('me-qty').value||0);
+  if(qty<=0){msg.textContent='Quantity must be at least 1.';msg.className='msg err';return;}
+  const type=document.getElementById('me-type').value;
+  msg.textContent='Saving…';msg.className='msg';
+  const {error}=await db.from('stock_movements').insert({
+    style_number:PICKED.style,
+    product_name:PICKED.name||null,
+    direction:type==='adjust_out'?'out':'in',
+    quantity:qty,
+    reason:type,
+    note:document.getElementById('me-note').value.trim()||null
+  });
+  if(error){msg.textContent='Error: '+error.message;msg.className='msg err';return;}
+  msg.textContent='Saved ✓';msg.className='msg ok';
+  await load();
+  setTimeout(closeEntry,400);
+});
+
+const _lo=document.getElementById('logout-btn');if(_lo)_lo.addEventListener('click',()=>signOut());
+load();
+</script>
+</body>
+</html>

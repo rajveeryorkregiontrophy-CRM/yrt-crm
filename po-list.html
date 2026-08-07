@@ -182,6 +182,7 @@
       <div class="nav-sep"></div>
       <a href="suppliers.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9M3 5h18v16H3z"/></svg><span class="lbl">Suppliers</span></a>
       <a href="po-list.html" class="active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h3"/></svg><span class="lbl">Purchase Timeline</span></a>
+      <a href="stock.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg><span class="lbl">Stock Control</span></a>
       <a href="purchase-invoices.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h20v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M2 7l3-4h14l3 4"/><path d="M9 13h6"/></svg><span class="lbl">Purchase Invoices</span></a>
       <a href="purchase-reports.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg><span class="lbl">Purchase Reports</span></a>
       <a href="products.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="lbl">Products</span></a>
@@ -249,8 +250,11 @@ const fmtD=d=>{if(!d)return '—';const x=new Date(d+'T00:00:00');return x.getDa
 const ST_LABEL={open:'Open',sent:'Sent',received:'Received',verified:'Verified',cancelled:'Cancelled'};
 
 let POS=[],SUPPLIERS=[],FILTER='open';
+// Stock Control feeds: lights up once the stock_movements table exists.
+let STOCK_OK=false;
 
 async function load(){
+  { const {error:se}=await db.from('stock_movements').select('id').limit(1); STOCK_OK=!se; }
   const {data:pos,error}=await db.from('purchase_orders').select('*, suppliers(company_name,short_name,supplier_number), po_items(id,part_no,style_number,product_name,description,quantity,qty_received,backorder_expected,amount,ordered_for,status,source_quote_item_id,source_allocation_id)').order('po_number',{ascending:false});
   if(error){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load — ${error.message}</div>`;return;}
   POS=pos||[];
@@ -369,11 +373,31 @@ function renderReceiving(completed){
 //   0 < qty < ordered -> back ordered (balance owed, optional expected date)
 //   qty = 0         -> reset to issued
 async function receiveItem(itemId,poId,qty,expected){
+  const poPre=POS.find(p=>p.id===poId);
+  const itPre=poPre&&(poPre.po_items||[]).find(x=>x.id===itemId);
+  const prevRecv=itPre?Math.min(Number(itPre.qty_received)||0,Number(itPre.quantity)||0):0;
   const {data,error}=await db.rpc('receive_po_item',{p_item:itemId,p_qty:qty,p_expected:expected||null});
   if(error){await smAlert('Could not update: '+error.message,'Error','danger');return;}
   const row=Array.isArray(data)?data[0]:data;
   const po=POS.find(p=>p.id===poId);
   const it=po&&(po.po_items||[]).find(x=>x.id===itemId);
+  // Stock Control: every received unit becomes a stock inward, by the
+  // quantity that actually arrived. Lowering a received count (Reset or a
+  // correction) writes the difference back out so stock stays true.
+  if(STOCK_OK&&it&&row){
+    const delta=(Number(row.out_qty_received)||0)-prevRecv;
+    if(delta!==0){
+      await db.from('stock_movements').insert({
+        style_number:it.style_number||it.part_no||null,
+        product_name:it.product_name||it.description||null,
+        direction:delta>0?'in':'out',
+        quantity:Math.abs(delta),
+        reason:delta>0?'po_receipt':'receipt_correction',
+        source_po_item_id:it.id,
+        ref:'PO #'+(po.po_number||'')
+      });
+    }
+  }
   if(it&&row){
     it.status=row.out_status;
     it.qty_received=row.out_qty_received;

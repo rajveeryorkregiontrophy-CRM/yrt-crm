@@ -655,7 +655,7 @@
         </div>
     </section>
     <section class="band band-flush b-lines">
-      <div class="eyebrow-row"><span class="eyebrow">Product Listing</span><span class="ch-count" id="line-count">—</span><button type="button" class="batch-po sup-col" id="batch-po" title="Order every line's outstanding balance onto its supplier's open PO">⊞ Order all to PO</button>
+      <div class="eyebrow-row"><span class="eyebrow">Product Listing</span><span class="ch-count" id="line-count">—</span>
         <div class="legend sup-col" id="po-legend">
           <span class="lg"><span class="lg-dot" style="background:#e0883a"></span>Not Ordered</span>
           <span class="lg"><span class="lg-dot" style="background:#f0b34e"></span>Partly Ordered</span>
@@ -830,6 +830,18 @@ if (EMBED) {
 function embedPost(m) { try { parent.postMessage(m, '*'); } catch (e) {} }
 
 let ORDER=null, LINES=[], DIRTY=false, PRODUCTS=[], SUPPLIERS=[], DEPOSITS=[], ART=[], ART_OK=false, INV_REF=null;
+// Stock Control: lights up once the stock_movements table exists.
+let STOCK_OK=false;
+async function detectStock(){
+  const {error}=await db.from('stock_movements').select('id').limit(1);
+  STOCK_OK=!error;
+}
+// Current on-hand balance for one product (sum of ins minus outs).
+async function stockOnHand(style){
+  if(!STOCK_OK||!style) return 0;
+  const {data}=await db.from('stock_movements').select('direction,quantity').eq('style_number',style);
+  return (data||[]).reduce((s,m)=>s+(m.direction==='in'?1:-1)*(Number(m.quantity)||0),0);
+}
 
 function markDirty(){DIRTY=true;const m=document.getElementById('save-msg');m.textContent='Unsaved changes';m.className='status-msg';}
 
@@ -949,6 +961,7 @@ async function load(){
   if(error||!data){document.getElementById('wrap').innerHTML=`<div class="state">Couldn't load this order.<br>${error?.message||''}</div>`;return;}
   ORDER=data;
   LOADED_AT = data.modified_at || null;   // optimistic lock: the version we loaded
+  await detectStock();
   // Cross-reference: a converted order shows the invoice it became.
   INV_REF=null;
   if(ORDER.record_type==='invoice'){
@@ -1178,7 +1191,6 @@ async function batchOrderToPO(){
   await alertModal('Ordered','Placed '+placed+' line'+(placed===1?'':'s')+' onto open POs.'
     +(missingSups.length?' Created new open PO'+(missingSups.length===1?'':'s')+' for '+missingSups.map(s=>s.name).join(', ')+'.':''),'info');
 }
-document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#batch-po');if(t)batchOrderToPO();});
 
 // Create a bare open PO for the modal's supplier and select it — deliberately
 // WITHOUT po-list's auto-pull, since the user is about to place lines themselves.
@@ -1288,7 +1300,13 @@ function render(){
   // status controls
   paintPipeline();
   document.querySelectorAll('.pip').forEach(p=>{
-    p.addEventListener('click',()=>{ORDER.art_status=p.dataset.s;paintPipeline();document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;markDirty();});
+    p.addEventListener('click',()=>{
+      // Stock gate: moving a sales order into Process goes through the
+      // stock-release popup (and clicking Process again reopens it to
+      // release the balance once more stock has arrived).
+      if(p.dataset.s==='in_process'&&STOCK_OK&&ORDER.record_type==='order'){openReleasePopup();return;}
+      ORDER.art_status=p.dataset.s;paintPipeline();document.getElementById('t-badge').innerHTML=`<span class="badge-st st-${ORDER.art_status}">${label(ORDER.art_status)}</span>`;markDirty();
+    });
   });
   const ip=document.getElementById('i-pickup');ip.value=ORDER.pickup_date||'';
   const ev=document.getElementById('i-event');ev.value=ORDER.event_date||'';
@@ -1397,7 +1415,14 @@ function renderLines(){
           : `<span class="cb-cell sup-input-wrap"><input class="li-input cb-sup" value="${esc(ln._supplier_name||'')}" data-i="${i}" placeholder="Supplier" autocomplete="off"><div class="cb-menu" data-menu="sup-${i}"></div></span>${ln.supplier_id&&ln._supplier_number?`<span class="sup-meta"><span class="sup-id-tag">#${esc(String(ln._supplier_number))}</span>${fulfillTag(ln)}</span>`:''}<button class="alloc-btn" data-alloc="${i}" title="Order this line to a purchase order">⊞ Order to PO</button>`}
         </div>
       </td>
-      <td class="qty-cell il-n" style="width:10%;"><span class="cl">Order Qty</span><span class="qtywrap"><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></span></td>
+      <td class="qty-cell il-n" style="width:10%;"><span class="cl">Order Qty</span><span class="qtywrap"><input class="li-input num" value="${ln.quantity??''}" data-i="${i}" data-k="quantity" placeholder="0"><span class="unit-suffix">${esc(ln.unit||'Pc')}</span></span>${(()=>{
+        // stock-release state: released so far vs line quantity
+        if(!STOCK_OK||ORDER.record_type!=='order')return '';
+        const rel=parseFloat(ln.stock_released)||0, need=parseFloat(ln.quantity)||0;
+        if(rel<=0&&ORDER.art_status!=='in_process')return '';
+        return rel>=need&&need>0?`<div class="il-status full-tag" style="margin-top:4px;display:inline-block;">${rel} released ✓</div>`
+          :`<div class="il-status partial-tag" style="margin-top:4px;display:inline-block;" title="Balance waiting on stock">${rel}/${need} released · ${Math.max(0,need-rel)} owed</div>`;
+      })()}</td>
       <td class="money-col il-n il-unit" style="width:10%;"><span class="cl">Unit Price</span><input class="li-input num" value="${ln.unit_price??''}" data-i="${i}" data-k="unit_price" placeholder="0.00"></td>
       <td class="disc-cell money-col il-n" style="width:9.5%;">
         <span class="cl">Discount</span><select class="li-disc" data-i="${i}">${discOpts.map(d=>`<option value="${d}" ${parseFloat(ln.discount_pct)===d?'selected':''}>${d===0?'—':d+'%'}</option>`).join('')}</select>
@@ -1700,7 +1725,7 @@ async function deleteLine(i){
 
 // Each line tracks ordered qty (allocations) vs supplier qty. You can order the
 // balance into open POs repeatedly until nothing is left to order.
-let ORD_I=null, ORD_SUP=null, ORD_POS=[], ORD_PLACED=[], ORD_DIRECT=[];
+let ORD_I=null, ORD_SUP=null, ORD_POS=[], ORD_PLACED=[], ORD_DIRECT=[], ORD_STOCK=0;
 async function openSplit(i){
   if(ORDER.record_type!=='order'){ alertModal('Sales Orders only','Ordering items to a PO is available on Sales Orders only.','info'); return; }
   const ln=LINES[i]; if(!ln){return;}
@@ -1730,6 +1755,7 @@ async function openSplit(i){
   // load this supplier's OPEN POs to order more into
   const {data:pos}=await db.from('purchase_orders').select('id,po_number,order_date').eq('status','open').eq('supplier_id',ORD_SUP.id).order('po_number');
   ORD_POS=pos||[];
+  ORD_STOCK=await stockOnHand(ln.style_number);
   renderOrderModal();
   document.getElementById('split-overlay').classList.add('open');
 }
@@ -1755,6 +1781,7 @@ function renderOrderModal(){
       <div class="ob-cell"><span class="ob-n">${need}</span><span class="ob-l">Order Qty</span></div>
       <div class="ob-cell"><span class="ob-n">${ordered}</span><span class="ob-l">Ordered</span></div>
       <div class="ob-cell hl"><span class="ob-n">${balance}</span><span class="ob-l">Still to Order</span></div>
+      ${STOCK_OK?`<div class="ob-cell"><span class="ob-n" style="color:${ORD_STOCK>0?'#3ddc84':'#ff4d4d'};">${ORD_STOCK}</span><span class="ob-l">In Stock</span></div>`:''}
     </div>`;
 
   // placed orders ledger (allocations + any direct PO lines)
@@ -2268,6 +2295,84 @@ async function deleteOrder(){
   );
 }
 
+// ── Stock release (Process gate) ────────────────────────────────────
+// Moving a sales order into Process releases stock against its lines.
+// The popup shows, per line: quantity, already released, balance still
+// to release, and what's on hand in Stock Control. The user chooses how
+// much to release now (capped by both balance and stock). Releasing less
+// than the full quantity leaves a balance on the line; reopening Process
+// releases more as stock arrives. Outward movements are written to
+// stock_movements and the running total kept on quote_items.stock_released.
+async function openReleasePopup(){
+  const lines=LINES.filter(l=>(parseFloat(l.quantity)||0)>0&&(l.style_number||l.description));
+  if(!lines.length){ await alertModal('Nothing to release','Add product lines before moving this order into Process.','info'); return; }
+  // current stock per product, in one query
+  const styles=[...new Set(lines.map(l=>l.style_number).filter(Boolean))];
+  const bal={};
+  if(styles.length){
+    const {data}=await db.from('stock_movements').select('style_number,direction,quantity').in('style_number',styles);
+    (data||[]).forEach(m=>{bal[m.style_number]=(bal[m.style_number]||0)+(m.direction==='in'?1:-1)*(Number(m.quantity)||0);});
+  }
+  const rows=lines.map(l=>{
+    const need=parseFloat(l.quantity)||0;
+    const rel=parseFloat(l.stock_released)||0;
+    const remaining=Math.max(0,need-rel);
+    const stock=Math.max(0,bal[l.style_number]||0);
+    const now=Math.min(remaining,stock);
+    return {l,need,rel,remaining,stock,now};
+  });
+  const allDone=rows.every(r=>r.remaining<=0);
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:9400;background:rgba(8,10,14,.78);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML=`<div style="background:var(--bg-2,#16181d);border:2px solid var(--line-2,#414a5c);border-radius:14px;width:100%;max-width:640px;padding:24px 26px;max-height:92vh;overflow-y:auto;">
+    <div style="font-family:var(--fd,sans-serif);font-weight:800;font-size:16px;color:#fff;margin-bottom:6px;">Release stock for production</div>
+    <div style="font-size:13px;color:var(--text-2,#c4cad6);line-height:1.5;margin-bottom:16px;">${allDone?'Every line is fully released — this order is covered by stock.':'Choose how much stock to release for each line. Anything not released stays as a balance you can release later, once more stock arrives.'}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr>
+        <th style="text-align:left;padding:8px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-bottom:2px solid var(--line-2,#414a5c);">Product</th>
+        <th style="text-align:center;padding:8px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-bottom:2px solid var(--line-2,#414a5c);">Qty</th>
+        <th style="text-align:center;padding:8px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-bottom:2px solid var(--line-2,#414a5c);">Released</th>
+        <th style="text-align:center;padding:8px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-bottom:2px solid var(--line-2,#414a5c);">In Stock</th>
+        <th style="text-align:center;padding:8px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-bottom:2px solid var(--line-2,#414a5c);">Release Now</th>
+      </tr></thead>
+      <tbody>${rows.map((r,i)=>`<tr>
+        <td style="padding:10px;border-bottom:1.5px solid var(--line,#323a48);color:var(--text,#eef0f4);">${esc(r.l.description||r.l.style_number||'Line '+(i+1))}${r.l.style_number?`<div style="font-size:10.5px;color:var(--text-3,#9098a8);">${esc(r.l.style_number)}</div>`:''}</td>
+        <td style="padding:10px;text-align:center;border-bottom:1.5px solid var(--line,#323a48);color:var(--text,#eef0f4);"><b>${r.need}</b></td>
+        <td style="padding:10px;text-align:center;border-bottom:1.5px solid var(--line,#323a48);color:${r.rel>=r.need?'#3ddc84':'var(--text-2,#c4cad6)'};">${r.rel}</td>
+        <td style="padding:10px;text-align:center;border-bottom:1.5px solid var(--line,#323a48);color:${r.stock>0?'#3ddc84':'#ff4d4d'};">${r.stock}</td>
+        <td style="padding:10px;text-align:center;border-bottom:1.5px solid var(--line,#323a48);">${r.remaining<=0?'<span style="color:#3ddc84;font-weight:700;">complete</span>':`<input type="number" data-rel="${i}" value="${r.now}" min="0" max="${Math.min(r.remaining,r.stock)}" style="width:64px;background:var(--bg,#0f1115);border:1px solid var(--line-2,#414a5c);color:#fff;border-radius:6px;padding:7px 8px;text-align:center;font-family:inherit;" oninput="const m=${Math.min(r.remaining,r.stock)};if(+this.value>m)this.value=m;if(this.value<0)this.value=0;">`}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+    <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:18px;">
+      <button id="rl-cancel" style="padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;background:var(--bg-3,#1f2229);color:var(--text,#eef0f4);border:1px solid var(--line-2,#414a5c);">Cancel</button>
+      <button id="rl-go" style="padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#ffffff,#d7dce4);color:#15171c;border:none;">${allDone?'Move to Process':'Release & move to Process'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+  ov.querySelector('#rl-cancel').onclick=()=>ov.remove();
+  ov.querySelector('#rl-go').onclick=async()=>{
+    for(let i=0;i<rows.length;i++){
+      const inp=ov.querySelector(`[data-rel="${i}"]`);
+      const qty=inp?Math.max(0,Math.min(+inp.value||0,Math.min(rows[i].remaining,rows[i].stock))):0;
+      if(qty<=0)continue;
+      const l=rows[i].l;
+      const {error:me}=await db.from('stock_movements').insert({style_number:l.style_number||null,product_name:l.description||null,direction:'out',quantity:qty,reason:'production_release',source_quote_item_id:l.id||null,ref:'Order #'+(ORDER.stage_id||'')});
+      if(me){await alertModal('Could not release stock',me.message,'danger');return;}
+      const newRel=(parseFloat(l.stock_released)||0)+qty;
+      await db.from('quote_items').update({stock_released:newRel}).eq('id',l.id);
+      l.stock_released=newRel;
+    }
+    ov.remove();
+    ORDER.art_status='in_process';
+    paintPipeline();
+    document.getElementById('t-badge').innerHTML=`<span class="badge-st st-in_process">${label('in_process')}</span>`;
+    renderLines();
+    markDirty();
+    await save();
+  };
+}
+
 // ── Contact-cycle checkpoint ────────────────────────────────────────
 // Shown right after an invoice is created. The client's contact-cycle
 // clock counts from clients.last_transaction; this asks whether the new
@@ -2313,6 +2418,18 @@ async function cycleCheckpoint(inv, invDate, amount){
 
 async function convertToInvoice(){
   if(DIRTY){ const s=await confirmModal('Save first?','You have unsaved changes. They’ll be saved before creating the invoice.',{confirmText:'Save & continue',cancelText:'Cancel'}); if(!s)return; await save(); }
+  // Stock gate: an order cannot become an invoice until every line's full
+  // quantity has been released from Stock Control.
+  if(STOCK_OK){
+    const short=LINES.filter(l=>(parseFloat(l.quantity)||0)>(parseFloat(l.stock_released)||0));
+    if(short.length){
+      await alertModal('Stock not fully released',
+        'This order can’t be converted to an invoice yet. These lines are still owed stock:<br><br>'
+        +short.map(l=>`• <b>${esc(l.description||l.style_number||'Line')}</b> — ${parseFloat(l.stock_released)||0} of ${parseFloat(l.quantity)||0} released`).join('<br>')
+        +'<br><br>Release the balance through the Process stage once the stock is in.','warn');
+      return;
+    }
+  }
   // One prompt only: the irreversibility confirmation.
   const ok=await confirmModal('Convert to invoice — this cannot be undone',
     'This turns order #'+ORDER.stage_id+' into an invoice. Once converted:<br><br>'
